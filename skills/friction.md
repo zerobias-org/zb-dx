@@ -250,4 +250,12 @@ If a status filter is provided, only show entries with that status.
 
 ## Changelog
 
+Log all changes — both self-corrections and manual improvements. Format:
+
+```
+- YYYY-MM-DD: Description (author, type)
+```
+
+Types: `self-correction` (Claude fixed a failing operation), `manual` (human improvement)
+
 _No changes yet._
