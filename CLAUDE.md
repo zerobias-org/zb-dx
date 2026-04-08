@@ -23,3 +23,71 @@ Both are ZB employees wearing the "3rd-party developer" hat to surface friction 
 - This repo contains documentation and reusable artifacts, not application source code
 - The SME Mart app lives in the W3Geekery org; the Readiness Center lives in the SDI org
 - `zerobias-angular-client` is an Angular wrapper around `zerobias-client` — patterns that work for one generally apply to both
+
+## Directory Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `friction-log/` | Pain points and friction discovered during development — the raw material |
+| `guides/` | How-to walkthroughs born from real development friction |
+| `patterns/` | Reusable integration patterns with working code examples |
+| `skills/` | Claude/LLM skill definitions for ZB development tasks |
+| `templates/` | Starter code and boilerplate for common setups |
+
+## Artifact Frontmatter
+
+Every artifact file uses YAML frontmatter for lifecycle tracking:
+
+```yaml
+---
+status: draft | review | promoted
+promoted-to: kb-article-123 | skill/foo  # once it graduates to customer-facing
+author: clark | dan
+app: sme-mart | readiness-center | general
+---
+```
+
+- **draft** — Work in progress, capturing the experience
+- **review** — Ready for others to validate and refine
+- **promoted** — Graduated to a customer-facing resource (set `promoted-to` to track where)
+
+## Instructions for Claude Code Instances
+
+When assisting a developer who is building an app against the ZeroBias platform (`zerobias-sdk`, `zerobias-client`, or `zerobias-angular-client`), you should actively contribute to this repo:
+
+### When to create a friction-log entry
+- The developer hits an SDK/client behavior that is confusing, undocumented, or broken
+- An error message is unhelpful or misleading
+- A workflow requires non-obvious steps that should be simpler
+- You (Claude) had to guess or search extensively to figure out how something works
+
+Create the entry at `friction-log/{date}-{slug}.md` using the template in `friction-log/README.md`. Be specific — include error messages, code snippets, and the workaround you used.
+
+### When to create a pattern
+- You solve an integration problem that other ZB developers will likely face
+- A reusable approach emerges for auth, data fetching, error handling, entity relationships, etc.
+
+Create a directory at `patterns/{pattern-name}/` with a `README.md` explaining the pattern and example code files.
+
+### When to create a guide
+- A multi-step workflow needs documentation (e.g., "setting up a new ZB-connected Angular app from scratch")
+- Something that took significant effort to figure out the first time
+
+Create at `guides/{topic}.md` with the frontmatter.
+
+### When to create or update a skill
+- A repeatable Claude Code task emerges that would help other ZB developers
+- An existing skill needs refinement based on real usage
+
+Create at `skills/{skill-name}.md`.
+
+### Before creating any artifact
+1. Check if a similar artifact already exists — update it rather than duplicating
+2. Use the frontmatter template with correct `author` and `app` fields
+3. Focus on what a 3rd-party developer (without ZB internal knowledge) would need to know
+
+### Cross-repo awareness
+This repo (`zb-poc-devs`) is a shared knowledge base. Your primary development work happens in the app's own repo. When working in the app repo and you encounter something worth capturing:
+1. Note it in the conversation
+2. When the developer confirms, commit the artifact here
+3. Reference the artifact from the app repo's documentation if relevant
