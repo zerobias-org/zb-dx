@@ -200,7 +200,7 @@ promoted-to: null
 ### `list [status]`
 
 1. Read config
-2. Scan all files in `{repo_path}/friction-log/` (excluding README.md)
+2. Scan all `.md` files directly in `{repo_path}/friction-log/` (do NOT recurse — skip `examples/` and `README.md`)
 3. Parse frontmatter from each file
 4. Display as a table:
 
@@ -217,7 +217,7 @@ If a status filter is provided, only show entries with that status.
 ### `check`
 
 1. Read config
-2. Find all friction-log entries with `status: task-created` and a `zb-task` value
+2. Scan only direct `.md` files in `{repo_path}/friction-log/` (skip `examples/` and `README.md`) — find entries with `status: task-created` and a `zb-task` value
 3. For each, query the ZB platform via MCP for the current task status
 4. Report a summary:
 
@@ -258,4 +258,4 @@ Log all changes — both self-corrections and manual improvements. Format:
 
 Types: `self-correction` (Claude fixed a failing operation), `manual` (human improvement)
 
-_No changes yet._
+- 2026-04-09: Added tutorial examples in `friction-log/examples/` and workflow guide at `.claude/docs/friction-workflow.md`. `list` and `check` now explicitly skip the `examples/` subfolder. (clark, manual)

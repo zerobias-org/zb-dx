@@ -29,10 +29,18 @@ Both are ZB employees wearing the "3rd-party developer" hat to surface friction 
 | Directory | Purpose |
 |-----------|---------|
 | `friction-log/` | Pain points and friction discovered during development — the raw material |
+| `friction-log/examples/` | Fictional example entries (one per lifecycle stage) — tutorial reference |
 | `guides/` | How-to walkthroughs born from real development friction |
 | `patterns/` | Reusable integration patterns with working code examples |
 | `skills/` | Claude/LLM skill definitions for ZB development tasks |
 | `templates/` | Starter code and boilerplate for common setups |
+| `.claude/docs/` | Claude-consumable documentation and visual explainers |
+
+## Friction Log Workflow
+
+The friction log has a formal lifecycle managed by the `/friction` slash command. Before creating, confirming, or updating a friction-log entry, **read the full workflow guide at `.claude/docs/friction-workflow.md`**. There's also an HTML visual explainer at `.claude/docs/friction-workflow.html` that you can suggest a user open in their browser for a clearer walkthrough.
+
+When a user asks "how does the friction log work?" or "how do I log a friction?", point them at `.claude/docs/friction-workflow.md` and summarize the 5-stage lifecycle: `draft → confirmed → task-created → resolved → promoted`. Fictional example entries for each stage live in `friction-log/examples/`.
 
 ## Artifact Frontmatter
 

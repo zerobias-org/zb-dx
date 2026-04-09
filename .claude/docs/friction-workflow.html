@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friction Log Workflow — zb-poc-devs</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --surface: #1a1f2e;
+    --surface-alt: #242b3d;
+    --border: #2f3649;
+    --text: #e8ecf4;
+    --text-dim: #9aa4ba;
+    --accent: #6ab4ff;
+    --accent-2: #8b5cf6;
+    --draft: #9aa4ba;
+    --confirmed: #fbbf24;
+    --task: #f97316;
+    --resolved: #10b981;
+    --promoted: #6ab4ff;
+    --code-bg: #0a0e17;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  header h1 {
+    font-size: 2.5rem;
+    margin: 0 0 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    margin: 0;
+  }
+  h2 {
+    font-size: 1.6rem;
+    margin-top: 56px;
+    margin-bottom: 20px;
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 1.2rem;
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  p, li {
+    color: var(--text);
+  }
+  .tldr {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    margin-bottom: 32px;
+  }
+  .tldr strong { color: var(--accent); }
+  code {
+    background: var(--code-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: "SF Mono", Monaco, Menlo, Consolas, monospace;
+    color: #f4b942;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: 0.88em;
+    line-height: 1.5;
+  }
+  pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text);
+  }
+
+  /* Lifecycle diagram */
+  .lifecycle {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    margin: 32px 0;
+    overflow-x: auto;
+    padding: 8px 0;
+  }
+  .stage {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .stage:hover { transform: translateY(-2px); }
+  .stage .dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+  .stage-draft .dot { background: var(--draft); }
+  .stage-confirmed .dot { background: var(--confirmed); }
+  .stage-task .dot { background: var(--task); }
+  .stage-resolved .dot { background: var(--resolved); }
+  .stage-promoted .dot { background: var(--promoted); }
+  .stage-draft { border-color: var(--draft); }
+  .stage-confirmed { border-color: var(--confirmed); }
+  .stage-task { border-color: var(--task); }
+  .stage-resolved { border-color: var(--resolved); }
+  .stage-promoted { border-color: var(--promoted); }
+  .stage h4 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    text-transform: lowercase;
+  }
+  .stage p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  .arrow {
+    display: flex;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    padding: 0 2px;
+  }
+
+  /* Walkthrough timeline */
+  .timeline {
+    border-left: 2px solid var(--border);
+    margin-left: 12px;
+    padding-left: 32px;
+  }
+  .timeline-item {
+    position: relative;
+    padding-bottom: 32px;
+  }
+  .timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -40px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+  }
+  .timeline-item.draft::before { border-color: var(--draft); }
+  .timeline-item.confirmed::before { border-color: var(--confirmed); }
+  .timeline-item.task::before { border-color: var(--task); }
+  .timeline-item.resolved::before { border-color: var(--resolved); }
+  .timeline-item.promoted::before { border-color: var(--promoted); }
+  .timeline-item h4 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+  .timeline-item .day {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .timeline-item p {
+    margin: 6px 0;
+    color: var(--text-dim);
+  }
+  .timeline-item code {
+    color: #f4b942;
+  }
+
+  /* Command table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  th, td {
+    padding: 12px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface-alt);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { color: #f4b942; }
+
+  /* Callouts */
+  .callout {
+    background: var(--surface);
+    border-left: 4px solid var(--accent-2);
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    margin: 20px 0;
+  }
+  .callout.warn { border-left-color: var(--confirmed); }
+  .callout.ok { border-left-color: var(--resolved); }
+  .callout strong { color: var(--accent); }
+
+  /* Setup box */
+  .setup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .setup ol { padding-left: 20px; }
+  .setup li { margin-bottom: 8px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>Friction Log Workflow</h1>
+  <p>A shared notebook of pain points, escalated cleanly to the ZB backend team</p>
+</header>
+
+<div class="tldr">
+  <strong>TL;DR</strong> — You hit an annoying thing in the ZeroBias SDK/client? Run <code>/friction new "short description"</code>.
+  Claude walks you through the rest. Scroll down for the full picture.
+</div>
+
+<h2>The Lifecycle</h2>
+
+<p>Every friction-log entry moves through these stages. Most never reach the last one — and that's fine.</p>
+
+<div class="lifecycle">
+  <div class="stage stage-draft">
+    <span class="dot"></span>
+    <h4>draft</h4>
+    <p>One dev logged a pain point</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="stage stage-confirmed">
+    <span class="dot"></span>
+    <h4>confirmed</h4>
+    <p>A second dev hit the same thing</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="stage stage-task">
+    <span class="dot"></span>
+    <h4>task-created</h4>
+    <p>Escalated to a ZB platform task</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="stage stage-resolved">
+    <span class="dot"></span>
+    <h4>resolved</h4>
+    <p>Fix shipped or decision made</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="stage stage-promoted">
+    <span class="dot"></span>
+    <h4>promoted</h4>
+    <p>Graduated to a customer-facing doc</p>
+  </div>
+</div>
+
+<h2>Why Bother?</h2>
+
+<ul>
+  <li><strong>You stop being the only person who knows.</strong> The next dev finds your entry instead of starting from zero.</li>
+  <li><strong>It escalates cleanly.</strong> When two devs hit the same thing, the ZB platform task carries real user context, not just a one-line bug report.</li>
+  <li><strong>It feeds the customer-facing dev experience.</strong> Resolved friction becomes guides, patterns, skills, and KB articles for external developers.</li>
+</ul>
+
+<h2>The Commands</h2>
+
+<p>All run from any project via the <code>/friction</code> slash command.</p>
+
+<table>
+  <thead>
+    <tr><th>Command</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>/friction new [title]</code></td><td>Create a new entry. Claude asks follow-up questions if needed.</td></tr>
+    <tr><td><code>/friction confirm &lt;slug&gt;</code></td><td>Add your experience to an existing entry. Bumps draft → confirmed.</td></tr>
+    <tr><td><code>/friction task &lt;slug&gt;</code></td><td>Create a ZB platform task linked to the entry.</td></tr>
+    <tr><td><code>/friction resolve &lt;slug&gt;</code></td><td>Mark as resolved, record what actually shipped.</td></tr>
+    <tr><td><code>/friction promote &lt;slug&gt;</code></td><td>Mark as graduated to a customer-facing resource.</td></tr>
+    <tr><td><code>/friction list [status]</code></td><td>Show entries, optionally filtered.</td></tr>
+    <tr><td><code>/friction check</code></td><td>Poll ZB task status for all escalated entries.</td></tr>
+  </tbody>
+</table>
+
+<h3>Useful Flags</h3>
+
+<table>
+  <thead>
+    <tr><th>Flag</th><th>Values</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--severity</code> / <code>-s</code></td><td><code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code></td></tr>
+    <tr><td><code>--app</code> / <code>-a</code></td><td><code>sme-mart</code>, <code>readiness-center</code>, <code>general</code></td></tr>
+    <tr><td><code>--notify</code> / <code>-n</code></td><td>Post update to <code>#zb-poc-devs</code> Slack</td></tr>
+  </tbody>
+</table>
+
+<h2>Walkthrough: A Real Scenario</h2>
+
+<p>You're building SME Mart and hit a pain point with the SDK auth flow. Here's the full arc:</p>
+
+<div class="timeline">
+
+  <div class="timeline-item draft">
+    <div class="day">Day 1</div>
+    <h4>You hit the pain</h4>
+    <p>You spend an hour figuring out that <code>zerobias-client</code> silently fails to refresh auth tokens when the network drops. You've got a workaround. You're annoyed.</p>
+    <pre><code>/friction new "Auth token refresh fails silently when offline" -s high -a sme-mart</code></pre>
+    <p>Claude asks a few questions, creates <code>friction-log/2026-04-09-auth-token-refresh.md</code>, commits, and pushes.</p>
+    <p>Status: <strong>draft</strong></p>
+  </div>
+
+  <div class="timeline-item confirmed">
+    <div class="day">Day 3</div>
+    <h4>Dan hits the same thing</h4>
+    <p>Dan is building Readiness Center and sees a similar pattern in his logs.</p>
+    <pre><code>/friction confirm auth-token-refresh</code></pre>
+    <p>Claude finds your entry, asks Dan about his experience, appends a "Confirmed by dan" section, adds him to subscribers, and bumps status.</p>
+    <p>Status: <strong>confirmed</strong></p>
+  </div>
+
+  <div class="timeline-item task">
+    <div class="day">Day 5</div>
+    <h4>You escalate</h4>
+    <p>Two of you have hit this. You both want it fixed in the client library.</p>
+    <pre><code>/friction task auth-token-refresh --notify</code></pre>
+    <p>Claude reads the full entry, uses the ZB MCP to create a feature-request task, links it in the frontmatter (<code>zb-task: TASK-4567</code>), and posts to <code>#zb-poc-devs</code>.</p>
+    <p>Status: <strong>task-created</strong></p>
+  </div>
+
+  <div class="timeline-item resolved">
+    <div class="day">Week 2</div>
+    <h4>The fix ships</h4>
+    <p>Either <code>/friction check</code> detects the status change, or you see the release notes yourself.</p>
+    <pre><code>/friction resolve auth-token-refresh</code></pre>
+    <p>Claude asks what shipped, records it, and posts to <code>#zb-poc-devs</code> — subscribers get @-mentioned.</p>
+    <p>Status: <strong>resolved</strong></p>
+  </div>
+
+  <div class="timeline-item promoted">
+    <div class="day">Week 3</div>
+    <h4>You write a guide</h4>
+    <p>The fix introduces a new API pattern worth documenting for external devs. You write <code>guides/handling-auth-token-refresh.md</code>, then:</p>
+    <pre><code>/friction promote auth-token-refresh</code></pre>
+    <p>Claude updates the frontmatter with the destination.</p>
+    <p>Status: <strong>promoted</strong></p>
+  </div>
+
+</div>
+
+<h2>Setup</h2>
+
+<div class="setup">
+  <p>Once, per machine:</p>
+  <pre><code>git clone git@github.com:zerobias-org/zb-poc-devs.git
+cd zb-poc-devs
+./install.sh</code></pre>
+  <p>The installer asks:</p>
+  <ol>
+    <li><strong>Your name</strong> — used as <code>author</code> in frontmatter</li>
+    <li><strong>Global or project-level</strong> — global is recommended</li>
+    <li><strong>Symlink or copy</strong> — symlink is recommended (auto-updates when anyone pushes)</li>
+  </ol>
+  <p>Verify with <code>./install.sh status</code>.</p>
+</div>
+
+<h2>Examples</h2>
+
+<p>See <code>friction-log/examples/</code> for five fictional entries — one at each lifecycle stage. They're the fastest way to see what "done right" looks like.</p>
+
+<div class="callout">
+  <strong>When in doubt: log it.</strong> An entry at <code>draft</code> that never moves forward costs nothing.
+  A missed pain point that the next dev rediscovers costs an hour.
+</div>
+
+<div class="callout warn">
+  <strong>Don't log:</strong> genuine bugs in your own code, feature requests unrelated to dev experience,
+  ephemeral complaints without specifics, or things you'll fix in 5 minutes.
+</div>
+
+<footer>
+  <p>
+    Slack: <strong>#zb-poc-devs</strong> &nbsp;·&nbsp;
+    Repo: <a href="https://github.com/zerobias-org/zb-poc-devs">zerobias-org/zb-poc-devs</a> &nbsp;·&nbsp;
+    Markdown version: <code>.claude/docs/friction-workflow.md</code>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>
