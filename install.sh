@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# zbdx skill installer
+# zb-dx skill installer
 # Installs the /friction slash command for Claude Code
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_SOURCE="${SCRIPT_DIR}/skills/friction.md"
-CONFIG_FILE="${HOME}/.claude/zbdx.json"
+CONFIG_FILE="${HOME}/.claude/zb-dx.json"
 GLOBAL_COMMANDS="${HOME}/.claude/commands"
 
 # Colors (safe for terminals that don't support them)
@@ -56,7 +56,7 @@ EOF
 
 do_install() {
     echo ""
-    echo "=== zbdx Skill Installer ==="
+    echo "=== zb-dx Skill Installer ==="
     echo ""
 
     # Check skill source exists
@@ -129,7 +129,7 @@ do_install() {
 
 do_update() {
     echo ""
-    echo "=== Updating zbdx skills ==="
+    echo "=== Updating zb-dx skills ==="
     echo ""
 
     # Pull latest
@@ -176,7 +176,7 @@ do_update() {
 
 do_status() {
     echo ""
-    echo "=== zbdx Installation Status ==="
+    echo "=== zb-dx Installation Status ==="
     echo ""
 
     if [[ -f "${CONFIG_FILE}" ]]; then
@@ -200,7 +200,7 @@ do_status() {
 
 do_uninstall() {
     echo ""
-    echo "=== Uninstalling zbdx skills ==="
+    echo "=== Uninstalling zb-dx skills ==="
     echo ""
 
     local global_target="${GLOBAL_COMMANDS}/friction.md"

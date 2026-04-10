@@ -1,6 +1,6 @@
 # Friction Log Workflow — The Noob's Guide
 
-**Who this is for:** You just joined the `zbdx` effort. You're building a real app against the ZeroBias SDK/client and you've hit something annoying. You want to know what to do with that annoyance.
+**Who this is for:** You just joined the `zb-dx` effort. You're building a real app against the ZeroBias SDK/client and you've hit something annoying. You want to know what to do with that annoyance.
 
 **TL;DR:** Run `/friction new "short description of the pain"` and Claude walks you through the rest.
 
@@ -67,7 +67,7 @@ All of these run from any project via the `/friction` slash command (once you've
 
 - `--severity` / `-s` — `critical`, `high`, `medium`, `low`
 - `--app` / `-a` — `sme-mart`, `readiness-center`, `general`
-- `--notify` / `-n` — Post an update to `#zbdx` Slack
+- `--notify` / `-n` — Post an update to `#zb-dx` Slack
 
 ---
 
@@ -103,7 +103,7 @@ Two of you have now hit this. You both want it fixed in the client library. You 
 /friction task auth-token-refresh --notify
 ```
 
-Claude reads the full entry, uses the ZB MCP to create a feature-request task in the ZB platform, links it in the frontmatter (`zb-task: TASK-4567`), and posts to `#zbdx`. Status: **task-created**.
+Claude reads the full entry, uses the ZB MCP to create a feature-request task in the ZB platform, links it in the frontmatter (`zb-task: TASK-4567`), and posts to `#zb-dx`. Status: **task-created**.
 
 ### Week 2 — The SDK team ships a fix
 
@@ -113,7 +113,7 @@ You can either wait for the `/friction check` command to detect the task status 
 /friction resolve auth-token-refresh
 ```
 
-Claude asks what shipped, records it, and posts to `#zbdx` so subscribers (you + Dan) get the @-mention. Status: **resolved**.
+Claude asks what shipped, records it, and posts to `#zb-dx` so subscribers (you + Dan) get the @-mention. Status: **resolved**.
 
 ### Week 3 — You write a guide about it
 
@@ -142,8 +142,8 @@ See `friction-log/examples/` for **5 fictional friction-log entries**, one per l
 Once, per machine:
 
 ```bash
-git clone git@github.com:zerobias-org/zbdx.git
-cd zbdx
+git clone git@github.com:zerobias-org/zb-dx.git
+cd zb-dx
 ./install.sh
 ```
 
@@ -171,6 +171,6 @@ When in doubt: log it. An entry at `draft` that never moves forward costs nothin
 
 ## Questions?
 
-- **Slack:** `#zbdx` in the zerobias-org workspace
-- **Repo:** [zerobias-org/zbdx](https://github.com/zerobias-org/zbdx)
+- **Slack:** `#zb-dx` in the zerobias-org workspace
+- **Repo:** [zerobias-org/zb-dx](https://github.com/zerobias-org/zb-dx)
 - **Visual version of this guide:** `.claude/docs/friction-workflow.html` — open in a browser

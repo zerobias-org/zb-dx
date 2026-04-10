@@ -15,7 +15,7 @@ Both are ZB employees wearing the "3rd-party developer" hat to surface friction 
 
 ## Coordination
 
-- Slack: **#zbdx** (zerobias-org workspace)
+- Slack: **#zb-dx** (zerobias-org workspace)
 - Artifacts are shared via Slack or committed directly to this repo
 
 ## Context
@@ -95,7 +95,7 @@ Create at `skills/{skill-name}.md`.
 3. Focus on what a 3rd-party developer (without ZB internal knowledge) would need to know
 
 ### Cross-repo awareness
-This repo (`zbdx`) is a shared knowledge base. Your primary development work happens in the app's own repo. When working in the app repo and you encounter something worth capturing:
+This repo (`zb-dx`) is a shared knowledge base. Your primary development work happens in the app's own repo. When working in the app repo and you encounter something worth capturing:
 1. Note it in the conversation
 2. When the developer confirms, commit the artifact here
 3. Reference the artifact from the app repo's documentation if relevant

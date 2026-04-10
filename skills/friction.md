@@ -11,10 +11,10 @@ Manage the ZB 3rd-party developer friction log — create, confirm, escalate to 
 
 ## Configuration
 
-The repo path is stored in `~/.claude/zbdx.json`:
+The repo path is stored in `~/.claude/zb-dx.json`:
 ```json
 {
-  "repo_path": "/path/to/zbdx",
+  "repo_path": "/path/to/zb-dx",
   "author": "clark"
 }
 ```
@@ -48,7 +48,7 @@ If invoked with NO arguments (just `/friction` and nothing else), display the us
 |------|-------------|
 | `--severity` / `-s` | `critical`, `high`, `medium`, `low` (default: `medium`) |
 | `--app` / `-a` | `sme-mart`, `readiness-center`, `general` |
-| `--notify` / `-n` | Post update to #zbdx Slack channel |
+| `--notify` / `-n` | Post update to #zb-dx Slack channel |
 
 ### Examples
 ```
@@ -65,7 +65,7 @@ If invoked with NO arguments (just `/friction` and nothing else), display the us
 
 ### `new [title]`
 
-1. Read config from `~/.claude/zbdx.json`
+1. Read config from `~/.claude/zb-dx.json`
 2. If no title provided, ask the user:
    - What were you trying to do?
    - What happened?
@@ -113,7 +113,7 @@ promoted-to: null
 
 ### `confirm <slug>`
 
-1. Read config from `~/.claude/zbdx.json`
+1. Read config from `~/.claude/zb-dx.json`
 2. Find the friction-log file matching the slug (partial match OK — search `{repo_path}/friction-log/` for files containing the slug)
 3. Read the file
 4. Ask the user for their experience:
@@ -134,7 +134,7 @@ promoted-to: null
 
 7. Update `status` to `confirmed` (if currently `draft`)
 8. Commit: `chore(friction): confirm {slug} by {author}`
-9. If `--notify` flag or severity is `critical`/`high`, post to `#zbdx` Slack (channel ID: `C0ARM97HBK2`):
+9. If `--notify` flag or severity is `critical`/`high`, post to `#zb-dx` Slack (channel ID: `C0ARM97HBK2`):
    > Friction confirmed by multiple devs: **{title}** — `friction-log/{filename}`
 
 ### `task <slug>`
@@ -145,7 +145,7 @@ promoted-to: null
    - Use the `zerobias_execute` MCP tool to create the task
    - Type: `feat:` (feature request) or `bug:` (bug report) based on the entry
    - Title: derived from the friction-log title
-   - Description: summarize the friction-log entry with a link to the file in the GitHub repo (`https://github.com/zerobias-org/zbdx/blob/main/friction-log/{filename}`)
+   - Description: summarize the friction-log entry with a link to the file in the GitHub repo (`https://github.com/zerobias-org/zb-dx/blob/main/friction-log/{filename}`)
    - Include subscribers as notify list
 4. Update the friction-log frontmatter:
    - Set `status: task-created`
@@ -162,7 +162,7 @@ promoted-to: null
 ```
 
 6. Commit: `chore(friction): create task for {slug}`
-7. If `--notify` flag, post to `#zbdx` Slack:
+7. If `--notify` flag, post to `#zb-dx` Slack:
    > ZB task created for friction: **{title}** — Task: {task ID}
 
 ### `resolve <slug>`
@@ -184,7 +184,7 @@ promoted-to: null
 ```
 
 5. Commit: `chore(friction): resolve {slug}`
-6. Post to `#zbdx` Slack, @-mentioning all subscribers:
+6. Post to `#zb-dx` Slack, @-mentioning all subscribers:
    > Friction resolved: **{title}** — {one-line resolution summary}
 7. If the user wants to extract a guide/pattern, suggest `/friction promote {slug}` next
 
@@ -231,7 +231,7 @@ If a status filter is provided, only show entries with that status.
 5. For any task that has moved to `completed`:
    - Ask the user if they want to resolve the friction-log entry
    - If yes, run the `resolve` flow
-6. If `--notify` flag, post the summary to `#zbdx`
+6. If `--notify` flag, post the summary to `#zb-dx`
 
 ## Git Behavior
 
@@ -241,7 +241,7 @@ If a status filter is provided, only show entries with that status.
 
 ## Slack Integration
 
-- Channel: `#zbdx` (ID: `C0ARM97HBK2`)
+- Channel: `#zb-dx` (ID: `C0ARM97HBK2`)
 - Use Slack MCP tools for posting
 - @-mention subscribers by looking up their Slack user IDs:
   - clark: `U08GK48MHFC`

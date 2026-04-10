@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Friction Log Workflow — zbdx</title>
+<title>Friction Log Workflow — zb-dx</title>
 <style>
   :root {
     --bg: #0f1419;
@@ -345,7 +345,7 @@
   <tbody>
     <tr><td><code>--severity</code> / <code>-s</code></td><td><code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code></td></tr>
     <tr><td><code>--app</code> / <code>-a</code></td><td><code>sme-mart</code>, <code>readiness-center</code>, <code>general</code></td></tr>
-    <tr><td><code>--notify</code> / <code>-n</code></td><td>Post update to <code>#zbdx</code> Slack</td></tr>
+    <tr><td><code>--notify</code> / <code>-n</code></td><td>Post update to <code>#zb-dx</code> Slack</td></tr>
   </tbody>
 </table>
 
@@ -378,7 +378,7 @@
     <h4>You escalate</h4>
     <p>Two of you have hit this. You both want it fixed in the client library.</p>
     <pre><code>/friction task auth-token-refresh --notify</code></pre>
-    <p>Claude reads the full entry, uses the ZB MCP to create a feature-request task, links it in the frontmatter (<code>zb-task: TASK-4567</code>), and posts to <code>#zbdx</code>.</p>
+    <p>Claude reads the full entry, uses the ZB MCP to create a feature-request task, links it in the frontmatter (<code>zb-task: TASK-4567</code>), and posts to <code>#zb-dx</code>.</p>
     <p>Status: <strong>task-created</strong></p>
   </div>
 
@@ -387,7 +387,7 @@
     <h4>The fix ships</h4>
     <p>Either <code>/friction check</code> detects the status change, or you see the release notes yourself.</p>
     <pre><code>/friction resolve auth-token-refresh</code></pre>
-    <p>Claude asks what shipped, records it, and posts to <code>#zbdx</code> — subscribers get @-mentioned.</p>
+    <p>Claude asks what shipped, records it, and posts to <code>#zb-dx</code> — subscribers get @-mentioned.</p>
     <p>Status: <strong>resolved</strong></p>
   </div>
 
@@ -406,8 +406,8 @@
 
 <div class="setup">
   <p>Once, per machine:</p>
-  <pre><code>git clone git@github.com:zerobias-org/zbdx.git
-cd zbdx
+  <pre><code>git clone git@github.com:zerobias-org/zb-dx.git
+cd zb-dx
 ./install.sh</code></pre>
   <p>The installer asks:</p>
   <ol>
@@ -434,8 +434,8 @@ cd zbdx
 
 <footer>
   <p>
-    Slack: <strong>#zbdx</strong> &nbsp;·&nbsp;
-    Repo: <a href="https://github.com/zerobias-org/zbdx">zerobias-org/zbdx</a> &nbsp;·&nbsp;
+    Slack: <strong>#zb-dx</strong> &nbsp;·&nbsp;
+    Repo: <a href="https://github.com/zerobias-org/zb-dx">zerobias-org/zb-dx</a> &nbsp;·&nbsp;
     Markdown version: <code>.claude/docs/friction-workflow.md</code>
   </p>
 </footer>

@@ -1,4 +1,4 @@
-# zbdx
+# zb-dx
 
 Private repository for ZeroBias employees who are building proof-of-concept applications as **3rd-party developers** — dogfooding the `zerobias-sdk`, `zerobias-client`, and `zerobias-angular-client` to harden the developer experience before external adoption.
 
@@ -24,7 +24,7 @@ More developers will join this effort over time.
 
 ## Communication
 
-Slack: **#zbdx** (zerobias-org workspace)
+Slack: **#zb-dx** (zerobias-org workspace)
 
 ## ZeroBias SDK Stack
 
