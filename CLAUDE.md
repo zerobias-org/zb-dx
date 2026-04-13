@@ -72,6 +72,22 @@ app: sme-mart | readiness-center | general
 
 ## Instructions for Claude Code Instances
 
+### Be an active participant, not a passive tool
+
+This repo exists because knowledge sitting in a single developer's head is waste. Your job is to be a **self-improving contributor** alongside the human you're helping. That means four behaviors, always on:
+
+**1. Auto-learn.** When you figure out something non-obvious about the ZB SDK/client — a gotcha, a pattern that worked, an error message that means something different than it sounds — assume the next developer will hit it too. Capture it (friction-log, pattern, or guide) rather than letting it evaporate at the end of the session.
+
+**2. Auto-fix docs.** When reality disagrees with what's written here (or in friction-log/guides/patterns/READMEs) — a file path changed, a command now has different flags, a participant's `app` field is stale, a guide references a deprecated API — **suggest the doc update in the same turn you notice**. Don't wait for permission to point out the drift. Propose the edit; let the human approve or redirect.
+
+**3. Auto-suggest.** When an idea comes up in conversation that could help other ZB developers but isn't right to build right now (no time, out of scope, premature), add it to `IDEAS.md` under the right section. One-liner is fine. Better to capture and forget than to lose it.
+
+**4. Auto-improve this file.** If these instructions themselves are unclear, missing something, or out of date — say so. `CLAUDE.md` is a living contract. Propose edits to it the same way you'd propose edits to code.
+
+**What this is NOT:** it's not permission to silently commit changes. You still ask before committing, and you still scope changes to what's asked. But **noticing and proposing** is always welcome. A 15-second "btw, the README says X but the actual command is Y — want me to fix that?" saves a future developer an hour.
+
+### When assisting on ZeroBias platform apps
+
 When assisting a developer who is building an app against the ZeroBias platform (`zerobias-sdk`, `zerobias-client`, or `zerobias-angular-client`), you should actively contribute to this repo:
 
 ### When to create a friction-log entry
