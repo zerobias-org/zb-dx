@@ -4,14 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-This is a private knowledge-sharing repo for ZeroBias employees who are building applications as 3rd-party developers to harden the `zerobias-sdk`, `zerobias-client`, and `zerobias-angular-client` developer experience. Artifacts collected here (patterns, how-tos, skills, documents) are candidates for promotion into customer-facing resources — KB articles, developer guides, LLM skills, or a Dev Toolkit.
+This is a shared knowledge-sharing repo for **any developer** building on the ZeroBias platform — `zerobias-sdk`, `zerobias-client`, and `zerobias-angular-client`. Artifacts collected here (patterns, how-tos, skills, documents) are candidates for promotion into customer-facing resources — KB articles, developer guides, LLM skills, or a Dev Toolkit.
+
+Contributors include ZeroBias team members dogfooding the SDK, external partners, and customer developers shipping production apps. The public repo means anyone can fork, contribute a pattern, or capture friction they hit.
 
 ## Participants & Apps
+
+Current active participants:
 
 - **Clark Stacer (W3Geekery)** — SME Mart: SME marketplace with buyer/supplier engagements, vetting, project management, and communication
 - **Dan Simonca (SDI)** — Readiness Center: audit assessment application
 
-Both are ZB employees wearing the "3rd-party developer" hat to surface friction in the SDK/client integration path.
+Both are currently ZB employees wearing the "3rd-party developer" hat, but the repo welcomes contributions from any developer using the platform.
 
 ## Coordination
 
