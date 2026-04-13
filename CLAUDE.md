@@ -10,12 +10,17 @@ Contributors include ZeroBias team members dogfooding the SDK, external partners
 
 ## Participants & Apps
 
+Each contributing developer has a profile in [`participants/`](./participants/) as `{firstname-lastname}.md` with frontmatter (`name`, `org`, `slack`, `github`, `app`, `focus`, `joined`). The `participants/README.md` explains the format.
+
 Current active participants:
 
-- **Clark Stacer (W3Geekery)** — SME Mart: SME marketplace with buyer/supplier engagements, vetting, project management, and communication
-- **Dan Simonca (SDI)** — Readiness Center: audit assessment application
+- **Clark Stacer (W3Geekery)** — SME Mart
+- **Dan Simonca (SDI)** — Readiness Center
+- **Joe Llamas (Work Worlds)** — Partner app development
 
-Both are currently ZB employees wearing the "3rd-party developer" hat, but the repo welcomes contributions from any developer using the platform.
+New devs should run **`/zb-dx-register`** after joining `#zb-dx` on Slack. The skill pulls their Slack profile, prompts for missing info, commits a participant file, and optionally posts a welcome message in `#zb-dx`. Subcommands: `list`, `sync` (diffs Slack channel members vs `participants/`), `update`.
+
+When a user asks "how do I register?" or "how do I join zb-dx?", point them at the `/zb-dx-register` skill. If the user mentions they've just joined `#zb-dx` but haven't registered, suggest running it.
 
 ## Coordination
 
@@ -38,7 +43,9 @@ Both are currently ZB employees wearing the "3rd-party developer" hat, but the r
 | `patterns/` | Reusable integration patterns with working code examples |
 | `skills/` | Claude/LLM skill definitions for ZB development tasks |
 | `templates/` | Starter code and boilerplate for common setups |
+| `participants/` | One MD file per contributing developer (profile + bio) |
 | `.claude/docs/` | Claude-consumable documentation and visual explainers |
+| `IDEAS.md` | Running list of patterns/guides/skills/tools worth building — open for any contributor to add to |
 
 ## Friction Log Workflow
 
@@ -97,6 +104,29 @@ Create at `skills/{skill-name}.md`.
 1. Check if a similar artifact already exists — update it rather than duplicating
 2. Use the frontmatter template with correct `author` and `app` fields
 3. Focus on what a 3rd-party developer (without ZB internal knowledge) would need to know
+
+### When to suggest IDEAS.md
+- The developer expresses interest in contributing but doesn't know where to start
+- You (Claude) identify a reusable tool/pattern/guide that doesn't fit an existing artifact type yet
+- A conversation surfaces multiple ideas that can't all be built right now
+
+`IDEAS.md` is the parking lot — add entries under the appropriate section (Patterns / Guides / Skills / Templates / Notes / Meta). Check off items when they graduate to real artifacts.
+
+### When to suggest `/zb-dx-register`
+- A new developer is working on a ZeroBias platform app for the first time and hasn't been added to `participants/`
+- The user mentions being added to the `#zb-dx` Slack channel
+- You notice the user's `author` slug in `zb-dx.json` doesn't match any file in `participants/`
+
+### Config
+The `/friction` and `/zb-dx-register` skills both read `~/.claude/zb-dx.json`:
+```json
+{
+  "repo_path": "/absolute/path/to/zb-dx",
+  "author": "firstname-lastname"
+}
+```
+
+The `author` slug should match a file in `participants/` (e.g., `author: clark-stacer` ↔ `participants/clark-stacer.md`).
 
 ### Cross-repo awareness
 This repo (`zb-dx`) is a shared knowledge base. Your primary development work happens in the app's own repo. When working in the app repo and you encounter something worth capturing:
