@@ -61,8 +61,10 @@ Every artifact file uses YAML frontmatter for lifecycle tracking:
 ---
 status: draft | review | promoted
 promoted-to: kb-article-123 | skill/foo  # once it graduates to customer-facing
-author: clark | dan
+author: clark-stacer | dan-simonca | joe-llamas   # matches participants/ slug
 app: sme-mart | readiness-center | general
+source: https://github.com/...                    # optional — for patterns inspired by external work
+updated: YYYY-MM-DD                                # required on patterns; recommended elsewhere
 ---
 ```
 
@@ -102,7 +104,19 @@ Create the entry at `friction-log/{date}-{slug}.md` using the template in `frict
 - You solve an integration problem that other ZB developers will likely face
 - A reusable approach emerges for auth, data fetching, error handling, entity relationships, etc.
 
-Create a directory at `patterns/{pattern-name}/` with a `README.md` explaining the pattern and example code files.
+**Pattern lifecycle (two stages):**
+
+1. **Flat file** — start as `patterns/{pattern-name}.md` (single file, rough analysis). Use this when the pattern is surfaced by research, a friction log, or an architecture discussion but hasn't been implemented or deeply explored yet. The flat-file form signals "candidate pattern, not yet battle-tested."
+
+2. **Subdirectory** — after a deep dive (working implementation, example code, lessons learned), promote to `patterns/{pattern-name}/README.md` plus supporting files (example code, diagrams, referenced artifacts). The directory form signals "validated pattern with working examples."
+
+When promoting flat → directory:
+- Move the flat file to `patterns/{name}/README.md`
+- Bump `updated:` in frontmatter
+- Add example code files alongside
+- Optionally set `status: review` to invite validation from other contributors
+
+Every pattern file (flat or directory README) must have frontmatter including `updated: YYYY-MM-DD` so readers can gauge the age of the analysis.
 
 ### When to create a guide
 - A multi-step workflow needs documentation (e.g., "setting up a new ZB-connected Angular app from scratch")
