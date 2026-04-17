@@ -1,0 +1,39 @@
+name: zb-dx-watcher
+
+on:
+  schedule:
+    # Hourly Mon-Fri 15:00-23:00 UTC (covers Central 9am-5pm + Pacific 8am-4pm)
+    - cron: '5 15-23 * * 1-5'
+    # Late-evening Pacific (00:00-01:00 UTC Tue-Sat covers Mon-Fri PT 5pm with DST safety)
+    - cron: '5 0-1 * * 2-6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Poll Slack channel for new members
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          ZB_DX_CHANNEL_ID: C0ARM97HBK2
+          CLARK_SLACK_USER_ID: U08GK48MHFC
+        run: node automation/poll.mjs
+
+      - name: Commit updated state if changed
+        run: |
+          if [[ -n "$(git status --porcelain automation/known-members.json)" ]]; then
+            git config user.name "zb-dx-watcher[bot]"
+            git config user.email "zb-dx-watcher@users.noreply.github.com"
+            git add automation/known-members.json
+            git commit -m "chore(automation): update known #zb-dx members"
+            git push
+          fi
