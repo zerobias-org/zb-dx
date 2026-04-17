@@ -6,7 +6,7 @@ The repo is public: https://github.com/zerobias-org/zb-dx
 
 To get started:
 - Browse `IDEAS.md` for things worth building, `friction-log/` for known pain points, and `patterns/` for reusable architecture
-- Fork & clone: `git clone git@github.com:{your-username}/zb-dx.git`
+- Fork & clone: `git clone https://github.com/{your-username}/zb-dx.git`
 - Register your profile: in Claude Code, run `/zb-dx-register` — adds you to `participants/` so the team knows what you're building
 
 When you start building against the SDK in your own app repo, you'll need an `.npmrc` for the private `@zerobias-org/*` packages — ping me when you get there and I'll share the setup.
