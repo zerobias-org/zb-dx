@@ -52,9 +52,13 @@ A living list of tools, patterns, guides, skills, and notes that could improve t
 - [ ] **ZB + Next.js starter** (SSR-safe client init)
 - [ ] **Testing harness** with mocked client + fixtures
 
+## Architecture (`architecture/`)
+
+- [x] **Transparency Architecture overview** — the canonical 3P-dev explanation of Engagement / Project / Board / Task primitives, entangled task pairs, Transparency Center, and the OWL/SHACL/RDF ontology overlay. → [`architecture/transparency-architecture.md`](./architecture/transparency-architecture.md) (+ interactive [`.html`](./architecture/transparency-architecture.html)). _Promoted from SME Mart, 2026-05-22._
+
 ## Notes / Reference Docs
 
-- [ ] **Glossary** — ZB-specific terms decoded for outsiders (Hydra, Dana, DataProducer, etc.)
+- [~] **Glossary** — ZB-specific terms decoded for outsiders (Hydra, Dana, DataProducer, etc.) _Partially covered in [`architecture/transparency-architecture.md`](./architecture/transparency-architecture.md); still want a standalone glossary covering Hydra / Dana / DataProducer / etc._
 - [ ] **Version compatibility matrix** — which SDK + client + Angular-client versions play nice
 - [ ] **Known issues & workarounds** — living doc of stuff that's broken but won't be fixed soon
 - [ ] **Rate limits & quotas** reference
