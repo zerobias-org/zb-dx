@@ -37,6 +37,7 @@ When a user asks "how do I register?" or "how do I join zb-dx?", point them at t
 
 | Directory | Purpose |
 |-----------|---------|
+| `architecture/` | Cross-cutting architecture references — synthesized multi-concept overviews (the "why" + "how it fits together") |
 | `friction-log/` | Pain points and friction discovered during development — the raw material |
 | `friction-log/examples/` | Fictional example entries (one per lifecycle stage) — tutorial reference |
 | `guides/` | How-to walkthroughs born from real development friction |

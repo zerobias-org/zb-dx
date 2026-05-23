@@ -13,3 +13,5 @@ joined: 2026-04-03
 Building **SME Mart** — an SME marketplace with buyer/supplier engagements, vetting, project management, and communication. Uses the ZB Angular client end-to-end.
 
 Also maintains the `/friction` skill and zb-dx repo tooling.
+
+Author of [`architecture/transparency-architecture.md`](../architecture/transparency-architecture.md) — the canonical 3P-dev explanation of ZB's transparency state machine and the substrate shared with Dan's Readiness Center and Joe's Work Worlds apps.

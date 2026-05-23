@@ -27,6 +27,7 @@ Each participant has a profile in [`participants/`](./participants/). New devs c
 
 ## What Lives Here
 
+- **Architecture** — Cross-cutting platform architecture references (Engagement model, Transparency Center, Boards, RDF/OWL/SHACL framing). Start with [`architecture/transparency-architecture.md`](./architecture/transparency-architecture.md).
 - **Patterns** — Reusable integration patterns for the ZB SDK/client
 - **How-tos** — Step-by-step guides born from real development friction
 - **Skills** — Claude/LLM skill definitions for common ZB development tasks
