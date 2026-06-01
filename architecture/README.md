@@ -22,7 +22,7 @@ Distinct from neighboring categories:
 
 ## Contents
 
-- **[`transparency-architecture.md`](./transparency-architecture.md)** + **[`transparency-architecture.html`](./transparency-architecture.html)** — the canonical 3P-dev explanation of ZB's **transparency state machine**: Engagement / Project / Board / Task primitives, nested-Project hierarchy, the entangled `satisfies` / `satisfiedBy` Task pair, the Transparency Center (HIS ↔ Goshen ↔ ArmorStack multi-org coalition), and the OWL + SHACL + RDF + Holon / Hologram ontology overlay that culminates in the cross-org compliance-attestation container. Every construct tagged `[EXISTS]` / `[PLANNED]` / `[TBD]`. The `.html` is the interactive version (4 tabs, Mermaid, click-to-filter status, copyable RDF compass + glossary, scroll-spy TOC).
+- **[`transparency-architecture.md`](./transparency-architecture.md)** + **[`transparency-architecture.html`](./transparency-architecture.html)** — the canonical 3P-dev explanation of ZB's **transparency state machine**: Engagement / Project / Board / Task primitives, nested-Project hierarchy, the entangled `satisfies` / `satisfiedBy` Task pair, the Transparency Center (HIS ↔ Goshen ↔ ArmorStack multi-org coalition), and the OWL + SHACL + RDF + Holon / Hologram ontology overlay that culminates in the cross-org compliance-attestation container. Every construct tagged `[EXISTS]` / `[PLANNED]` / `[TBD]`. The `.html` is the interactive version (4 tabs, Mermaid, click-to-filter status, copyable RDF compass + glossary, scroll-spy TOC). The `.html` is **generated from the `.md`** via the visual-explainer skill (dark theme / 16px-floor / mermaid resize+fullscreen prefs) — **regenerate it after editing the `.md`; do not hand-edit the `.html`.**
 
 ## Frontmatter convention
 
