@@ -8,6 +8,8 @@ updated: 2026-04-15
 
 # Engagement → Workspace → Projects Hierarchy
 
+> **[SUPERSEDED 2026-06-01]** — the canonical ZB model reframes this. Engagement is NOT a containment tier above Workspace/Projects; it is an optional **node-role** that *governs* a Project tree via a typed `governs` ResourceLink (off the containment axis, zero data propagation). Containment is one `platform.Project` class nested by `parentId` (tier ladder `project / workspace / aperture / thread`); Workspace is a tier *within* that tree, not a layer under an Engagement. The typed-relations idea below (`relates_to` / `depends_on` …) aligns with ZB's ResourceLink graph. See the canonical ruling in memex. Retained as Multica-pattern reference.
+
 A three-tier data model that extends Multica's workspace pattern with a multi-party commerce wrapper (ZB's contribution). Workspace is the isolation boundary; Engagement is the transparency contract between parties.
 
 ## Block diagram

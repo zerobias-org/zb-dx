@@ -8,6 +8,8 @@ updated: 2026-04-15
 
 # Flat Projects with Typed Relations (Graph, Not Tree)
 
+> **[RECONCILE 2026-06-01]** — ZB's canonical model is **hybrid**, not pure-flat: containment uses a `parentId` **tree** (one `platform.Project` class; tier ladder `project / workspace / aperture / thread`), AND typed links (`governs` + other ResourceLinks) form the cross-cutting **graph** on top. The typed-relations argument below is right for the graph layer; ZB keeps nesting for containment rather than going fully flat. See the canonical ruling in memex.
+
 Model projects as siblings under a workspace, connected by typed relation edges (`relates_to`, `depends_on`, `blocked_by`, `requires`, `supersedes`, `derives_from`). A DAG, not a tree.
 
 ## Why a graph beats nesting

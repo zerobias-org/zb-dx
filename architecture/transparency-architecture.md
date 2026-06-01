@@ -85,9 +85,9 @@ Three load-bearing platform concepts that everything else hangs on.
 
 **[EXISTS] Boundary** — a security/scope perimeter. The unit of "what's in scope." Boundaries nest, and the nesting obeys a **subset chain**: a child's boundary must be a subset of its parent's. *Tighten-never-loosen*, enforced at write time. In ontology terms (§10) a Boundary **is a Holon** — a container + its rules + its contents.
 
-**[EXISTS] Engagement** — the commercial contract between two Parties (demand-side + supply-side). It is the **seam** between two orgs' private worlds. It carries the MSA/SOW, the boundary set, and the party list. It is the **outermost boundary** in the subset chain — nothing crosses an Engagement except through (a) a cross-engagement link (§7) or (b) an entangled task pair (§8).
+**[EXISTS] Engagement** — the commercial contract between two Parties (demand-side + supply-side). It is the **seam** between two orgs' private worlds, carrying the MSA/SOW, boundary set, and party list. It is an optional **node-role** (a `platform.Project` tagged `engagement`) that **governs** a Project-rooted tree via a typed `governs` ResourceLink — it is *off* the containment axis, not a parent or "outermost boundary." Nothing crosses an Engagement except through (a) a cross-engagement link (§7) or (b) an entangled task pair (§8); the `governs` link itself propagates zero data.
 
-**Invariant (memex):** every SME Mart Project has a related Engagement. The Engagement is the ceiling; the Project tree lives underneath it.
+**Invariant (memex):** every SME Mart Project tree is *governed by* a related Engagement (via the `governs` link). The Engagement is a peer node off-axis, not a structural ceiling — the Project tree roots at a Project (`parentId = null`), and the Engagement governs it laterally.
 
 ---
 
@@ -112,7 +112,7 @@ A nested (sub-)Project's **primary `boundaryId` must match its parent's** — in
 
 ### 4.3 The hierarchy — fixed ends, flexible middle
 
-Brian's Hierarchy Editor directive (2026-04-30):
+Brian's Hierarchy Editor directive (2026-04-30) — **UPDATED 2026-06-01 (Brian re-blessed):** Engagement is no longer the outermost containment tier and Project is not its "first child." Engagement *governs* a Project-rooted tree via a typed `governs` ResourceLink (off the containment axis; zero data propagation). The corrected tree roots at **Project** (`parentId = null`); "Program" is an optional any-tier node-role tag. The diagram below is retained as the historical 2026-04-30 directive:
 
 ```
 Engagement                          [FIXED]   — commercial seam, outermost boundary
@@ -124,7 +124,7 @@ Engagement                          [FIXED]   — commercial seam, outermost bou
             Sub-Task                [FIXED]   — a Task whose parent is another Task
 ```
 
-- **Fixed ends:** Engagement, Project (top), Task, Sub-Task (bottom). Labels cannot be renamed by users.
+- **Fixed ends:** Project (root/top), Task, Sub-Task (bottom). Labels cannot be renamed by users. (Engagement is off-axis — it governs the tree via the `governs` link; it is not the top of the containment tree.)
 - **Flexible middle:** one or more **user-customizable tiers** between Project and Task. Default seed chain is `Workspace → Aperture → Thread`. The customer can **add**, **delete**, or **rename** levels per Engagement.
 - **Same underlying class.** Every middle tier — whatever it's named — is a `platform.Project` row at a deeper `parentId` depth. Renaming changes the *display label*, not the schema. **[PLANNED]** as a per-engagement template ("Hierarchy Editor" UI); the nesting itself is **[EXISTS]** via `parentId`.
 
@@ -472,7 +472,7 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 
 ## 14. Glossary (quick reference)
 
-- **Engagement** — commercial seam between two Parties; outermost boundary. *(SHACL Profile.)*
+- **Engagement** — commercial seam between two Parties; an optional node-role (`Project` tagged `engagement`) that *governs* a Project tree via the `governs` link, off the containment axis (not a parent/outermost-boundary). *(SHACL Profile.)*
 - **Project** — the one nestable structural container; tiers = depth + label. *(OWL class.)*
 - **Board** — thin rendering view over Tasks; `boardType ∈ kanban/list/timeline/calendar`; parent = one of boundary/project/user (org default). Auto-default per Project.
 - **Task** — atomic unit; owned by one Board; RACI via Party UUIDs.

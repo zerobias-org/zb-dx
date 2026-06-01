@@ -466,7 +466,7 @@ flowchart TB
           <tbody>
             <tr><td class="k"><strong>Party</strong></td><td><span class="chip exists">EXISTS</span></td><td>The actor taxonomy: <code>User / Org / Team / Vendor / Person</code>. Every scoped entity is owned by, or answers to, a Party. RACI and task ownership reference <strong>Party UUIDs</strong> (not raw principal IDs).</td></tr>
             <tr><td class="k"><strong>Boundary</strong></td><td><span class="chip exists">EXISTS</span></td><td>A security/scope perimeter &mdash; the unit of "what's in scope." Boundaries nest with a <strong>subset chain</strong>: child &sube; parent, <em>tighten-never-loosen</em>, enforced at write time. In ontology terms a Boundary <strong>is a Holon</strong> (Tab&nbsp;4).</td></tr>
-            <tr><td class="k"><strong>Engagement</strong></td><td><span class="chip exists">EXISTS</span></td><td>The commercial contract between two Parties (demand + supply). The <strong>seam</strong> between two orgs' private worlds. The outermost boundary &mdash; nothing crosses it except a cross-engagement link or an entangled task pair. <em>Invariant: every SME Mart Project has a related Engagement.</em></td></tr>
+            <tr><td class="k"><strong>Engagement</strong></td><td><span class="chip exists">EXISTS</span></td><td>The commercial contract between two Parties (demand + supply). The <strong>seam</strong> between two orgs' private worlds. An optional <strong>node-role</strong> (a <code>platform.Project</code> tagged <code>engagement</code>) that <strong>governs</strong> a Project tree via a typed <code>governs</code> ResourceLink &mdash; off the containment axis, not a parent. Nothing crosses it except a cross-engagement link or an entangled task pair; the <code>governs</code> link propagates zero data. <em>Invariant: every SME Mart Project tree is governed by a related Engagement.</em></td></tr>
           </tbody>
         </table>
       </div>
@@ -512,14 +512,15 @@ flowchart TB
         <div class="mm-render">
           <div class="mermaid" id="dia-hier">
 flowchart TB
-  EN["ENGAGEMENT<br/><i>FIXED</i> · commercial seam · outermost boundary"]
-  PR["PROJECT<br/><i>FIXED</i> · always first child of Engagement"]
+  EN["ENGAGEMENT<br/><i>node-role</i> · commercial seam · governs (off-axis)"]
+  PR["PROJECT<br/><i>root</i> · parentId = null · 'Program' if it coordinates"]
   M1["«middle tier 1»<br/><i>FLEXIBLE</i> · default 'Workspace'"]
   M2["«middle tier 2»<br/><i>FLEXIBLE</i> · default 'Aperture'"]
   M3["«middle tier 3»<br/><i>FLEXIBLE</i> · default 'Thread'"]
   TK["TASK<br/><i>FIXED</i> · atomic unit · owned by one Board"]
   ST["SUB-TASK<br/><i>FIXED</i> · a Task whose parent is another Task"]
-  EN --> PR --> M1 --> M2 --> M3 --> TK --> ST
+  EN -.->|governs · zero data| PR
+  PR --> M1 --> M2 --> M3 --> TK --> ST
   NOTE["All middle tiers are the SAME platform.Project class<br/>at deeper parentId depth + a user label.<br/>Renaming changes the display label, not the schema."]
   M2 -.-> NOTE
   classDef fixed fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:1.5px;
@@ -1026,7 +1027,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
       </div>
       <template id="copy-glossary">## Glossary
 
-- **Engagement** — commercial seam between two Parties; outermost boundary. (SHACL Profile.)
+- **Engagement** — commercial seam between two Parties; an optional node-role (Project tagged `engagement`) that governs a Project tree via the `governs` link, off the containment axis. (SHACL Profile.)
 - **Party** — actor (User/Org/Team/Vendor/Person); owns/answers-for scoped entities.
 - **Boundary** — scope perimeter; subset chain (tighten-never-loosen); is a Holon.
 - **Project** — the one nestable structural container; tiers = depth + label. (OWL class.)
@@ -1046,7 +1047,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
 - **Multi-Protocol Gateway** — acceptance/denial vehicle; RDF content-negotiation across the seam. [PLANNED]</template>
       <div class="glos-section">
         <dl>
-          <dt>Engagement</dt><dd>Commercial seam between two Parties; outermost boundary. <em>(SHACL Profile in W3C terms.)</em></dd>
+          <dt>Engagement</dt><dd>Commercial seam between two Parties; an optional node-role that <strong>governs</strong> a Project tree via the <code>governs</code> link, off the containment axis. <em>(SHACL Profile in W3C terms.)</em></dd>
           <dt>Party</dt><dd>Actor (User/Org/Team/Vendor/Person); owns or answers-for scoped entities.</dd>
           <dt>Boundary</dt><dd>Scope perimeter; subset chain (tighten-never-loosen); <em>is a Holon</em>.</dd>
           <dt>Project</dt><dd>The one nestable structural container; tiers = <code>parentId</code> depth + label. <em>(OWL class.)</em></dd>
@@ -1327,7 +1328,7 @@ const GLOSSARY = {
   'Transparency Center': 'The shared, opt-in publication surface over entangled task pairs.',
   'satisfiedBy': 'Reverse of `satisfies`; on the demand-half task. Replaces twin_of. [PLANNED]',
   'satisfies': 'Proposed directed Task↔Task link from supply-task to demand-task (replaces twin_of). [PLANNED]',
-  'Engagement': 'Commercial seam between two Parties; outermost boundary. (SHACL Profile.)',
+  'Engagement': 'Commercial seam between two Parties; an optional node-role that governs a Project tree via the governs link, off the containment axis. (SHACL Profile.)',
   'Requirement': 'The contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) [PLANNED]',
   'Assessment': 'Measurement of satisfaction. (SHACL ValidationReport.) [PLANNED]',
   'Hologram': "A Holon's validated state at time T, projectable onto any surface.",
