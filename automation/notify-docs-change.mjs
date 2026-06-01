@@ -44,7 +44,19 @@ async function topChangelogEntry() {
   if (start === -1) return null;
   let end = lines.findIndex((l, i) => i > start && /^## /.test(l));
   if (end === -1) end = lines.length;
-  return lines.slice(start, end).join('\n').trim();
+  const section = lines.slice(start, end);
+  const heading = section[0].replace(/^##\s+/, '').trim();
+  // Cap at the first real paragraph. Skip blank-line-delimited blocks that
+  // mention "memex" — those are private-memory source citations, meaningless
+  // to the channel audience.
+  const paragraphs = section
+    .slice(1)
+    .join('\n')
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const firstPublic = paragraphs.find((p) => !/memex/i.test(p));
+  return firstPublic ? `${heading}\n\n${firstPublic}` : heading;
 }
 
 function truncate(s, n) {
