@@ -1,0 +1,52 @@
+name: architecture-docs-notify
+
+# Notify #zb-dx when architecture docs land on main, so folks pull latest /
+# sync with upstream. Fires only on merge-to-main that touches architecture/**.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'architecture/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Compute changed architecture docs
+        id: changes
+        run: |
+          BEFORE='${{ github.event.before }}'
+          AFTER='${{ github.sha }}'
+          # Fall back to first-parent when before is missing/unknown (dispatch, new ref, force-push).
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            BEFORE="$(git rev-parse "$AFTER~1" 2>/dev/null || echo "$AFTER")"
+          fi
+          FILES="$(git diff --name-only "$BEFORE" "$AFTER" -- 'architecture/**' | head -50)"
+          {
+            echo "files<<__EOF__"
+            echo "$FILES"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Notify #zb-dx
+        if: steps.changes.outputs.files != ''
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          ZB_DX_CHANNEL_ID: C0ARM97HBK2
+          CHANGED_FILES: ${{ steps.changes.outputs.files }}
+          COMPARE_URL: ${{ github.event.compare }}
+          REPO: ${{ github.repository }}
+          PUSHER: ${{ github.event.pusher.name }}
+        run: node automation/notify-docs-change.mjs
