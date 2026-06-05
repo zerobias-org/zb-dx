@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHACL + OWL + Holon — Ontology overlay on ZB Transparency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --font-body: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --bg: #0e1018;
+  --surface: #161925;
+  --surface2: #1d2130;
+  --surface-elevated: #232736;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.18);
+  --text: #e6e9f2;
+  --text-dim: #8c93a8;
+  --text-very-dim: #5a6178;
+
+  --demand: #38bdf8;
+  --demand-dim: rgba(56, 189, 248, 0.12);
+  --demand-soft: rgba(56, 189, 248, 0.28);
+
+  --supply: #fbbf24;
+  --supply-dim: rgba(251, 191, 36, 0.12);
+  --supply-soft: rgba(251, 191, 36, 0.28);
+
+  --transp: #c084fc;
+  --transp-dim: rgba(192, 132, 252, 0.14);
+  --transp-soft: rgba(192, 132, 252, 0.35);
+  --transp-glow: rgba(192, 132, 252, 0.22);
+
+  --entangle: #f472b6;
+  --entangle-soft: rgba(244, 114, 182, 0.4);
+
+  --owl: #34d399;     /* OWL = green (meaning) */
+  --owl-soft: rgba(52, 211, 153, 0.30);
+  --shacl: #c084fc;   /* SHACL = violet (constraint) — matches transp */
+  --rdf: #fbbf24;     /* RDF = amber (data) */
+  --holon: #f472b6;   /* Holon = magenta */
+}
+
+/* Disable light-mode media query — dark only */
+@media (prefers-color-scheme: light) {
+  :root { color-scheme: dark; }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, var(--transp-glow) 0%, transparent 55%),
+    radial-gradient(ellipse at 15% 80%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  padding: 40px 28px 60px;
+  min-height: 100vh;
+}
+
+.page { max-width: 1500px; margin: 0 auto; }
+
+/* ===== HEADER ===== */
+.hdr { text-align: center; margin-bottom: 28px; }
+.hdr h1 {
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--owl), var(--transp) 50%, var(--entangle));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+.hdr .subtitle {
+  font-size: 18px;
+  color: var(--text-dim);
+  font-style: italic;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.hdr .byline {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-very-dim);
+  margin-top: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* ===== CAPTION (Brian's quote block) ===== */
+.caption {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--transp);
+  border-radius: 8px;
+  padding: 22px 26px;
+  margin: 28px auto 36px;
+  max-width: 1100px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.caption .quote {
+  font-style: italic;
+  color: var(--text);
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.caption .quote::before { content: '"'; color: var(--transp); font-size: 26px; margin-right: 2px; }
+.caption .quote::after { content: '"'; color: var(--transp); font-size: 26px; margin-left: 2px; }
+.caption .attrib {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.caption .explain {
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+/* ===== SECTION ===== */
+section { margin-bottom: 56px; }
+section h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--transp);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+section .lede {
+  font-size: 18px;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-bottom: 22px;
+  max-width: 1100px;
+  line-height: 1.6;
+}
+
+/* ===== STACK (3-layer + extensions) ===== */
+.stack {
+  display: grid;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 22px 26px;
+}
+.stack .layer {
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  column-gap: 22px;
+  align-items: center;
+}
+.stack .layer .name {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.stack .layer .what {
+  font-size: 16px;
+  color: var(--text);
+  line-height: 1.55;
+}
+.stack .layer .our {
+  font-size: 16px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+.stack .layer .our strong { color: var(--text); }
+
+.layer.l-owl    { border: 1.5px solid var(--owl-soft);    background: rgba(52, 211, 153, 0.08); }
+.layer.l-owl    .name { color: var(--owl); }
+.layer.l-shacl  { border: 1.5px solid var(--transp-soft); background: rgba(192, 132, 252, 0.10); }
+.layer.l-shacl  .name { color: var(--shacl); }
+.layer.l-rdf    { border: 1.5px solid rgba(251, 191, 36, 0.40); background: rgba(251, 191, 36, 0.08); }
+.layer.l-rdf    .name { color: var(--rdf); }
+.layer.l-holon  { border: 1.5px solid var(--entangle-soft); background: rgba(244, 114, 182, 0.08); }
+.layer.l-holon  .name { color: var(--holon); }
+.layer.l-proj   { border: 1.5px dashed rgba(192, 132, 252, 0.45); background: transparent; }
+.layer.l-proj   .name { color: var(--transp); }
+
+.stack .arr {
+  text-align: center;
+  font-size: 22px;
+  color: var(--text-very-dim);
+  line-height: 1;
+}
+
+/* ===== TABLE ===== */
+.tbl-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 6px 4px;
+  overflow-x: auto;
+}
+table.map {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  color: var(--text);
+  font-size: 17px;
+}
+table.map thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--transp);
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--border-bright);
+  font-size: 17px;
+}
+table.map tbody td {
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  vertical-align: top;
+  line-height: 1.55;
+}
+table.map tbody td.k { font-weight: 600; color: var(--text); width: 30%; }
+table.map tbody td.v { color: var(--text-dim); }
+table.map tbody td.v strong { color: var(--text); }
+table.map tbody td.v code,
+table.map tbody td.k code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  background: rgba(192, 132, 252, 0.10);
+  border: 1px solid var(--transp-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--transp);
+}
+table.map tbody tr:last-child td { border-bottom: none; }
+
+/* ===== MERMAID WRAPPER (resize + fullscreen) ===== */
+.mermaid-host {
+  position: relative;
+  background: var(--surface);
+  border: 1.5px solid var(--border-bright);
+  border-radius: 12px;
+  padding: 14px 14px 18px;
+  margin: 18px 0 12px;
+  resize: both;
+  overflow: auto;
+  min-height: 360px;
+  min-width: 400px;
+  height: 600px;
+}
+.mermaid-host::after {
+  content: "⇲";
+  position: absolute;
+  right: 6px; bottom: 4px;
+  font-size: 16px;
+  color: var(--text-very-dim);
+  pointer-events: none;
+}
+.mm-toolbar {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 3;
+}
+.mm-btn {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  width: 32px; height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mm-btn:hover { background: var(--surface-elevated); border-color: var(--transp-soft); color: var(--transp); }
+.mm-render {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 8px);
+  cursor: grab;
+  overflow: hidden;
+}
+.mm-render.dragging { cursor: grabbing; }
+.mm-render svg {
+  display: block;
+  max-width: none !important;
+  transform-origin: 0 0;
+}
+
+/* Fullscreen overlay */
+.mm-fs {
+  position: fixed;
+  inset: 0;
+  background: #060810;
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+}
+.mm-fs.active { display: flex; }
+.mm-fs .mm-toolbar {
+  position: static;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-bright);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mm-fs .mm-toolbar .label {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-right: auto;
+}
+.mm-fs .mm-render {
+  flex: 1;
+  height: auto;
+}
+
+/* Mermaid label sizes are forced via init config; this is a backup.
+   Use a system sans for Mermaid only — Fraunces measures unreliably for SVG box sizing
+   and causes node / subgraph title clipping. */
+.mermaid, .mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid .cluster text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif !important;
+}
+.mermaid .nodeLabel, .mermaid .edgeLabel {
+  font-size: 16px !important;
+}
+.mermaid .cluster text {
+  font-size: 17px !important;
+  font-weight: 600 !important;
+}
+
+/* ===== ADOPT / SKEPTICAL ===== */
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.dual .col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+.dual .col.adopt   { border-left: 3px solid var(--owl); }
+.dual .col.skeptic { border-left: 3px solid var(--supply); }
+.dual h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.dual .adopt h3   { color: var(--owl); }
+.dual .skeptic h3 { color: var(--supply); }
+.dual ul {
+  list-style: none;
+  padding: 0;
+}
+.dual li {
+  font-size: 16px;
+  line-height: 1.65;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+  color: var(--text);
+}
+.dual li:last-child { border-bottom: none; }
+.dual li strong { color: var(--text); }
+
+/* ===== PRINCIPLE BOXES ===== */
+.principle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--entangle);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin: 12px 0;
+}
+.principle .label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--entangle);
+  margin-bottom: 4px;
+}
+.principle .title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.principle .body {
+  font-size: 16px;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+/* ===== NEXT STEPS ===== */
+.steps {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px;
+}
+.steps ol {
+  padding-left: 24px;
+}
+.steps li {
+  font-size: 17px;
+  line-height: 1.7;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.steps li strong { color: var(--transp); }
+.steps li code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  background: rgba(192, 132, 252, 0.10);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--transp);
+}
+
+/* ===== SOURCES ===== */
+.sources {
+  font-size: 15px;
+  color: var(--text-dim);
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 18px 22px;
+}
+.sources h3 {
+  color: var(--text);
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.sources ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 6px 18px;
+}
+.sources li { padding: 3px 0; }
+.sources a { color: var(--transp); text-decoration: none; }
+.sources a:hover { text-decoration: underline; }
+
+/* ===== FOOTER ===== */
+.footer {
+  margin-top: 40px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-very-dim);
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 920px) {
+  body { padding: 24px 14px 40px; }
+  .hdr h1 { font-size: 30px; }
+  .stack .layer { grid-template-columns: 1fr; row-gap: 8px; }
+  .dual { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div style="max-width:1100px; margin:0 auto 24px; padding:12px 18px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.30); border-left:3px solid #34d399; border-radius:8px; font-family:'JetBrains Mono','SF Mono',Consolas,monospace; font-size:16px; color:#e6e9f2;">
+    <strong style="color:#34d399;">CANONICAL</strong> &nbsp;·&nbsp; This doc's home is <code style="color:#34d399;">zb-dx/architecture/shacl-owl-holon-overlay.html</code> &nbsp;·&nbsp; companion to <code style="color:#34d399;">transparency-architecture</code> &nbsp;·&nbsp; the aim every ZB 3P developer is building toward.
+  </div>
+
+  <div class="hdr">
+    <h1>SHACL + OWL + Holon — the Ontology overlay onto ZB Transparency</h1>
+    <div class="subtitle">
+      How the W3C Enterprise Ontology stack (OWL 2 + SHACL 1.2 + RDF) maps directly onto our Requirement / Assessment / Record model — and extends naturally into Brian's Holon, Hologram, and quantum-entangled task narrative.
+    </div>
+    <div class="byline">CLARK · 2026-05-19, REFINED 2026-06-05 · ANSWER TO BRIAN'S ASK · FOR ALL ZB 3P DEVELOPERS (zb-dx/architecture)</div>
+  </div>
+
+  <div class="caption">
+    <div class="quote">REQUIREMENT is the contract. Entangled task pairs ARE demand and supply REQUIREMENT contracts. … A HOLON Sub Graph Ontology is a CONTAINER that is the sum of all INFORMATION of the container and the config rules (DISA STIG OR CIS BENCHMARK) so we can create a sub graph in the ontology for the CONTAINER HOLON and then assess that container HOLON with STIG assessment graph rules, to get a Holon graph based Holon CONTAINER STIG assessment Hologram we can "project" onto a 2d/3d/world model for visualization. ALL BOUNDED IN THE ONTOLOGY layers and sub graphs for all these components and rules.</div>
+    <div class="attrib">— Brian Hierholzer · 2026-05-07 + 2026-05-19 (Slack #engineering-marketplace)</div>
+    <div class="quote" style="font-size:16px; margin-top:16px;">HOLON is now: System — a system graph. State of System at Time T is the system state measurement (assessment), and the Hologram is the projection.</div>
+    <div class="attrib">— Brian Hierholzer · 2026-06-05 (refinement — sharpens the measurement / projection seam)</div>
+    <div class="explain">
+      Brian's directive: layer W3C OWL/SHACL/RDF against ZB Transparency, show that requirements / satisfactions / contracts / payments / legal / data-sharing are all covered by the existing ontology stack, and extend through Holon / Hologram / quantum-entangled-task framing. This page is that overlay.
+    </div>
+  </div>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>1 · "All three are missing" — the stack the industry is racing for, and what we already have</h2>
+    <div class="lede">
+      The Anthropic / Microsoft / Palantir graphic Brian shared makes one claim: every enterprise platform is racing for the three-layer ontology stack, and no incumbent owns all three. We do — we just haven't named it in W3C vocabulary yet. Once we do, every standards-compliant auditor, regulator, and partner can read our Transparency surface on day one.
+    </div>
+
+    <div class="stack">
+      <div class="layer l-owl">
+        <div class="name">OWL 2<br/>(meaning · T-Box)</div>
+        <div class="what"><strong>What concepts exist and how they relate.</strong> Classes, subclass/equivalence, properties, inference axioms. Defines <em>shared semantics</em> across organizations.</div>
+        <div class="our"><strong>Our equivalent:</strong> <strong>Requirement</strong>, <strong>Assessment</strong>, <strong>Record</strong>, <strong>Engagement</strong>, <strong>Party</strong>, <strong>Boundary</strong>, <strong>Task</strong>, <strong>RACI</strong> — the ZB schema-of-record class system.</div>
+      </div>
+      <div class="arr">↓</div>
+      <div class="layer l-shacl">
+        <div class="name">SHACL 1.2<br/>(constraint · S-Box)</div>
+        <div class="what"><strong>What well-formed data looks like.</strong> NodeShapes, PropertyShapes, cardinality, value sets, <code>sh:and</code> / <code>sh:or</code> / <code>sh:xone</code>. Versioned, packageable, jointly-authored.</div>
+        <div class="our"><strong>Our equivalent:</strong> Boundary Manager scope/policy/RACI checks · <code>acceptance_primitive</code> (conjunction · precedence · disjunction) · per-engagement hierarchy template · ZB validation pipeline.</div>
+      </div>
+      <div class="arr">↓</div>
+      <div class="layer l-rdf">
+        <div class="name">RDF (+RDF-star)<br/>(data · A-Box)</div>
+        <div class="what"><strong>The actual instance data.</strong> Subject–predicate–object triples, with statement-level annotations (RDF-star). Carries provenance via PROV-O.</div>
+        <div class="our"><strong>Our equivalent:</strong> ZB AuditgraphDB — Resource / Tag / Link / Task entities. Plus hash-chained <strong>Records</strong> (which add tamper-evidence on top of standard provenance).</div>
+      </div>
+      <div class="arr">↓</div>
+      <div class="layer l-holon">
+        <div class="name">Holon<br/>(system graph)</div>
+        <div class="what"><strong>A System — a system graph (Brian, 2026-06-05).</strong> "Sum of all INFORMATION + config rules" — a sub-graph that bundles the system-being-assessed with the rules-to-assess-it (DISA STIG, CIS Benchmark, SOC2 control set). Self-similar: a <strong>system of systems</strong> — Holons nest inside Holons.</div>
+        <div class="our"><strong>Our equivalent:</strong> <strong>Boundary</strong> (the partition) + <strong>Requirement tree</strong> (the rules) + scoped <strong>Resources</strong> (the contents). A Boundary <em>is</em> a Holon (system graph) in our schema; Boundary-inside-Boundary-inside-Engagement <em>is</em> the system-of-systems nesting.</div>
+      </div>
+      <div class="arr">↓</div>
+      <div class="layer l-shacl" style="border-style:dashed;">
+        <div class="name">State(T) = Assessment<br/>(system state measurement)</div>
+        <div class="what"><strong>State of System at Time T = the measurement (Brian, 2026-06-05).</strong> The validated sub-graph at time T — pass/fail/inconclusive + evidence. The <em>state lives here</em>, as data. This is the assessment, not the picture of it.</div>
+        <div class="our"><strong>Our equivalent:</strong> the <strong>Assessment</strong> entity / SHACL <code>sh:ValidationReport</code> against the Holon's shape package at timestamp T. Append-only Records make every State(T) reconstructable.</div>
+      </div>
+      <div class="arr">↓</div>
+      <div class="layer l-proj">
+        <div class="name">Hologram<br/>(the projection)</div>
+        <div class="what"><strong>The Hologram is the projection (Brian, 2026-06-05).</strong> It carries <em>no new data</em> — it is purely State(T) projected onto a surface (2D dashboard / 3D world model / audio / time-series). Bounded data → bounded image.</div>
+        <div class="our"><strong>Our equivalent:</strong> the <strong>Transparency View</strong> + Multi-Protocol Gateway output. Today: 2D web UI. Tomorrow: the same State(T) projected onto whatever surface the consumer can render.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>2 · The Three-Layer Agreement = SHACL profile inheritance</h2>
+    <div class="lede">
+      Brian's "Three layers of agreement" (Platform invariants → Party policy → Engagement terms) is — exactly — SHACL 1.2 profile inheritance. The W3C Profiling spec was written for this. Validity flows downward; constraints flow upward; lower layers cannot violate higher layers. Same words.
+    </div>
+
+    <div class="mermaid-host" id="host-stack">
+      <div class="mm-toolbar">
+        <button class="mm-btn" data-act="zoom-out" title="zoom out">−</button>
+        <button class="mm-btn" data-act="zoom-in"  title="zoom in">+</button>
+        <button class="mm-btn" data-act="fit"      title="fit">⊡</button>
+        <button class="mm-btn" data-act="fs"       title="fullscreen">⛶</button>
+      </div>
+      <div class="mm-render">
+        <div class="mermaid" id="dia-stack">
+flowchart TB
+
+  subgraph L1["LAYER 1 · PLATFORM"]
+    direction LR
+    PI["<b>ZB Platform Invariants</b><br/><i>SHACL base profile</i><br/>• No irreversible action w/o Record<br/>• No scope expansion unconfirmed<br/>• No data egress w/o approved task<br/>• Records append-only + hash-chained"]
+  end
+
+  subgraph L2["LAYER 2 · PARTY"]
+    direction LR
+    PD["Demand Party Policy<br/>(SHACL profile · party-scoped)<br/>• Org RACI · members · admins<br/>• Boundaries · delegations<br/>• Internal evaluation criteria"]
+    PS["Supply Party Policy<br/>(SHACL profile · party-scoped)<br/>• Org RACI · members · admins<br/>• Boundaries · readiness perimeter<br/>• Internal readiness rules"]
+  end
+
+  subgraph L3["LAYER 3 · ENGAGEMENT"]
+    direction TB
+    EN["Engagement = the seam<br/>(SHACL package · jointly authored · versioned)<br/>• MSA · SOW · commercial relation<br/>• Hierarchy template (user-customizable middle tiers)<br/>• N × Requirements within<br/>• Inherits PARTY · bound by PLATFORM"]
+    RQ["Requirement<br/>(NodeShape + OWL class)<br/>• demand-half task (1/2) + supply-half task (2/2)<br/>• acceptance_primitive: conjunction (default) · precedence · xone<br/>• N child Requirements (rules/checks) — recursive"]
+  end
+
+  L1 -->|inherits| L2
+  L2 -->|inherits| L3
+  EN --> RQ
+
+  classDef l1 fill:#1d2130,stroke:#c084fc,color:#e6e9f2,stroke-width:1.5px;
+  classDef l2 fill:#1d2130,stroke:#38bdf8,color:#e6e9f2,stroke-width:1.5px;
+  classDef l3 fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:1.5px;
+  class PI l1
+  class PD,PS l2
+  class EN,RQ l3
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>3 · Vocabulary mapping — ZB ↔ W3C standards</h2>
+    <div class="lede">
+      ZB stays canonical (schema of record). W3C vocabulary is the publication / validation / federation language. We don't replace anything — we name it correctly so it's interoperable.
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="map">
+        <thead>
+          <tr>
+            <th>ZB concept (canonical)</th>
+            <th>W3C / standards analog</th>
+            <th>What we gain by naming it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="k"><strong>Requirement</strong> (the contract)</td>
+            <td class="v"><code>owl:Class</code> + <code>sh:NodeShape</code></td>
+            <td class="v">Simultaneously a <em>concept</em> (OWL class — "what is an access-control requirement?") and a <em>shape</em> (SHACL NodeShape constraining its tasks). Child Requirements = <code>sh:node</code> recursion.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Assessment</strong></td>
+            <td class="v"><code>sh:ValidationReport</code></td>
+            <td class="v">Direct match. SHACL reports carry <code>sh:conforms</code>, <code>sh:result</code> (severity · focusNode · value) — exactly pass/fail/inconclusive + evidence refs. Free renderer ecosystem.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Record</strong> (hash-chained, append-only)</td>
+            <td class="v">RDF + <strong>PROV-O</strong> (<code>prov:Activity</code>, <code>prov:wasGeneratedBy</code>)</td>
+            <td class="v">RDF carries the data. PROV-O carries lineage. Our hash chain layers tamper-evidence on top of the W3C provenance standard — we don't reinvent provenance, we strengthen it.</td>
+          </tr>
+          <tr>
+            <td class="k"><code>acceptance_primitive</code><br/>(conjunction · precedence · disjunction)</td>
+            <td class="v"><code>sh:and</code> / <code>sh:xone</code> (ordered) / <code>sh:or</code></td>
+            <td class="v">Lexical match. Conjunction default = SHACL's default AND of property shapes. Tooling exists.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Boundary Manager</strong><br/>(scope · policy · RACI checks)</td>
+            <td class="v">SHACL Property Shapes + Rules</td>
+            <td class="v">Each "check" is a SHACL constraint evaluation against the party's shape package. <strong>SHACL Rules</strong> (2026 spec) lets us derive new facts (e.g., "if both halves accepted → Requirement satisfied").</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Engagement</strong></td>
+            <td class="v"><strong>SHACL Profile</strong> (packaged · versioned · jointly authored)</td>
+            <td class="v">Both parties pin to a version. Template upgrades are deliberate. SHACL 1.2 Profiling spec is built for exactly this. Hierarchy Editor (Brian 2026-04-30) becomes a <strong>SHACL UI</strong> use case.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Transparency View</strong></td>
+            <td class="v">SHACL Validation Report renderer + provenance viewer</td>
+            <td class="v">Open-source renderers already exist (TopBraid, Apache Jena, RDF4J). We can render in our UI <em>and</em> let consumers render with their own tooling.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Multi-Protocol Gateway</strong></td>
+            <td class="v">RDF content-negotiation + signed serializations</td>
+            <td class="v">Speaks <code>text/turtle</code>, <code>application/ld+json</code>, <code>application/n-quads</code>, <code>application/trig</code>. Records cross as RDF; everything else stays sovereign.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Boundary</strong> + scoped Requirements + Resources</td>
+            <td class="v"><strong>Holon</strong> (System — system graph)</td>
+            <td class="v">A Boundary already <em>is</em> a Holon: a <strong>system graph</strong> = system + rules + contents. Naming it makes the <strong>system-of-systems</strong> nesting (Boundary inside Boundary inside Engagement) explicit and assessable.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Assessment</strong> at time T<br/>(system state measurement)</td>
+            <td class="v"><strong>State(T)</strong> = <code>sh:ValidationReport</code> at timestamp</td>
+            <td class="v"><strong>State of System at Time T = the measurement (Brian, 2026-06-05).</strong> The state is <em>data</em> — the validated sub-graph at T. Distinct from its projection. Time-series State(T₀..Tₙ) = the stateful audit trail.</td>
+          </tr>
+          <tr>
+            <td class="k"><strong>Transparency surface</strong> (rendered at a moment in time)</td>
+            <td class="v"><strong>Hologram</strong> (the projection)</td>
+            <td class="v"><strong>The Hologram is the projection (Brian, 2026-06-05)</strong> of State(T) onto a surface — no new data. Multi-modal (2D / 3D / world model / audio) because the underlying State is graph-native.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>4 · Coverage by contract type — legal, commerce, data, payment, data-sharing</h2>
+    <div class="lede">
+      Brian's claim: "payments, legal requirements, data sharing are completely covered in this Ontological structure." Confirmed. Each concern has a mature W3C-adjacent ontology we plug in as a SHACL package on the Engagement profile.
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="map">
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th>Ontology / vocabulary</th>
+            <th>What it gives the Engagement profile</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="k">Requirements · satisfactions · contracts</td>
+            <td class="v">OWL class <em>Requirement</em> + SHACL <code>sh:NodeShape</code></td>
+            <td class="v">Recursive child requirements · satisfaction as SHACL conformance · contract as published shape package. Already covered above.</td>
+          </tr>
+          <tr>
+            <td class="k">Commerce · permissions · obligations · prohibitions</td>
+            <td class="v"><strong>ODRL</strong> (Open Digital Rights Language, W3C Recommendation)</td>
+            <td class="v">Permission/prohibition/duty triples. Used industry-wide for licensing, data-rights, and commercial terms. SHACL validates well-formed ODRL offers.</td>
+          </tr>
+          <tr>
+            <td class="k">Legal · GDPR · jurisdictional compliance</td>
+            <td class="v"><strong>DPV</strong> (Data Privacy Vocabulary, W3C) + smashHitCore + DSAP</td>
+            <td class="v">Legal basis · purpose · processing activity · jurisdiction. Active research (arXiv 2507.15420, 2025) demonstrates SHACL-based GDPR contract compliance — we can adopt the pattern.</td>
+          </tr>
+          <tr>
+            <td class="k">Data sharing agreements</td>
+            <td class="v">DSAP + ODRL + DPV composition</td>
+            <td class="v">Obligations · propagation of rights between parties · consent-or-contract basis. Direct match for our buyer↔3PAO linked-project (CE1) pattern.</td>
+          </tr>
+          <tr>
+            <td class="k">Payment · billing · settlement</td>
+            <td class="v">ODRL duty + Schema.org <code>PaymentMethod</code> / <code>MonetaryAmount</code> + GS1 patterns</td>
+            <td class="v">Payment terms become SHACL-validated duties on the engagement; Schema.org gives commerce-tool interop (Stripe, Plaid, etc., consume it).</td>
+          </tr>
+          <tr>
+            <td class="k">Security / compliance frameworks<br/>(SOC2 · DISA STIG · CIS · NIST 800-53)</td>
+            <td class="v"><strong>OSCAL</strong> (NIST) + SCAP + framework-specific SHACL packages</td>
+            <td class="v">OSCAL already has a graph model; a SHACL binding turns each control into a NodeShape, each STIG/CIS check into a SHACL Rule. This is the path to Brian's "Holon STIG Hologram" being real, not metaphor.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>5 · Holon → State(T)/Assessment → Hologram pipeline</h2>
+    <div class="lede">
+      Brian (2026-05-19, 9:10 AM): "A HOLON Sub Graph Ontology is a CONTAINER that is the sum of all INFORMATION of the container and the config rules (DISA STIG OR CIS BENCHMARK) so we can create a sub graph in the ontology for the CONTAINER HOLON and then assess that container HOLON with STIG assessment graph rules, to get a Holon graph based Holon CONTAINER STIG assessment Hologram we can 'project' onto a 2d/3d/world model for visualization."
+      <br/><br/>
+      <strong>Refined 2026-06-05:</strong> "HOLON is now a System — a system graph. State of System at Time T is the system state measurement (assessment), and the Hologram is the projection." This sharpens the seam: the <strong>Holon is a system</strong> (a system of systems), the <strong>State at T is the Assessment</strong> (the measurement — the data), and the <strong>Hologram is purely the projection</strong> of that state. Implementable today on our existing schema once we ship the RDF/SHACL output adapter.
+    </div>
+
+    <div class="mermaid-host" id="host-holon">
+      <div class="mm-toolbar">
+        <button class="mm-btn" data-act="zoom-out" title="zoom out">−</button>
+        <button class="mm-btn" data-act="zoom-in"  title="zoom in">+</button>
+        <button class="mm-btn" data-act="fit"      title="fit">⊡</button>
+        <button class="mm-btn" data-act="fs"       title="fullscreen">⛶</button>
+      </div>
+      <div class="mm-render">
+        <div class="mermaid" id="dia-holon">
+flowchart LR
+
+  subgraph H["HOLON · a System graph (system of systems)"]
+    direction TB
+    C["SYSTEM<br/>(the thing being assessed)<br/>• host · workload · org-unit · system-of-systems<br/>• members + boundary + contents<br/>• carried as ZB Boundary + scoped Resources"]
+    R["RULES<br/>(config baseline)<br/>• DISA STIG / CIS Benchmark / SOC2 / FedRAMP<br/>• represented as SHACL Shape package<br/>• OSCAL-bound where applicable"]
+  end
+
+  ASS["STATE(T) = ASSESSMENT<br/>(system state measurement — the data)<br/>• evaluates System against Rules<br/>• emits sh:ValidationReport = the validated sub-graph at T<br/>• per-check pass / fail / inconclusive · the STATE lives here"]
+
+  HG["HOLOGRAM<br/>(the projection — no new data)<br/>• projects State(T) onto a surface<br/>• carries severity · focusNode · evidence from State(T)<br/>• Records crosslink each finding"]
+
+  subgraph P["SURFACES · the Hologram landed on any surface"]
+    direction TB
+    P1["2D dashboard<br/>(Transparency View web UI)"]
+    P2["3D world model<br/>(spatial compliance overlay)"]
+    P3["Audio brief<br/>(generated narration)"]
+    P4["Time-series of states<br/>(State[T₀..Tₙ] = the audit movie)"]
+  end
+
+  H -->|"measure at time T"| ASS
+  ASS -->|"project"| HG
+  HG -->|"render"| P1
+  HG -->|"render"| P2
+  HG -->|"render"| P3
+  HG -->|"aggregate State(T) over time"| P4
+
+  classDef holon fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:1.5px;
+  classDef ass   fill:#1d2130,stroke:#c084fc,color:#e6e9f2,stroke-width:1.5px;
+  classDef hg    fill:#1d2130,stroke:#34d399,color:#e6e9f2,stroke-width:1.5px;
+  classDef proj  fill:#161925,stroke:#5a6178,color:#e6e9f2,stroke-width:1px;
+  class C,R holon
+  class ASS ass
+  class HG hg
+  class P1,P2,P3,P4 proj
+        </div>
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="label">Holographic Principle</div>
+      <div class="title">Boundary information fully determines interior data</div>
+      <div class="body">
+        In physics: the maximum information in a region is bounded by its surface area, not its volume — what's on the boundary fully describes the interior. In SHACL: a NodeShape <em>is</em> a boundary contract that determines admissible interior data. The mapping is uncannily literal. Our <strong>Boundary</strong> entity is the physical-world enclosure (the Holon / system graph); its associated <strong>SHACL package</strong> is the boundary contract; the <strong>Records inside</strong> are the determined interior. The <strong>State(T) is the bounded data</strong> (the measurement / assessment); the <strong>Hologram is the bounded image</strong> (the projection). Bounded data → bounded image. This isn't metaphor borrowed loosely from physics — the math lines up.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>6 · Quantum-entangled task pairs — measurement, collapse, and the seam</h2>
+    <div class="lede">
+      Brian (2026-05-19, 9:53 AM): "This unlocks our journey to Quantum neutral atoms … making us a quantum ready neutral Transparency state machine using quantum entangled transparency tasks." The framing isn't loose: our entangled-task pair already behaves like a two-qubit system in superposition, collapsing to a definite contract state on measurement (<code>acceptance_primitive</code>).
+    </div>
+
+    <div class="mermaid-host" id="host-ent">
+      <div class="mm-toolbar">
+        <button class="mm-btn" data-act="zoom-out" title="zoom out">−</button>
+        <button class="mm-btn" data-act="zoom-in"  title="zoom in">+</button>
+        <button class="mm-btn" data-act="fit"      title="fit">⊡</button>
+        <button class="mm-btn" data-act="fs"       title="fullscreen">⛶</button>
+      </div>
+      <div class="mm-render">
+        <div class="mermaid" id="dia-ent">
+flowchart TB
+
+  subgraph EN["ENGAGEMENT · the seam between Parties"]
+    direction LR
+    DT["DEMAND-HALF TASK (1/2)<br/>• private state<br/>• boundary mgr gates<br/>• 'Need access-control evidence'"]
+    ST["SUPPLY-HALF TASK (2/2)<br/>• private state<br/>• boundary mgr gates<br/>• 'Access-control policy v2.1 + evidence'"]
+  end
+
+  DT <-->|"entangled<br/>(paired by Requirement id)"| ST
+
+  AP{{"acceptance_primitive<br/>= conjunction (default)<br/>= measurement"}}
+  DT --> AP
+  ST --> AP
+
+  AP -->|"collapse to definite contract state"| RQ["REQUIREMENT<br/>(satisfied · denied · inconclusive)"]
+  RQ --> AS["ASSESSMENT<br/>(SHACL ValidationReport)"]
+  AS --> RC["RECORD<br/>(hash-chained RDF + PROV-O)"]
+  RC --> MG["MULTI-PROTOCOL GATEWAY<br/>(Turtle · JSON-LD · N-Quads · RDF-star)"]
+  MG --> TV["TRANSPARENCY VIEW<br/>(2D / 3D / audio / world-model projection)"]
+
+  Q["QUANTUM NEUTRAL-ATOMS SUBSTRATE (future)<br/>• same paired-task topology<br/>• same measurement-collapse semantics<br/>• port, not redesign"]:::future
+  MG -.->|"port-compatible<br/>by construction"| Q
+
+  classDef sideD fill:#1d2130,stroke:#38bdf8,color:#e6e9f2,stroke-width:1.5px;
+  classDef sideS fill:#1d2130,stroke:#fbbf24,color:#e6e9f2,stroke-width:1.5px;
+  classDef seam  fill:#161925,stroke:#c084fc,color:#e6e9f2,stroke-width:1.5px;
+  classDef apx   fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:2px;
+  classDef future fill:transparent,stroke:#5a6178,color:#8c93a8,stroke-dasharray:6 4,stroke-width:1.5px;
+  class DT sideD
+  class ST sideS
+  class RQ,AS,RC,MG,TV seam
+  class AP apx
+        </div>
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="label">Why the quantum framing is operationally precise</div>
+      <div class="title">Entangled tasks · measurement collapse · port to quantum substrate</div>
+      <div class="body">
+        <strong>1 · Entanglement.</strong> The demand-half and supply-half are paired by the Requirement id; neither has a definite "accepted" state until the pair is jointly measured. That's the contract-instance superposition.
+        <strong>2 · Measurement.</strong> <code>acceptance_primitive = conjunction</code> is the measurement operator — both halves must collapse to "accepted" for the Requirement to take a definite satisfied state. <code>xone</code> and <code>or</code> are alternative measurement operators.
+        <strong>3 · Record.</strong> The Record is the post-measurement classical signal — hash-chained, attributable, propagable through the gateway.
+        <strong>4 · Substrate independence.</strong> Because the model is already entanglement-isomorphic (paired state · joint measurement · classical readout), porting onto a quantum neutral-atoms hardware substrate later is a <em>transcription</em>, not a redesign. The semantics are already there. Only the implementation layer changes.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>7 · Time-series of States — the audit movie</h2>
+    <div class="lede">
+      A State (= Assessment) at time T is a snapshot measurement. A sequence of States across time is the auditable movie of the engagement's compliance state — measured continuously, signed at each step, and projectable (as a Hologram) onto whatever surface the consumer can render.
+    </div>
+
+    <div class="principle">
+      <div class="label">State(T) → State(T+1) → … → State(Tₙ)</div>
+      <div class="title">Append-only Records produce the time series for free</div>
+      <div class="body">
+        Because Records are append-only and hash-chained, the sequence States{T₀..Tₙ} is just <em>Records replayed against the SHACL package at each timestamp</em> — and each State projects to a Hologram on demand. No additional storage model. No additional protocol. The Multi-Protocol Gateway emits the same RDF surface at any T — past States are reconstructable from the chain; future States are computed from new Records as they land. Regulators get a movie, not a snapshot. Auditors get reproducibility for free.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>8 · What we adopt · what we don't</h2>
+
+    <div class="dual">
+      <div class="col adopt">
+        <h3>Adopt</h3>
+        <ul>
+          <li><strong>Name the model in W3C vocabulary in spec docs.</strong> "Requirement is an OWL class + SHACL NodeShape; acceptance_primitive is the SHACL conjunction/disjunction primitive." Two sentences, instant credibility with every ontology-literate audience.</li>
+          <li><strong>Publish per-engagement SHACL packages as versioned artifacts.</strong> Both parties pin to a version. SHACL 1.2 Profiling is built for this.</li>
+          <li><strong>Position the Hierarchy Editor as a SHACL UI.</strong> We accidentally built one. Naming it correctly is free.</li>
+          <li><strong>Add an RDF / JSON-LD output to the Multi-Protocol Gateway.</strong> Content-negotiated. Records as RDF, validated against the engagement's shapes. Records are already content-addressable; this is a serialization adapter.</li>
+          <li><strong>Use PROV-O for Record provenance.</strong> Hash chain stays our differentiator; PROV-O gives the standard lineage vocabulary on top.</li>
+          <li><strong>Add ODRL + DPV shapes for engagements touching money or PII.</strong> Turns SME Mart into a GDPR-credible platform without ad-hoc compliance work.</li>
+          <li><strong>Adopt "Holon" + "Hologram" in external comms.</strong> Brian's framing is technically precise — the Holographic Principle / boundary-contract mapping is uncannily literal — and it differentiates us hard.</li>
+          <li><strong>Treat the OSCAL → SHACL binding as a near-term path to first STIG/SOC2 Hologram.</strong> Demonstrable, vendor-relevant, partner-ready.</li>
+        </ul>
+      </div>
+      <div class="col skeptic">
+        <h3>Be skeptical of</h3>
+        <ul>
+          <li><strong>Don't replace AuditgraphDB with a triplestore.</strong> ZB is the schema of record. OWL/SHACL is the <em>publication/validation/federation</em> language, not the runtime DB. If a vendor pitches triplestore-as-platform, decline.</li>
+          <li><strong>Don't run full OWL reasoning in the hot path.</strong> Use it design-time / publish-time. Most "is this Requirement satisfied?" answers are faster against the canonical relational schema; reserve OWL reasoning for cross-engagement legibility.</li>
+          <li><strong>Don't lock to SHACL 1.2 Node Expressions.</strong> Still First Public Working Draft (Jan 2026). Core + Rules + Profiling are the stable surface.</li>
+          <li><strong>Don't write the OWL/SHACL artifact before ZB schema lands.</strong> Requirement / Assessment / Record need to settle in AuditgraphDB first; the W3C artifact is downstream.</li>
+          <li><strong>Don't oversell the quantum framing externally before the substrate path is concrete.</strong> Internal narrative: precise and motivating. External pitch to regulators or auditors: lead with SHACL/OWL/RDF — quantum is a parenthetical for now.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>9 · Concrete next steps</h2>
+
+    <div class="steps">
+      <ol>
+        <li><strong>One-page vocabulary mapping doc</strong> — <code>.planning/notes/zb-w3c-ontology-mapping.md</code> — that lives alongside the federation tab in the transparency-center handoff. Audience: Brian, Nic, future regulators, partner architects.</li>
+        <li><strong>One sample SHACL package</strong> — ship a single engagement template (e.g., SOC2 access-control) as a versioned <code>.ttl</code> file. Both parties pin. Proves the model end-to-end.</li>
+        <li><strong>One RDF output endpoint on the Multi-Protocol Gateway</strong> — <code>GET /transparency/{requirement}/records.ttl</code> — Records as Turtle, validated against the engagement's shapes. Mostly a serialization adapter on top of existing infrastructure.</li>
+        <li><strong>OSCAL → SHACL binding spike</strong> — pick one NIST control catalog (or one DISA STIG), bind to SHACL, run against a synthetic Container Holon, render the first Hologram. Demonstrable artifact.</li>
+        <li><strong>Friction log the operational gap</strong> in <code>zb-dx</code> — if/when we discover ZB Tag/Resource APIs don't yet emit RDF/JSON-LD natively. That's the realistic gating issue for the gateway, not the ontology itself.</li>
+        <li><strong>Brief Brian + Kevin + Nic</strong> on whether to adopt "Holon / Hologram" as <em>schema-of-record vocabulary</em> (new ZB entities) versus <em>narrative-only vocabulary</em> (external pitch language only). Both are viable; the decision belongs to ZB leadership.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <section>
+    <h2>10 · One-sentence pitch</h2>
+    <div class="caption" style="border-left-color: var(--owl); margin-top: 0;">
+      <div class="quote" style="color: var(--text);">
+        The W3C ontology stack — OWL 2 + SHACL 1.2 + RDF — is <strong style="color: var(--owl);">the language we describe our model in, not the runtime we replace it with</strong>: ZB AuditgraphDB stays the schema of record, but Requirement becomes an OWL class + SHACL NodeShape, Engagement becomes a versioned SHACL profile, the Multi-Protocol Gateway becomes RDF content-negotiation over hash-chained Records, and the Boundary becomes a Holon whose validated state is the projectable Hologram — which gives us interoperability with every standards-compliant auditor, regulator, and enterprise platform, instant credibility with the ontology-race incumbents, and a substrate-independent semantics that ports cleanly onto quantum hardware when that substrate is ready.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== -->
+  <div class="sources">
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://www.w3.org/TR/shacl12-core/">SHACL 1.2 Core (W3C, March 2026)</a></li>
+      <li><a href="https://www.w3.org/TR/shacl12-rules/">SHACL 1.2 Rules</a></li>
+      <li><a href="https://www.w3.org/TR/2026/WD-shacl12-node-expr-20260108/">SHACL 1.2 Node Expressions (FPWD, Jan 2026)</a></li>
+      <li><a href="https://w3c.github.io/data-shapes/shacl12-profiling/">SHACL 1.2 Profiling (Editor's Draft)</a></li>
+      <li><a href="https://w3c.github.io/data-shapes/shacl12-ui/">SHACL 1.2 User Interfaces</a></li>
+      <li><a href="https://w3c.github.io/data-shapes/shacl12-overview/">SHACL 1.2 Overview</a></li>
+      <li><a href="https://www.w3.org/news/2026/first-public-working-draft-shacl-1-2-node-expressions/">W3C News · FPWD: SHACL 1.2 Node Expressions (2026)</a></li>
+      <li><a href="https://www.w3.org/TR/owl2-overview/">OWL 2 Overview (W3C Recommendation)</a></li>
+      <li><a href="https://www.w3.org/TR/prov-overview/">PROV Overview (W3C Recommendation)</a></li>
+      <li><a href="https://www.w3.org/TR/odrl-model/">ODRL Information Model (W3C Recommendation)</a></li>
+      <li><a href="https://w3c.github.io/dpv/dpv/">Data Privacy Vocabulary (DPV)</a></li>
+      <li><a href="https://pages.nist.gov/OSCAL/">NIST OSCAL — Open Security Controls Assessment Language</a></li>
+      <li><a href="https://www.semanticarts.com/shacl-and-owl/">SHACL vs OWL — Roles in Data Modeling (Semantic Arts)</a></li>
+      <li><a href="https://www.topquadrant.com/resources/why-i-use-shacl-for-defining-ontology-models/">Why I Use SHACL for Defining Ontology Models (TopQuadrant)</a></li>
+      <li><a href="https://dl.acm.org/doi/10.1145/3731443.3771340">Lessons from Combined OWL + SHACL Development (K-CAP 2025)</a></li>
+      <li><a href="https://arxiv.org/abs/2507.15420">SHACL-based Contract Compliance Verification (arXiv 2025)</a></li>
+      <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10346455/">smashHitCore Ontology — GDPR-Compliant Data Sharing</a></li>
+      <li><a href="https://gauravagg2016.medium.com/ontology-engineering-as-the-semantic-operating-system-of-the-ai-first-enterprise-e8db15bc0957">Ontology Engineering as the Semantic OS of the AI-First Enterprise (Apr 2026)</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Holographic_principle">Holographic Principle (overview)</a></li>
+      <li><a href="https://architectingautonomy.substack.com/p/cross-domain-governance">Sempf — Cross-Domain Governance (2026-05-07)</a></li>
+    </ul>
+  </div>
+
+  <div class="footer">CLARK · 2026-05-19, REFINED 2026-06-05 · SHACL + OWL + HOLON OVERLAY ON ZB TRANSPARENCY · COMPANION TO transparency-architecture.html (zb-dx/architecture)</div>
+
+</div>
+
+<!-- Fullscreen overlay (single, shared) -->
+<div class="mm-fs" id="mmFs">
+  <div class="mm-toolbar">
+    <div class="label" id="mmFsLabel"></div>
+    <button class="mm-btn" data-act="zoom-out" title="zoom out">−</button>
+    <button class="mm-btn" data-act="zoom-in"  title="zoom in">+</button>
+    <button class="mm-btn" data-act="fit"      title="fit">⊡</button>
+    <button class="mm-btn" data-act="close"    title="close (Esc)">✕</button>
+  </div>
+  <div class="mm-render" id="mmFsRender"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+// ---- Mermaid init: force dark, system sans, conservative sizes ----
+// Note: startOnLoad disabled so we can wait for fonts.ready before rendering —
+// otherwise Mermaid measures with a fallback font, then re-renders with the loaded
+// webfont, leaving node/subgraph boxes too small (text clipped at bottom/right).
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  darkMode: true,
+  securityLevel: 'loose',
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis',
+    nodeSpacing: 60,
+    rankSpacing: 70,
+    padding: 24,
+    useMaxWidth: false,
+    wrappingWidth: 260
+  },
+  themeVariables: {
+    fontSize: '16px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    primaryColor: '#1d2130',
+    primaryTextColor: '#e6e9f2',
+    primaryBorderColor: '#c084fc',
+    lineColor: '#8c93a8',
+    secondaryColor: '#161925',
+    tertiaryColor: '#0e1018',
+    background: '#0e1018',
+    clusterBkg: '#161925',
+    clusterBorder: '#5a6178',
+    edgeLabelBackground: '#161925'
+  }
+});
+
+// ---- Pan + zoom wrapper around every .mm-render ----
+function attachPanZoom(host) {
+  const render = host.querySelector('.mm-render');
+  const state = { scale: 1, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
+
+  function apply() {
+    const svg = render.querySelector('svg');
+    if (!svg) return;
+    svg.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`;
+  }
+  function zoom(factor, cx, cy) {
+    const newScale = Math.max(0.1, Math.min(8, state.scale * factor));
+    // zoom around (cx, cy) relative to render
+    const k = newScale / state.scale;
+    state.tx = cx - k * (cx - state.tx);
+    state.ty = cy - k * (cy - state.ty);
+    state.scale = newScale;
+    apply();
+  }
+  function fit() {
+    const svg = render.querySelector('svg');
+    if (!svg) return;
+    const bb = svg.getBBox();
+    const rw = render.clientWidth;
+    const rh = render.clientHeight;
+    const margin = 20;
+    const s = Math.min((rw - margin*2) / bb.width, (rh - margin*2) / bb.height);
+    state.scale = Math.max(0.1, Math.min(8, s));
+    state.tx = (rw - bb.width * state.scale) / 2 - bb.x * state.scale;
+    state.ty = (rh - bb.height * state.scale) / 2 - bb.y * state.scale;
+    apply();
+  }
+
+  // toolbar buttons (within host, not fullscreen)
+  host.querySelectorAll('.mm-toolbar .mm-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const a = btn.dataset.act;
+      const r = render.getBoundingClientRect();
+      const cx = r.width / 2, cy = r.height / 2;
+      if (a === 'zoom-in')  zoom(1.3, cx, cy);
+      if (a === 'zoom-out') zoom(0.7, cx, cy);
+      if (a === 'fit')      fit();
+      if (a === 'fs')       openFullscreen(host);
+    });
+  });
+
+  // drag-pan
+  render.addEventListener('mousedown', (e) => {
+    state.dragging = true;
+    state.sx = e.clientX - state.tx;
+    state.sy = e.clientY - state.ty;
+    render.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!state.dragging) return;
+    state.tx = e.clientX - state.sx;
+    state.ty = e.clientY - state.sy;
+    apply();
+  });
+  window.addEventListener('mouseup', () => {
+    state.dragging = false;
+    render.classList.remove('dragging');
+  });
+
+  // wheel zoom (only when over render)
+  render.addEventListener('wheel', (e) => {
+    if (!host.classList.contains('mm-fs') && !host.closest('.mm-fs.active')) {
+      // inline mode: only zoom when shift held; otherwise let page scroll
+      if (!e.shiftKey) return;
+    }
+    e.preventDefault();
+    const r = render.getBoundingClientRect();
+    const cx = e.clientX - r.left;
+    const cy = e.clientY - r.top;
+    zoom(e.deltaY < 0 ? 1.3 : 0.7, cx, cy);
+  }, { passive: false });
+
+  // expose for fit-on-render
+  host._panzoom = { fit, zoom, apply, state };
+}
+
+// ---- Fullscreen ----
+const fsEl = document.getElementById('mmFs');
+const fsRender = document.getElementById('mmFsRender');
+const fsLabel = document.getElementById('mmFsLabel');
+let fsActiveHost = null;
+let fsOriginalParent = null;
+
+function openFullscreen(host) {
+  const svg = host.querySelector('.mm-render svg');
+  if (!svg) return;
+  fsActiveHost = host;
+  fsOriginalParent = host.querySelector('.mm-render');
+  fsLabel.textContent = host.id.replace('host-', '').toUpperCase() + ' · fullscreen';
+  // move the svg into fsRender
+  fsRender.innerHTML = '';
+  fsRender.appendChild(svg);
+  fsEl.classList.add('active');
+  // attach pan/zoom to fsRender if not yet
+  if (!fsEl._panZoomBound) {
+    attachPanZoom(fsEl);
+    fsEl._panZoomBound = true;
+  }
+  // fit on next tick
+  requestAnimationFrame(() => {
+    if (fsEl._panzoom) {
+      // reset state, then fit
+      fsEl._panzoom.state.scale = 1;
+      fsEl._panzoom.state.tx = 0;
+      fsEl._panzoom.state.ty = 0;
+      fsEl._panzoom.fit();
+    }
+  });
+}
+function closeFullscreen() {
+  if (!fsActiveHost) return;
+  const svg = fsRender.querySelector('svg');
+  if (svg && fsOriginalParent) {
+    fsOriginalParent.appendChild(svg);
+    svg.style.transform = '';
+    // refit inline
+    if (fsActiveHost._panzoom) {
+      fsActiveHost._panzoom.state.scale = 1;
+      fsActiveHost._panzoom.state.tx = 0;
+      fsActiveHost._panzoom.state.ty = 0;
+      fsActiveHost._panzoom.fit();
+    }
+  }
+  fsEl.classList.remove('active');
+  fsActiveHost = null;
+  fsOriginalParent = null;
+}
+// fullscreen toolbar
+fsEl.querySelectorAll('.mm-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const a = btn.dataset.act;
+    if (a === 'close') closeFullscreen();
+    if (a === 'zoom-in' && fsEl._panzoom)  fsEl._panzoom.zoom(1.3, fsRender.clientWidth/2, fsRender.clientHeight/2);
+    if (a === 'zoom-out' && fsEl._panzoom) fsEl._panzoom.zoom(0.7, fsRender.clientWidth/2, fsRender.clientHeight/2);
+    if (a === 'fit' && fsEl._panzoom)      fsEl._panzoom.fit();
+  });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && fsEl.classList.contains('active')) closeFullscreen();
+});
+
+// ---- Wait for fonts to load THEN render Mermaid, then bind pan/zoom + auto-fit ----
+async function renderAndBind() {
+  // Wait for system fonts (the only ones Mermaid measures with) to be ready.
+  // Fraunces/JetBrains Mono load async via Google Fonts — we don't block on them
+  // because Mermaid uses system sans (see CSS override above).
+  try { await document.fonts.ready; } catch (_) { /* old browser */ }
+  await mermaid.run({ querySelector: '.mermaid' });
+  // Give layout one frame to settle, then bind pan/zoom + fit
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.mermaid-host').forEach(host => {
+      attachPanZoom(host);
+      if (host._panzoom) host._panzoom.fit();
+    });
+  });
+}
+window.addEventListener('load', renderAndBind);
+</script>
+</body>
+</html>
