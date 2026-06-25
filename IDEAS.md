@@ -102,6 +102,28 @@ Multica is an open-source human + agent team coordinator (Next.js + Go + Postgre
 
 **Local clone:** `~/Projects/tools/multica/` — explored 2026-04-15, commit on main at time of analysis.
 
+## Protocols to Study: A2UI (agent-driven UI)
+
+Surfaced by @clark (2026-06-25) — https://a2ui.org/ / https://github.com/a2ui-project/a2ui
+
+A2UI is Google's open protocol (Apache 2.0, **v0.9.1 stable / v1.0 RC**, "early public preview", ~15.5k ⭐) for letting an **AI agent emit declarative UI as JSON** that the client renders with its **own native components** — "safe like data, expressive like code." Directly relevant to where ZB is heading (agents responding to tasks/notes; the always-multi-LLM stance; cross-org controlled disclosure).
+
+**How it works:**
+- Flat, ID-referenced **JSON** (MIME `application/a2ui+json`) — streamable so an LLM can render progressively. Concepts: Surfaces / Components (from a **vetted catalog**) / data binding / Actions.
+- **Security is the point:** agents assemble only pre-approved catalog components — no code execution, no UI injection across trust boundaries.
+- Transport: **A2A**. Integrates **AG-UI / CopilotKit** + **MCP**. Ships an A2UI Composer visual editor.
+- Renderers: **Lit** (first-class web), **Angular** (roadmap / Theater examples only), React (roadmap), Flutter (GenUI SDK).
+
+**Why it could matter to ZB:**
+
+- [ ] **Agent-emits-rich-UI, safely** — the open answer to "agents return structured UI without executing code." If ZB agents ever produce UI, this is the catalog-constrained pattern. Maps cleanly onto a shared ZB component catalog (ngx-library as the render target).
+- [ ] **Cross-trust-boundary UI ↔ the transparency model** — A2UI's headline problem ("how do agents safely send rich UI across trust boundaries?") rhymes with ZB's controlled-disclosure / Transparency-Center thesis. Pattern alignment, **presentation-only** — A2UI must never carry claim/provenance/party-scoping (those stay on the graph).
+- [ ] **Platform/SDK-level decision, not per-app** — an agent-UI strategy belongs in the ZB SDK so all 3P UIs share it (same logic as Engagement/Project/Task being platform-owned). Intersects A2A/MCP, which are platform concerns → Kevin/Nic.
+
+**Caveats:** v0.9 maturity; **Angular renderer is roadmap, not first-class** (Lit is); adopting introduces a parallel rendering stack; zero payoff until something *produces* agent UI. Evaluate, don't adopt yet.
+
+**SME Mart tracking:** scoped as a trigger-gated spike — `sme-mart/.planning/director/backlog/040-a2ui-agent-driven-ui-spike.md` (promote when an assistant surface exists or ZB formalizes agent-driven interactions).
+
 ## Submitted by devs
 
 _Add your ideas here with your name/handle. No format required — just get it on the page._
