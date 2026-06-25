@@ -19,7 +19,7 @@ updated: 2026-05-22
 
 **Everything in this document exists to enable one deliverable: a cross-org, signable, projectable compliance-attestation record.**
 
-Brian's thesis: ZeroBias is a *transparency state machine* between organizations. Two (or more) orgs enter an **Engagement**; inside it they exchange **entangled task pairs** (a demand-side requirement task ⟷ a supply-side satisfaction task); the platform captures every exchange as a hash-chained **Record**; the validated state of the whole thing is published through a **Transparency Center** that any scoped auditor or regulator can read. The final-state output is an **OWL + SHACL + RDF container** carrying the full audit trail of a multi-party assessment — transportable as one signed package.
+Brian's thesis: ZeroBias is a *transparency state machine* between organizations. Two (or more) orgs enter an **Engagement** (in the platform, each side owns its own *mirrored* Engagement node bound by an `engages` link — see §3); across it they exchange **entangled task pairs** (a demand-side requirement task ⟷ a supply-side satisfaction task); the platform captures every exchange as a hash-chained **Record**; the validated state of the whole thing is published through a **Transparency Center** that any scoped auditor or regulator can read. The final-state output is an **OWL + SHACL + RDF container** carrying the full audit trail of a multi-party assessment — transportable as one signed package.
 
 **That is the entire point of SME Mart, Readiness Center, and Work Worlds. They are three different UIs over the same substrate.** Brian, 2026-04-28: *"All three of you guys could be different UIs. I just want to make sure it's the same damn thing underneath."*
 
@@ -85,9 +85,13 @@ Three load-bearing platform concepts that everything else hangs on.
 
 **[EXISTS] Boundary** — a security/scope perimeter. The unit of "what's in scope." Boundaries nest, and the nesting obeys a **subset chain**: a child's boundary must be a subset of its parent's. *Tighten-never-loosen*, enforced at write time. In ontology terms (§10) a Boundary **is a Holon** — a container + its rules + its contents.
 
-**[EXISTS] Engagement** — the commercial contract between two Parties (demand-side + supply-side). It is the **seam** between two orgs' private worlds, carrying the MSA/SOW, boundary set, and party list. It is an optional **node-role** (a `platform.Project` tagged `engagement`) that **governs** a Project-rooted tree via a typed `governs` ResourceLink — it is *off* the containment axis, not a parent or "outermost boundary." Nothing crosses an Engagement except through (a) a cross-engagement link (§7) or (b) an entangled task pair (§8); the `governs` link itself propagates zero data.
+**[EXISTS] Engagement** — the commercial relationship between two Parties (demand-side + supply-side). It is an optional **node-role** (a `platform.Project` tagged `engagement`) that sits *off* the containment axis — not a parent or "outermost boundary."
 
-**Invariant (memex):** every SME Mart Project tree is *governed by* a related Engagement (via the `governs` link). The Engagement is a peer node off-axis, not a structural ceiling — the Project tree roots at a Project (`parentId = null`), and the Engagement governs it laterally.
+**Mirrored two-org model (2026-06-04).** There is **not** one shared Engagement node spanning both orgs. **Each org owns its OWN Engagement node**, and the two mirrored nodes are bound to each other by a typed **`engages` ↔ `engaged_by`** ResourceLink. The counterparty is therefore held **by reference** (a traversable UUID↔UUID edge), **not** in the wipeable display name or an org-scoped tag — those are mutable labels with no referential integrity. Direction encodes role: the engaging party renders `engages`, the counterparty renders `engaged_by` (so the same org pair expresses provider/customer cleanly, and flips per engagement). Each Engagement node **`governs`** its own Project-rooted tree via a typed `governs` ResourceLink (zero data propagation). The agreement that the engagement legitimately exists (both parties consented) is modeled as a first-class **Requirement** (agreements→Requirements, [PLANNED]).
+
+Nothing crosses to the counterparty's world except through (a) the `engages` counterparty link (identity/relationship pairing — no data disclosure), (b) a cross-engagement link (§7), or (c) an entangled task pair (§8 — the only cross-party *data* seam). **`governs`, `engages`, and `depends_on` are LIVE on CI** (registered 2026-06-19, all `project -> project`, verified via `linkTypeSearch`); `satisfies` is task→task only.
+
+**Invariant (memex):** every SME Mart Project tree is *governed by* a related Engagement (via the `governs` link). The Engagement is a peer node off-axis, not a structural ceiling — the Project tree roots at a Project (`parentId = null`), and the Engagement governs it laterally; the counterparty's mirrored Engagement is reached via the `engages` link.
 
 ---
 
@@ -164,8 +168,18 @@ When you need to associate one unit of work with another, pick the **lightest me
 
 > *Verified 2026-05-22 against `~/Projects/zb/hydra/dao/sql/hydra/resource/{link,linkResources,listResourceLinksExtended}.sql` (single-INSERT writes, OR-on-both-columns read; no DB triggers mirror writes). Empirical record: memex `memex/zerobias/platform/hydra-resource-links-write-creates-one-row-read-is-bidirectional-via-or-query`.*
 - **Cross-engagement "linked project"** — the only path for a coalition (§9). A primary Project in one Engagement links a secondary Project from another Engagement to pull its work in and grant data-plane access.
-- **Lateral relations (not containment):** `depends_on`, `relates_to`, `blocked_by`, `supersedes`, `derives_from`, `requires`.
-- Task↔Task link type IDs are environment-specific (CI vs UAT differ) — look them up via ZB MCP; do not hardcode across envs.
+- **Adopt-now project link-types — LIVE on CI 2026-06-19** (registered, `project -> project`, verified via `linkTypeSearch`). Each is directional and registers both predicate labels (`fromLinkType` forward + `toLinkType` inverse):
+
+  | Forward | Inverse | from → to | Job |
+  |---|---|---|---|
+  | `governs` | `governed_by` | engagement → governed root | Engagement-as-governance-node (§3, §4.3) |
+  | `engages` | `engaged_by` | engagement node → counterparty engagement node | mirrored-engagement counterparty seam; direction encodes provider/customer (§3) |
+  | `depends_on` | `dependency_of` | project/task → project/task | structural prerequisite (distinct from transient `blocked_by`) |
+  | `satisfies` | `satisfied_by` | **task → task** | directional cross-party task-entanglement / fulfillment seam (§8) |
+
+  None of these propagate boundary/visibility/permissions — cross-party visibility stays task-entanglement-only (§8). The `engagement` *tag* and the `engages`/`governs` *links* do orthogonal jobs (tag = what a node is; link = how nodes relate); both are kept. Engagement-*classification* ("which Projects ARE Engagements") is moving to a first-class `platform.Project.type = engagement` discriminator — NOT the `engages` link. *(Authority: zb/ui `BACKEND_FEATURE_REQUESTS.md` RL-001 / task-13.)*
+- **Other lateral relations (not containment):** `relates_to` (symmetric), `blocked_by`, `supersedes`, `derives_from`, `requires`.
+- Task↔Task and project link-type IDs are environment-specific (CI vs UAT differ) — look them up via ZB MCP / `linkTypeSearch` by predicate string; do not hardcode across envs.
 
 ---
 
@@ -472,14 +486,16 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 
 ## 14. Glossary (quick reference)
 
-- **Engagement** — commercial seam between two Parties; an optional node-role (`Project` tagged `engagement`) that *governs* a Project tree via the `governs` link, off the containment axis (not a parent/outermost-boundary). *(SHACL Profile.)*
+- **Engagement** — commercial relationship between two Parties; an optional node-role (`Project` tagged `engagement`), off the containment axis. **Mirrored:** each org owns its OWN Engagement node, bound to the counterpart by `engages` ↔ `engaged_by` (counterparty held by-reference, not by display name). Each node *governs* its own Project tree via the `governs` link. *(SHACL Profile.)*
+- **`engages` / `engaged_by`** — directional ResourceLink binding the two mirrored Engagement nodes; direction encodes provider/customer. The durable counterparty seam (replaces the wipeable display-name / org-tag). **LIVE on CI 2026-06-19.**
+- **`governs` / `governed_by`** — directional ResourceLink: an Engagement node governs its Project-rooted tree, off the containment axis, zero data propagation. **LIVE on CI 2026-06-19.**
 - **Project** — the one nestable structural container; tiers = depth + label. *(OWL class.)*
 - **Board** — thin rendering view over Tasks; `boardType ∈ kanban/list/timeline/calendar`; parent = one of boundary/project/user (org default). Auto-default per Project.
 - **Task** — atomic unit; owned by one Board; RACI via Party UUIDs.
 - **Sub-Task** — Task owned by another Task.
 - **Tag** — hydra filter, no scope (`tagType: marketplace`).
 - **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, planned `satisfies` ↔ `satisfiedBy`) call twice if you need both partner rows materialized.
-- **`satisfies` / `satisfiedBy`** — proposed directed Task↔Task link for the entangled Req⟷Sat pair (replaces `twin_of`).
+- **`satisfies` / `satisfied_by`** — directed **Task→Task** link for the entangled Req⟷Sat pair (replaces `twin_of`). Registered on task-13 (cross-party task-entanglement seam); the task/project→requirement traceability flavor stays parked on task-29.
 - **Requirement** — the contract: demand-half + supply-half task. *(OWL class + SHACL NodeShape.)* [PLANNED]
 - **Assessment** — measurement of satisfaction. *(SHACL ValidationReport.)* [PLANNED]
 - **Record** — hash-chained append-only memory. *(RDF + PROV-O.)* [PLANNED]
