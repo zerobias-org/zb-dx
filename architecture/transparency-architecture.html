@@ -466,7 +466,7 @@ flowchart TB
           <tbody>
             <tr><td class="k"><strong>Party</strong></td><td><span class="chip exists">EXISTS</span></td><td>The actor taxonomy: <code>User / Org / Team / Vendor / Person</code>. Every scoped entity is owned by, or answers to, a Party. RACI and task ownership reference <strong>Party UUIDs</strong> (not raw principal IDs).</td></tr>
             <tr><td class="k"><strong>Boundary</strong></td><td><span class="chip exists">EXISTS</span></td><td>A security/scope perimeter &mdash; the unit of "what's in scope." Boundaries nest with a <strong>subset chain</strong>: child &sube; parent, <em>tighten-never-loosen</em>, enforced at write time. In ontology terms a Boundary <strong>is a Holon</strong> (Tab&nbsp;4).</td></tr>
-            <tr><td class="k"><strong>Engagement</strong></td><td><span class="chip exists">EXISTS</span></td><td>The commercial contract between two Parties (demand + supply). The <strong>seam</strong> between two orgs' private worlds. An optional <strong>node-role</strong> (a <code>platform.Project</code> tagged <code>engagement</code>) that <strong>governs</strong> a Project tree via a typed <code>governs</code> ResourceLink &mdash; off the containment axis, not a parent. Nothing crosses it except a cross-engagement link or an entangled task pair; the <code>governs</code> link propagates zero data. <em>Invariant: every SME Mart Project tree is governed by a related Engagement.</em></td></tr>
+            <tr><td class="k"><strong>Engagement</strong></td><td><span class="chip exists">EXISTS</span></td><td>The commercial relationship between two Parties (demand + supply). An optional <strong>node-role</strong> (a <code>platform.Project</code> tagged <code>engagement</code>), off the containment axis. <strong>Mirrored model:</strong> each org owns its OWN Engagement node; the two mirrored nodes are bound by a typed <code>engages</code> &harr; <code>engaged_by</code> ResourceLink, so the counterparty is held <strong>by reference</strong> (not in the wipeable display name); direction encodes provider/customer. Each node <strong>governs</strong> its own Project-rooted tree via the <code>governs</code> link (zero data propagation). <code>governs</code>/<code>engages</code>/<code>depends_on</code> are <strong>LIVE on CI 2026-06-19</strong>. <em>Invariant: every SME Mart Project tree is governed by a related Engagement.</em></td></tr>
           </tbody>
         </table>
       </div>
@@ -546,7 +546,7 @@ flowchart TB
           <tbody>
             <tr><td class="k"><strong>Tag</strong> (hydra Tag)</td><td><span class="chip exists">EXISTS</span></td><td>Thematic grouping / filtering only. A "sub-project" can be just a tag if it needs no own scope. <code>tagType: "marketplace"</code> for new SME Mart tags.</td><td>None &mdash; a tag is a filter, not a scope.</td></tr>
             <tr><td class="k"><strong>Nested Project</strong> (<code>parentId</code>)</td><td><span class="chip exists">EXISTS</span></td><td>A sub-unit needs its <strong>own distinct boundary / transparency partition</strong>.</td><td>Child &sube; parent (subset chain).</td></tr>
-            <tr><td class="k"><strong>ResourceLink</strong></td><td><span class="chip exists">EXISTS</span></td><td>Relating <strong>across an Engagement boundary</strong> (the coalition pattern), or a non-containment lateral relation (<code>depends_on</code>, <code>relates_to</code>, <code>blocked_by</code>, <code>supersedes</code>, &hellip;).</td><td>Not constrained by the subset chain; carries its own semantics. <em>The <code>linkResources</code> endpoint stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator, so a single write is visible from both endpoints. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, planned <code>satisfies</code> &harr; <code>satisfiedBy</code>) call twice if you need both partner rows materialized.</em></td></tr>
+            <tr><td class="k"><strong>ResourceLink</strong></td><td><span class="chip exists">EXISTS</span></td><td>Relating <strong>across an Engagement boundary</strong> (the coalition pattern), or a non-containment lateral relation (<code>governs</code>, <code>engages</code>, <code>depends_on</code>, <code>relates_to</code>, <code>blocked_by</code>, &hellip;).</td><td>Not constrained by the subset chain; carries its own semantics. <strong>Adopt-now types <code>governs</code>/<code>engages</code>/<code>depends_on</code> LIVE on CI 2026-06-19</strong> (project&rarr;project); each directional with a registered inverse (<code>governed_by</code>/<code>engaged_by</code>/<code>dependency_of</code>). <em>The <code>linkResources</code> endpoint stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator, so a single write is visible from both endpoints. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, planned <code>satisfies</code> &harr; <code>satisfied_by</code>) call twice if you need both partner rows materialized.</em></td></tr>
           </tbody>
         </table>
       </div>
@@ -626,7 +626,7 @@ flowchart TB
       </div>
     </div>
 
-    <div class="note info"><span class="nt">Naming change: <code>twin_of</code> &rarr; <code>satisfies</code> / <code>satisfiedBy</code></span>The old handoff used a single symmetric <code>twin_of</code> link. The current proposal is a <strong>directed pair</strong> of Task&harr;Task ResourceLinkTypes &mdash; the supply task <code>satisfies</code> the demand task; the demand task is <code>satisfiedBy</code> the supply task &mdash; marking an entangled <strong>Requirement&harr;Satisfaction</strong> pair. <span class="chip planned">PLANNED</span> &mdash; proposed, not yet in the link-type registry. Verify before use.</div>
+    <div class="note info"><span class="nt">Naming change: <code>twin_of</code> &rarr; <code>satisfies</code> / <code>satisfied_by</code></span>The old handoff used a single symmetric <code>twin_of</code> link. The current proposal is a <strong>directed pair</strong> of Task&harr;Task ResourceLinkTypes &mdash; the supply task <code>satisfies</code> the demand task; the demand task is <code>satisfied_by</code> the supply task &mdash; marking an entangled <strong>Requirement&harr;Satisfaction</strong> pair. Decided on task-13 (cleared to build), task&harr;task; the project&rarr;project trio (<code>governs</code>/<code>engages</code>/<code>depends_on</code>) is <strong>LIVE on CI 2026-06-19</strong> while satisfies is pending registration.</div>
 
     <section>
       <h2>The multi-org, multi-project scenario &mdash; HIS &harr; Goshen &harr; ArmorStack</h2>
@@ -1002,7 +1002,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
       <ul>
         <li><span class="chip tbd">TBD</span> <strong>Hierarchy level-matching enforcement</strong> &mdash; how is "both sides mirror tier names" enforced in schema for entanglement?</li>
         <li><span class="chip planned">PLANNED</span> <strong>Board Settings</strong> &mdash; custom fields + per-Board activity scoping designed-not-built; RACI-in-Board uncertain.</li>
-        <li><span class="chip planned">PLANNED</span> <strong><code>satisfies</code> / <code>satisfiedBy</code> link types</strong> &mdash; proposed; need Nic to register them (per env).</li>
+        <li><span class="chip planned">PLANNED</span> <strong><code>satisfies</code> / <code>satisfied_by</code> link types</strong> &mdash; decided on task-13 (task&harr;task); the project&rarr;project trio <code>governs</code>/<code>engages</code>/<code>depends_on</code> is <strong>LIVE on CI 2026-06-19</strong>; satisfies pending registration.</li>
         <li><span class="chip planned">PLANNED</span> <strong>Requirement / Assessment / Record entities</strong> &mdash; agreed in narrative, not yet in AuditgraphDB.</li>
         <li><span class="chip planned">PLANNED</span> <strong>Transparency Center surface + Multi-Protocol Gateway</strong> &mdash; publication/query layer + RDF endpoint, platform-team scope.</li>
         <li><span class="chip tbd">TBD</span> <strong>Holon / Hologram vocabulary adoption</strong> &mdash; schema-of-record entities vs. narrative-only? (BACKLOG-110)</li>
@@ -1027,7 +1027,9 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
       </div>
       <template id="copy-glossary">## Glossary
 
-- **Engagement** — commercial seam between two Parties; an optional node-role (Project tagged `engagement`) that governs a Project tree via the `governs` link, off the containment axis. (SHACL Profile.)
+- **Engagement** — commercial relationship between two Parties; an optional node-role (Project tagged `engagement`), off the containment axis. Mirrored: each org owns its OWN Engagement node, bound to the counterpart by `engages` / `engaged_by` (counterparty by-reference, not display name). Each node governs its own Project tree via the `governs` link. (SHACL Profile.)
+- **`engages` / `engaged_by`** — directional ResourceLink binding the two mirrored Engagement nodes; direction encodes provider/customer. Durable counterparty seam. LIVE on CI 2026-06-19.
+- **`governs` / `governed_by`** — directional ResourceLink: an Engagement node governs its Project-rooted tree, off the containment axis, zero data propagation. LIVE on CI 2026-06-19.
 - **Party** — actor (User/Org/Team/Vendor/Person); owns/answers-for scoped entities.
 - **Boundary** — scope perimeter; subset chain (tighten-never-loosen); is a Holon.
 - **Project** — the one nestable structural container; tiers = depth + label. (OWL class.)
@@ -1035,8 +1037,8 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
 - **Task** — atomic unit; owned by exactly one Board; RACI fields take Party UUIDs.
 - **Sub-Task** — Task owned by another Task.
 - **Tag** — hydra filter, no scope (tagType: marketplace for new SME Mart tags).
-- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, planned `satisfies` ↔ `satisfiedBy`) call twice if you need both partner rows materialized.
-- **satisfies / satisfiedBy** — proposed directed Task↔Task link for the entangled Req↔Sat pair (replaces twin_of). [PLANNED]
+- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, planned `satisfies` ↔ `satisfied_by`) call twice if you need both partner rows materialized.
+- **satisfies / satisfied_by** — directed Task→Task link for the entangled Req↔Sat pair (replaces twin_of). Registered on task-13 (cross-party task-entanglement seam); task→requirement traceability flavor stays on task-29.
 - **Requirement** — the contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) [PLANNED]
 - **Assessment** — measurement of satisfaction. (SHACL ValidationReport.) [PLANNED]
 - **Record** — hash-chained append-only memory. (RDF + PROV-O.) [PLANNED]
@@ -1047,7 +1049,9 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
 - **Multi-Protocol Gateway** — acceptance/denial vehicle; RDF content-negotiation across the seam. [PLANNED]</template>
       <div class="glos-section">
         <dl>
-          <dt>Engagement</dt><dd>Commercial seam between two Parties; an optional node-role that <strong>governs</strong> a Project tree via the <code>governs</code> link, off the containment axis. <em>(SHACL Profile in W3C terms.)</em></dd>
+          <dt>Engagement</dt><dd>Commercial relationship between two Parties; an optional node-role (<code>Project</code> tagged <code>engagement</code>), off the containment axis. <strong>Mirrored:</strong> each org owns its OWN Engagement node, bound to the counterpart by <code>engages</code> &harr; <code>engaged_by</code> (counterparty by-reference). Each node <em>governs</em> its own Project tree. (SHACL Profile.)</dd>
+          <dt><code>engages</code> / <code>engaged_by</code></dt><dd>Directional ResourceLink binding the two mirrored Engagement nodes; direction encodes provider/customer. <span class="chip exists">EXISTS</span> LIVE on CI 2026-06-19.</dd>
+          <dt><code>governs</code> / <code>governed_by</code></dt><dd>Directional ResourceLink: an Engagement node governs its Project-rooted tree, off the containment axis, zero data propagation. <span class="chip exists">EXISTS</span> LIVE on CI 2026-06-19.</dd>
           <dt>Party</dt><dd>Actor (User/Org/Team/Vendor/Person); owns or answers-for scoped entities.</dd>
           <dt>Boundary</dt><dd>Scope perimeter; subset chain (tighten-never-loosen); <em>is a Holon</em>.</dd>
           <dt>Project</dt><dd>The one nestable structural container; tiers = <code>parentId</code> depth + label. <em>(OWL class.)</em></dd>
@@ -1056,7 +1060,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
           <dt>Sub-Task</dt><dd>A Task whose parent is another Task.</dd>
           <dt>Tag</dt><dd>hydra filter, no scope. Use <code>tagType: "marketplace"</code> for new SME Mart tags.</dd>
           <dt>ResourceLink</dt><dd>Typed link (cross-engagement / lateral). <code>linkResources</code> stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, planned <code>satisfies</code> &harr; <code>satisfiedBy</code>) call twice to materialize both partner rows.</dd>
-          <dt><code>satisfies</code> / <code>satisfiedBy</code></dt><dd>Proposed directed Task&harr;Task link for the entangled Req&harr;Sat pair (replaces <code>twin_of</code>). <span class="chip planned">PLANNED</span></dd>
+          <dt><code>satisfies</code> / <code>satisfied_by</code></dt><dd>Directed Task&harr;Task link for the entangled Req&harr;Sat pair (replaces <code>twin_of</code>). Registered on task-13; task&rarr;requirement traceability flavor stays on task-29.</dd>
           <dt>Requirement</dt><dd>The contract: demand-half + supply-half task. <em>(OWL class + SHACL NodeShape.)</em> <span class="chip planned">PLANNED</span></dd>
           <dt>Assessment</dt><dd>Measurement of satisfaction. <em>(SHACL ValidationReport.)</em> <span class="chip planned">PLANNED</span></dd>
           <dt>Record</dt><dd>Hash-chained append-only memory. <em>(RDF + PROV-O.)</em> <span class="chip planned">PLANNED</span></dd>
@@ -1326,9 +1330,13 @@ const GLOSSARY = {
   'Multi-Protocol Gateway': 'Acceptance/denial vehicle; RDF content-negotiation across the seam. [PLANNED]',
   'acceptance_primitive': 'conjunction (default) / precedence / disjunction collapse operator. Maps to sh:and / sh:xone / sh:or. [PLANNED]',
   'Transparency Center': 'The shared, opt-in publication surface over entangled task pairs.',
-  'satisfiedBy': 'Reverse of `satisfies`; on the demand-half task. Replaces twin_of. [PLANNED]',
-  'satisfies': 'Proposed directed Task↔Task link from supply-task to demand-task (replaces twin_of). [PLANNED]',
-  'Engagement': 'Commercial seam between two Parties; an optional node-role that governs a Project tree via the governs link, off the containment axis. (SHACL Profile.)',
+  'satisfiedBy': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
+  'satisfied_by': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
+  'satisfies': 'Directed Task→Task link from supply-task to demand-task (replaces twin_of). Registered on task-13 (task->task).',
+  'Engagement': 'Commercial relationship between two Parties; an optional node-role, off the containment axis. Mirrored: each org owns its OWN Engagement node, bound to the counterpart by engages/engaged_by (counterparty by-reference). Each node governs its own Project tree via the governs link. (SHACL Profile.)',
+  'engages': 'Directional ResourceLink binding the two mirrored Engagement nodes; direction encodes provider/customer. Durable counterparty seam. LIVE on CI 2026-06-19.',
+  'engaged_by': 'Reverse of engages; on the counterparty Engagement node. LIVE on CI 2026-06-19.',
+  'governs': 'Directional ResourceLink: an Engagement node governs its Project-rooted tree, off the containment axis, zero data propagation. LIVE on CI 2026-06-19.',
   'Requirement': 'The contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) [PLANNED]',
   'Assessment': 'Measurement of satisfaction. (SHACL ValidationReport.) [PLANNED]',
   'Hologram': "A Holon's validated state at time T, projectable onto any surface.",
