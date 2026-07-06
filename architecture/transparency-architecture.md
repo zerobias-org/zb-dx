@@ -9,7 +9,7 @@ updated: 2026-05-22
 
 > **Audience:** Every third-party developer building a UI on the ZeroBias platform — SME Mart (Clark / W3Geekery), Readiness Center (Dan), Work Worlds (Joe), and any future app. This is the single canonical explanation of the shared substrate underneath all of them.
 >
-> **Status:** Promoted to `zb-dx/architecture/` as the canonical 3P-dev architecture reference, 2026-05-22. Supersedes the prior SME Mart-local handoffs `transparency-center-entangled-tasks-2026-04-21.html` and `shacl-owl-holon-quantum-overlay-2026-05-19-fixed.html` (archived locally). Folds both into one model and corrects the Board section against the **real** shipped `platform.Board` schema. Includes §5.2 corrections verified by Director Parks (SME Mart) against live platform SQL.
+> **Status:** Promoted to `zb-dx/architecture/` as the canonical 3P-dev architecture reference, 2026-05-22. Supersedes the prior SME Mart-local handoffs `transparency-center-entangled-tasks-2026-04-21.html` and `shacl-owl-system-quantum-overlay-2026-05-19-fixed.html` (archived locally). Folds both into one model and corrects the Board section against the **real** shipped `platform.Board` schema. Includes §5.2 corrections verified by Director Parks (SME Mart) against live platform SQL.
 >
 > **Companion:** [`transparency-architecture.html`](./transparency-architecture.html) — the human-facing interactive version of this same content (tabs, Mermaid diagrams, click-to-filter status, scroll-spy TOC, copyable RDF compass / glossary).
 
@@ -83,7 +83,7 @@ Three load-bearing platform concepts that everything else hangs on.
 
 **[EXISTS] Party** — the actor taxonomy: `User / Org / Team / Vendor / Person`. Every scoped entity is owned by, or answers to, a Party. RACI assignments and task ownership reference Party UUIDs (not raw principal IDs).
 
-**[EXISTS] Boundary** — a security/scope perimeter. The unit of "what's in scope." Boundaries nest, and the nesting obeys a **subset chain**: a child's boundary must be a subset of its parent's. *Tighten-never-loosen*, enforced at write time. In ontology terms (§10) a Boundary **is a Holon** — a container + its rules + its contents.
+**[EXISTS] Boundary** — a security/scope perimeter. The unit of "what's in scope." Boundaries nest, and the nesting obeys a **subset chain**: a child's boundary must be a subset of its parent's. *Tighten-never-loosen*, enforced at write time. In ontology terms (§10) a Boundary **is a System** — a container + its rules + its contents.
 
 **[EXISTS] Engagement** — the commercial relationship between two Parties (demand-side + supply-side). It is an optional **node-role** (a `platform.Project` tagged `engagement`) that sits *off* the containment axis — not a parent or "outermost boundary."
 
@@ -393,7 +393,7 @@ Only the standardized hash-chained Record crosses the seam. Party Policy, Bounda
 
 ---
 
-## 11. The ontology overlay — OWL + SHACL + RDF + Holon/Hologram (the culmination)
+## 11. The ontology overlay — OWL + SHACL + RDF + System/Hologram (the culmination)
 
 This is *why* the data shapes matter. The W3C ontology stack is **the language we describe the model in, not a runtime we replace ZB with.** ZB AuditgraphDB stays the schema of record. But every Engagement/Project/Requirement/Task/Record must be **shape-able into a versioned RDF/JSON-LD/Turtle container** carrying the full audit trail — transportable, signable, projectable.
 
@@ -404,8 +404,8 @@ This is *why* the data shapes matter. The W3C ontology stack is **the language w
 | **Meaning (T-Box)** | OWL 2 | What concepts exist + how they relate | Requirement, Assessment, Record, Engagement, Party, Boundary, Task, RACI — the ZB class system |
 | **Constraint (S-Box)** | SHACL 1.2 | What well-formed data looks like; versioned, packageable, jointly-authored | Boundary Manager checks · `acceptance_primitive` · per-engagement hierarchy template · ZB validation pipeline |
 | **Data (A-Box)** | RDF (+RDF-star) | The actual triples + statement-level provenance | ZB AuditgraphDB (Resource/Tag/Link/Task) + hash-chained Records |
-| **Holon** | (named sub-graph) | A bounded container: contents + rules, self-similar nesting | A **Boundary** + its Requirement tree + scoped Resources |
-| **Hologram** | (state projection) | A Holon's validated state at time T, projected onto any surface | The **Transparency View** + MP-Gateway output (2D today; 3D/audio/world-model tomorrow) |
+| **System** | (named sub-graph) | A bounded container: contents + rules, self-similar nesting | A **Boundary** + its Requirement tree + scoped Resources |
+| **Hologram** | (state projection) | A System's validated state at time T, projected onto any surface | The **Transparency View** + MP-Gateway output (2D today; 3D/audio/world-model tomorrow) |
 
 ### 11.2 Canonical vocabulary mapping
 
@@ -419,7 +419,7 @@ This is *why* the data shapes matter. The W3C ontology stack is **the language w
 | Engagement | **SHACL Profile** (packaged · versioned · jointly authored) — both parties pin a version |
 | Transparency View | SHACL ValidationReport renderer + provenance viewer (TopBraid / Jena / RDF4J) |
 | Multi-Protocol Gateway | RDF content-negotiation + signed serializations (Turtle / JSON-LD / N-Quads / TriG) |
-| Boundary + scoped Requirements + Resources | **Holon** (named sub-graph) |
+| Boundary + scoped Requirements + Resources | **System** (named sub-graph) |
 | Transparency surface at a moment | **Hologram** (validated sub-graph projection) |
 
 ### 11.3 Coverage extensions (plug-in SHACL packages on the Engagement profile)
@@ -432,9 +432,9 @@ This is *why* the data shapes matter. The W3C ontology stack is **the language w
 | Payment / billing / settlement | ODRL duty + Schema.org `PaymentMethod`/`MonetaryAmount` |
 | Security frameworks (SOC2 / DISA STIG / CIS / NIST 800-53) | **OSCAL** (NIST) + framework-specific SHACL packages |
 
-### 11.4 Holon → Assessment → Hologram pipeline
+### 11.4 System → Assessment → Hologram pipeline
 
-A **Holon** (Container = thing-being-assessed, e.g. a host/system as ZB Boundary + scoped Resources; Rules = a config baseline like DISA STIG/CIS as a SHACL package) is fed to an **Assessment** (SHACL validation engine → `sh:ValidationReport`), which emits a **Hologram** (validated sub-graph at time T) that renders onto any surface: 2D dashboard, 3D world model, audio brief, or a **time-series** "audit movie" (append-only Records replayed against the SHACL package at each timestamp — the time series comes for free).
+A **System** (Container = thing-being-assessed, e.g. a host/system as ZB Boundary + scoped Resources; Rules = a config baseline like DISA STIG/CIS as a SHACL package) is fed to an **Assessment** (SHACL validation engine → `sh:ValidationReport`), which emits a **Hologram** (validated sub-graph at time T) that renders onto any surface: 2D dashboard, 3D world model, audio brief, or a **time-series** "audit movie" (append-only Records replayed against the SHACL package at each timestamp — the time series comes for free).
 
 **Holographic-principle parallel (precise, not loose):** a SHACL NodeShape *is* a boundary contract that fully determines admissible interior data — boundary information determines the interior, exactly like the physics principle. Boundary → SHACL package → determined interior Records.
 
@@ -459,7 +459,7 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 | **C-1** | Preserves the **entangled demand-half + supply-half task pair**? | Every Requirement decomposes into exactly 2 linked tasks (or N matched pairs); none orphaned. |
 | **C-2** | Every field **round-trips to RDF triples** without loss? | Fields typed, atomic, predicate-nameable. No mixed-axis strings, no positional ordering. |
 | **C-3** | Records **append-only + hash-chainable**? | No in-place mutation; PROV-O attribution preservable; tamper-evidence intact. |
-| **C-4** | **Party-boundary scoping** present (Holon projection computable)? | Every entity under an Engagement carries a Party UUID (or is unambiguously inferable from parent). |
+| **C-4** | **Party-boundary scoping** present (System projection computable)? | Every entity under an Engagement carries a Party UUID (or is unambiguously inferable from parent). |
 | **C-5** | Engagement-pinned **SHACL profile / Requirement-set version** explicit? | Requirement registry has a version anchor at engagement creation; UI never silently swaps versions under live data. |
 
 ---
@@ -473,7 +473,7 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 3. **`satisfies` / `satisfiedBy` link types** — proposed, not yet in the link-type registry. Need Nic to register them (per env).
 4. **Requirement / Assessment / Record entities** — agreed in narrative, not yet in the AuditgraphDB schema.
 5. **Transparency Center surface + Multi-Protocol Gateway** — the publication/query layer and the RDF content-negotiation endpoint are platform-team scope, not yet built.
-6. **Holon / Hologram vocabulary adoption** — schema-of-record entities vs. narrative-only language? (Brian/Kevin/Nic decision; BACKLOG-110)
+6. **System / Hologram vocabulary adoption** — schema-of-record entities vs. narrative-only language? (Brian/Kevin/Nic decision; BACKLOG-110)
 7. **Per-engagement SHACL profile versioning** — does the platform support it today, or is it a platform-team gap? (compass C-5)
 8. **PROV-O on Records** — when do ZB Records gain PROV-O attribution surfaces?
 9. **JSONL/RDF container shape** — Brian's "final deliverable" references JSONL/RDF; is it JSONL-of-quads, JSON-LD, TriG? Pending platform spec.
@@ -500,11 +500,11 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 - **Assessment** — measurement of satisfaction. *(SHACL ValidationReport.)* [PLANNED]
 - **Record** — hash-chained append-only memory. *(RDF + PROV-O.)* [PLANNED]
 - **acceptance_primitive** — conjunction/precedence/disjunction collapse operator. *(sh:and/sh:xone/sh:or.)* [PLANNED]
-- **Holon** — a Boundary as a bounded sub-graph (container + rules + contents).
-- **Hologram** — a Holon's validated state at time T, projectable onto any surface.
+- **System** — a Boundary as a bounded sub-graph (container + rules + contents).
+- **Hologram** — a System's validated state at time T, projectable onto any surface.
 - **Transparency Center** — the shared, opt-in publication surface over entangled pairs.
 - **Multi-Protocol Gateway** — the acceptance/denial vehicle; RDF content-negotiation across the seam. [PLANNED]
-- **Boundary** — scope perimeter; subset chain (tighten-never-loosen); *is a Holon*.
+- **Boundary** — scope perimeter; subset chain (tighten-never-loosen); *is a System*.
 - **Party** — actor (User/Org/Team/Vendor/Person); owns/answers-for scoped entities.
 
 ---

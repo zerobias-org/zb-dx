@@ -8,6 +8,40 @@ visual-explainer skill (dark theme · 16px font floor · Mermaid resize+fullscre
 editing the `.md`, mirror the change into the `.html` and log both here so the handoff
 history is clear for 3P devs and future sessions.
 
+## 2026-07-03 — New: Continuous Assessment (Boundary Manager × Projects) model
+
+**Directional heads-up — not hard architecture facts.** Read this as a snapshot of the direction
+we're heading, not finalized or shipped truth. Most of it is `[PLANNED]` / `[TBD]` (the doc tags every
+claim) — so treat it as where the model is going, build against it with that in mind, and expect it to
+move. I'll keep updates flowing as often as I can.
+**New architecture doc pair** — `continuous-assessment-model.md` (dense / LLM-ingestible) +
+`continuous-assessment-model.html` (interactive, 5 tabs, Mermaid). This is the compliance /
+continuous-assessment lens on top of the transparency substrate: **the Boundary is the runtime
+control plane (a System), and a Project is the measurement of it.** 3P devs building compliance /
+readiness UIs should read this for the current project data model. Headlines: audit-as-a-project is
+dead (audit is a continuous verb; the report is a windowed Aperture projection of System state);
+**Program / Phase / Assessment** are the primary project **types**; the old single "project flavor"
+is now **four orthogonal axes** — `lifecycle` + `types` (structural, SC-008 / task-74) and
+`project-context` + `project-domain` (tags, tag PR #8). **`projectTypeId` now carries only the
+`project-context` axis** (project/workspace/aperture/thread) — if your code folds engagement /
+domain / tier into it, unwind that. Component = a RACI responsibility unit (Boundary "Teams" is dead).
+
+**Terminology:** the ontology-overlay vocabulary is aligned to **System** throughout, and the overlay
+doc is now `shacl-owl-system-overlay.html` (its filename changed — update any bookmarks). This is a
+label change only — the ontology model, the pipeline, and the Hologram concept are unchanged. Aligned
+across `transparency-architecture.{md,html}` + `README.md` as well.
+
+**Authoritative source:** `~/Projects/zb/boundary-projects-mocks/MODEL.md` (kept current by the zb/ui
+Director) + zb/ui `.claude/docs/BACKEND_FEATURE_REQUESTS.md` (SC-008 / task-74, tag PR #8, the FR table).
+
+**Files touched:** new `continuous-assessment-model.md` + `.html`; the ontology overlay renamed to
+`shacl-owl-system-overlay.html` (System term sweep); `transparency-architecture.md` + `.html` (System
+term sweep + a duplicate-id fix in the pipeline diagram); `README.md` (overlay filename + term);
+`SYNC-RECIPE.md` (added MODEL.md as a source).
+
+**Unchanged:** the transparency state-machine model, the entangled task-pair seam, and the RDF compass
+all stand — this adds the compliance lens and aligns one label; it does not revise the substrate.
+
 ## 2026-06-23 — Mirrored two-org Engagement + adopt-now link-types LIVE on CI
 
 **Model change + status sync** — authoritative source: zb/ui `.claude/docs/BACKEND_FEATURE_REQUESTS.md`
