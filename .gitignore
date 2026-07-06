@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Claude Code local settings (personal, not shared — .claude/docs is still tracked)
+.claude/settings.local.json
+
+# Session handoff artifact (local)
+restart_context.md

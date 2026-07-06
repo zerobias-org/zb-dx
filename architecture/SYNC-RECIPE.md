@@ -16,7 +16,8 @@ Pull latest before reading each.
 
 | Rank | Source | Path | What to harvest |
 |---|---|---|---|
-| **1** | zb/ui Backend FR tracker (PRIMARY) | `~/Projects/zb/ui/.claude/docs/BACKEND_FEATURE_REQUESTS.md` | FR status transitions: `DRAFT → FILED → LIVE/verified`; new link-types; new platform fields; reshaped endpoints. The "LIVE on CI/dev/prod" lines are the freshness signal. |
+| **1 (model)** | BM×Projects current-state model | `~/Projects/zb/boundary-projects-mocks/MODEL.md` | The clean current data model (continuous-assessment framing · Program/Phase/Assessment types · the four axes · Component-RACI · terminology). Director-maintained; supersedes model bits scattered in that folder's `BRIEF.md`. Feeds `continuous-assessment-model.{md,html}`. |
+| **1 (status)** | zb/ui Backend FR tracker (PRIMARY) | `~/Projects/zb/ui/.claude/docs/BACKEND_FEATURE_REQUESTS.md` | FR status transitions: `DRAFT → FILED → LIVE/verified`; new link-types; new platform fields; reshaped endpoints. The "LIVE on CI/dev/prod" lines are the freshness signal. |
 | 2 | zb/ui platform reference docs | `~/Projects/zb/ui/.claude/docs/PLATFORM_RESOURCE_LINKS_REFERENCE.md`, `FILESERVICE_REFERENCE.md`, roles ref | Verified primitive behavior (link-types, file rules, RBAC). |
 | 3 | SME Mart decisions + rulings | `…/sme-mart/.planning/director/DECISIONS.md`, `project-link-type-vocabulary-proposal-*.md`, `.planning/docs/RDF-COMPASS.md` | Model rulings (hierarchy, engagement, vetting), resolved open-questions. |
 | 4 | memex (model rulings) | `~/basic-memory/memex/zerobias/platform/*`, `…/sme-mart/*` | Canonical rulings (one-project-entity axes, mirrored engagement, transparency invariant). Local only — not reachable from cloud. |
@@ -27,9 +28,11 @@ Mart decisions. Never cite the deprecated Next.js SME Mart app.
 
 ## Target docs (UPDATE these)
 
-- `architecture/transparency-architecture.md` — content source of truth.
+- `architecture/transparency-architecture.md` — transparency state-machine content source of truth.
 - `architecture/transparency-architecture.html` — **mirror** (see HTML fan-out gotcha).
-- `architecture/CHANGELOG.md` — log every change, newest first.
+- `architecture/continuous-assessment-model.md` — compliance / continuous-assessment content source of truth (from MODEL.md).
+- `architecture/continuous-assessment-model.html` — **mirror** (5 tabs; same HTML fan-out gotcha; mocks tab held until the Director finalizes `boundary-projects-mocks/` mocks).
+- `architecture/CHANGELOG.md` — log every change, newest first. **The top entry's heading + first paragraph is posted verbatim to #zb-dx on merge** (via `architecture-docs-notify.yml` → `automation/notify-docs-change.mjs`), so write the lead paragraph for that audience.
 - `architecture/patterns/*.md` — add a `superseded`/`reconcile` banner if a ruling invalidates a pattern.
 
 ---

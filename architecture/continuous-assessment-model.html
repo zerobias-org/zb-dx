@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Continuous Assessment — Boundary Manager × Projects model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --font-body: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --bg: #0e1018;
+  --surface: #161925;
+  --surface2: #1d2130;
+  --surface-elevated: #232736;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.18);
+  --text: #e6e9f2;
+  --text-dim: #8c93a8;
+  --text-very-dim: #5a6178;
+
+  --demand: #38bdf8;
+  --demand-dim: rgba(56, 189, 248, 0.12);
+  --demand-soft: rgba(56, 189, 248, 0.28);
+
+  --supply: #fbbf24;
+  --supply-dim: rgba(251, 191, 36, 0.12);
+  --supply-soft: rgba(251, 191, 36, 0.28);
+
+  --transp: #c084fc;
+  --transp-dim: rgba(192, 132, 252, 0.14);
+  --transp-soft: rgba(192, 132, 252, 0.35);
+  --transp-glow: rgba(192, 132, 252, 0.22);
+
+  --entangle: #f472b6;
+  --entangle-soft: rgba(244, 114, 182, 0.4);
+
+  --owl: #34d399;
+  --ok: #34d399;
+  --plan: #fbbf24;
+  --tbd: #f87171;
+
+  --engage: #f472b6;
+  --proj: #38bdf8;
+  --ws: #34d399;
+  --tsk: #c084fc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, var(--transp-glow) 0%, transparent 55%),
+    radial-gradient(ellipse at 15% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  padding: 40px 28px 80px;
+  min-height: 100vh;
+}
+.page { max-width: 1500px; margin: 0 auto; }
+
+/* ===== HEADER ===== */
+.hdr { text-align: center; margin-bottom: 24px; }
+.hdr h1 {
+  font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1;
+  background: linear-gradient(135deg, var(--transp), var(--entangle) 55%, var(--supply));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+.hdr .subtitle { font-size: 18px; color: var(--text-dim); font-style: italic; max-width: 880px; margin: 0 auto; }
+.hdr .byline { font-family: var(--font-mono); font-size: 16px; color: var(--text-very-dim); margin-top: 14px; letter-spacing: 0.02em; }
+
+/* ===== STATUS LEGEND ===== */
+.status-legend {
+  display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+  max-width: 1100px; margin: 22px auto 8px;
+}
+.status-legend .sl {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 14px; font-size: 16px; color: var(--text-dim);
+}
+.chip {
+  display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+  padding: 2px 8px; border-radius: 5px; letter-spacing: 0.04em; white-space: nowrap;
+}
+.chip.exists { color: var(--ok); background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.4); }
+.chip.planned { color: var(--plan); background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.4); }
+.chip.tbd { color: var(--tbd); background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.4); }
+
+/* ===== TABS ===== */
+.tabs-nav {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin: 30px auto 26px; max-width: 1200px;
+}
+.tab-btn {
+  background: var(--surface); color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 9px;
+  font-family: var(--font-body); font-size: 17px; font-weight: 600;
+  padding: 12px 20px; cursor: pointer; transition: all 0.15s;
+}
+.tab-btn:hover { border-color: var(--transp-soft); color: var(--text); }
+.tab-btn.active { background: var(--transp-dim); color: var(--transp); border-color: var(--transp-soft); }
+.tab-panel { display: none; animation: fade 0.25s ease; }
+.tab-panel.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ===== CAPTION ===== */
+.caption {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--transp); border-radius: 8px;
+  padding: 18px 24px; margin: 0 auto 32px; max-width: 1100px;
+  font-size: 16px; line-height: 1.6;
+}
+.caption .quote { font-style: italic; color: var(--text); font-size: 17px; margin-bottom: 10px; }
+.caption .quote::before { content: '"'; color: var(--transp); font-size: 24px; margin-right: 2px; }
+.caption .quote::after { content: '"'; color: var(--transp); font-size: 24px; margin-left: 2px; }
+.caption .attrib { color: var(--text-dim); font-family: var(--font-mono); font-size: 15px; margin-bottom: 12px; }
+.caption .explain { color: var(--text-dim); font-size: 16px; line-height: 1.65; }
+
+/* ===== SECTIONS / TYPE ===== */
+section { margin-bottom: 40px; }
+h2 {
+  font-size: 28px; font-weight: 600; color: var(--transp);
+  margin: 36px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+h3 { font-size: 22px; font-weight: 600; color: var(--text); margin: 26px 0 12px; }
+h4 { font-size: 19px; font-weight: 600; color: var(--text); margin: 20px 0 8px; }
+p { font-size: 16px; color: var(--text); margin-bottom: 12px; line-height: 1.7; }
+.lede { font-size: 18px; color: var(--text-dim); line-height: 1.7; margin-bottom: 14px; max-width: 1100px; }
+ul, ol { margin: 8px 0 16px 24px; }
+li { font-size: 16px; color: var(--text); line-height: 1.7; margin-bottom: 6px; }
+code { font-family: var(--font-mono); font-size: 15px; background: var(--surface2); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+strong { color: var(--text); }
+em { color: var(--text-dim); }
+a { color: var(--transp); }
+
+/* ===== TABLES ===== */
+.tbl-wrap { overflow-x: auto; margin: 14px 0 20px; }
+table.map { width: 100%; border-collapse: collapse; font-size: 16px; }
+table.map th {
+  text-align: left; padding: 12px 14px; color: var(--transp); font-weight: 600;
+  border-bottom: 1px solid var(--border-bright); font-size: 16px;
+}
+table.map td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; line-height: 1.55; }
+table.map td.k { color: var(--text); }
+table.map tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+/* ===== PRINCIPLE BOX ===== */
+.principle {
+  background: rgba(192,132,252,0.06); border: 1px solid var(--transp-soft);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0;
+}
+.principle .label { font-family: var(--font-mono); font-size: 15px; color: var(--text-very-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+.principle .title { font-size: 20px; font-weight: 700; color: var(--transp); margin: 6px 0 8px; }
+.principle .body { font-size: 16px; color: var(--text); line-height: 1.75; }
+
+/* ===== DUAL COLS ===== */
+.dual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0; }
+.dual .col { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; }
+.dual .adopt { border-top: 3px solid var(--ok); }
+.dual .skeptic { border-top: 3px solid var(--tbd); }
+.dual h3 { margin-top: 0; }
+@media (max-width: 900px) { .dual { grid-template-columns: 1fr; } }
+
+/* ===== CARD GRID ===== */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 18px 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.card.app-d { border-top: 3px solid var(--demand); }
+.card.app-s { border-top: 3px solid var(--supply); }
+.card.app-t { border-top: 3px solid var(--transp); }
+.card .ct { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.card .cm { font-family: var(--font-mono); font-size: 14px; color: var(--text-very-dim); margin-bottom: 8px; }
+.card p { font-size: 16px; }
+
+/* ===== STACK (layers) ===== */
+.stack { display: flex; flex-direction: column; gap: 6px; margin: 18px 0; }
+.stack .layer { border: 1.5px solid var(--border-bright); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
+.stack .layer .name { font-family: var(--font-mono); font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.stack .layer .what { font-size: 16px; color: var(--text); line-height: 1.6; }
+.stack .layer .our { font-size: 16px; color: var(--text-dim); margin-top: 6px; line-height: 1.6; }
+.stack .arr { text-align: center; color: var(--text-very-dim); font-size: 20px; }
+.l-owl { border-color: var(--owl); } .l-owl .name { color: var(--owl); }
+.l-shacl { border-color: var(--transp); } .l-shacl .name { color: var(--transp); }
+.l-rdf { border-color: var(--demand); } .l-rdf .name { color: var(--demand); }
+.l-system { border-color: var(--entangle); } .l-system .name { color: var(--entangle); }
+.l-proj { border-color: var(--supply); } .l-proj .name { color: var(--supply); }
+
+/* ===== NOTE / WARN ===== */
+.note { border-radius: 10px; padding: 16px 20px; margin: 16px 0; font-size: 16px; line-height: 1.7; }
+.note.warn { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.4); }
+.note.info { background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.35); }
+.note.good { background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.35); }
+.note .nt { font-weight: 700; font-size: 17px; display: block; margin-bottom: 6px; }
+
+/* ===== MERMAID WRAPPER (resize + fullscreen) ===== */
+.mermaid-host {
+  position: relative; background: var(--surface); border: 1.5px solid var(--border-bright);
+  border-radius: 12px; padding: 14px 14px 18px; margin: 18px 0 12px;
+  resize: both; overflow: auto; min-height: 360px; min-width: 400px; height: 600px;
+}
+.mermaid-host::after { content: "⇲"; position: absolute; right: 6px; bottom: 4px; font-size: 16px; color: var(--text-very-dim); pointer-events: none; }
+.mm-toolbar { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 3; }
+.dia-id { position: absolute; top: 8px; left: 8px; z-index: 3; font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--transp); background: var(--surface2); border: 1px solid var(--transp-soft); border-radius: 6px; padding: 4px 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mm-btn {
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border-bright);
+  border-radius: 6px; font-family: var(--font-mono); font-size: 16px; width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mm-btn:hover { background: var(--surface-elevated); border-color: var(--transp-soft); color: var(--transp); }
+.mm-render { position: relative; width: 100%; height: calc(100% - 8px); cursor: grab; overflow: hidden; }
+.mm-render.dragging { cursor: grabbing; }
+.mm-render svg { display: block; max-width: none !important; transform-origin: 0 0; }
+.mm-cap { font-size: 15px; color: var(--text-very-dim); font-style: italic; margin: 0 0 22px 2px; }
+.mm-fs { position: fixed; inset: 0; background: #060810; z-index: 9999; display: none; flex-direction: column; }
+.mm-fs.active { display: flex; }
+.mm-fs .mm-toolbar { position: static; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border-bright); display: flex; gap: 8px; align-items: center; }
+.mm-fs .mm-toolbar .label { font-family: var(--font-mono); font-size: 16px; color: var(--text-dim); margin-right: auto; }
+.mm-fs .mm-render { flex: 1; height: auto; }
+.mermaid, .mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid .cluster text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif !important;
+}
+.mermaid .nodeLabel, .mermaid .edgeLabel { font-size: 16px !important; }
+.mermaid .cluster text { font-size: 17px !important; font-weight: 600 !important; }
+
+/* ===== FOOTER ===== */
+.footer { text-align: center; font-family: var(--font-mono); font-size: 14px; color: var(--text-very-dim); margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); letter-spacing: 0.04em; }
+.sources { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 24px; margin: 24px 0; }
+.sources h3 { margin-top: 0; }
+.sources li { font-size: 15px; }
+
+/* ===== MOCK FIGURES ===== */
+.mock-fig { margin: 18px 0 26px; }
+.mock-fig img { display: block; width: 100%; height: auto; max-width: 100%; border: 1px solid var(--border-bright); border-radius: 10px; background: var(--surface); }
+.mock-fig figcaption { font-size: 15px; color: var(--text-dim); margin-top: 8px; font-style: italic; }
+.mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0; }
+@media (max-width: 900px) { .mock-grid { grid-template-columns: 1fr; } }
+
+/* ===== STATUS FILTER (clickable legend chips) ===== */
+.status-legend .sl[data-status-filter] { cursor: pointer; user-select: none; transition: all 0.15s; }
+.status-legend .sl[data-status-filter]:hover { border-color: var(--transp-soft); transform: translateY(-1px); }
+.status-legend .sl[data-status-filter].active { background: var(--surface-elevated); border-color: var(--transp-soft); box-shadow: 0 0 0 1px var(--transp-soft); }
+.status-legend .reset-btn {
+  background: transparent; color: var(--text-very-dim);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-family: var(--font-mono); font-size: 14px; padding: 8px 14px;
+  cursor: pointer; transition: all 0.15s;
+}
+.status-legend .reset-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.status-legend .reset-btn[hidden] { display: none; }
+body[data-filter] [data-status]:not([data-status="exists"]):not([data-status="planned"]):not([data-status="tbd"]) { display: none; }
+body[data-filter="exists"] [data-status="planned"], body[data-filter="exists"] [data-status="tbd"] { display: none; }
+body[data-filter="planned"] [data-status="exists"], body[data-filter="planned"] [data-status="tbd"] { display: none; }
+body[data-filter="tbd"] [data-status="exists"], body[data-filter="tbd"] [data-status="planned"] { display: none; }
+.filter-banner {
+  display: none; max-width: 1100px; margin: 8px auto 18px;
+  padding: 10px 16px; font-size: 15px; color: var(--text-dim);
+  background: var(--surface); border: 1px dashed var(--text-very-dim); border-radius: 8px; text-align: center;
+}
+body[data-filter] .filter-banner { display: block; }
+
+/* ===== COPY BUTTONS ===== */
+.section-actions { display: flex; gap: 10px; align-items: center; margin: -4px 0 14px; flex-wrap: wrap; }
+.copy-btn {
+  background: var(--surface2); color: var(--text-dim);
+  border: 1px solid var(--border-bright); border-radius: 6px;
+  font-family: var(--font-mono); font-size: 14px; padding: 6px 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--surface-elevated); border-color: var(--transp-soft); color: var(--transp); }
+.copy-btn.copied { color: var(--ok); border-color: rgba(52,211,153,0.4); }
+
+/* ===== SECTION ANCHORS ===== */
+h2[id], h3[id] { scroll-margin-top: 16px; position: relative; }
+.anchor-link {
+  position: absolute; left: -22px; top: 50%; transform: translateY(-50%);
+  opacity: 0; color: var(--text-very-dim); font-size: 18px; text-decoration: none;
+  transition: opacity 0.15s, color 0.15s; padding: 0 4px;
+}
+h2:hover .anchor-link, h3:hover .anchor-link { opacity: 1; }
+.anchor-link:hover { color: var(--transp); }
+
+/* ===== GLOSSARY TERMS (inline tooltips) ===== */
+.glos { border-bottom: 1px dotted var(--transp-soft); cursor: help; position: relative; }
+.glos::after {
+  content: attr(data-def);
+  position: absolute; left: 0; top: 100%; margin-top: 6px;
+  min-width: 280px; max-width: 400px;
+  background: var(--surface-elevated); color: var(--text);
+  border: 1px solid var(--transp-soft); border-radius: 8px;
+  padding: 10px 14px; font-family: var(--font-body); font-size: 15px;
+  font-style: normal; font-weight: normal; line-height: 1.55;
+  z-index: 50; opacity: 0; pointer-events: none;
+  transform: translateY(-6px); transition: opacity 0.15s, transform 0.15s;
+  white-space: normal; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+.glos:hover::after, .glos:focus::after { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.glos-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 26px; margin: 20px 0; }
+.glos-section dl { margin: 8px 0 0; column-count: 2; column-gap: 28px; }
+.glos-section dt { font-weight: 700; color: var(--transp); margin-top: 10px; font-size: 16px; break-inside: avoid; }
+.glos-section dd { margin: 4px 0 8px 0; font-size: 15px; line-height: 1.55; color: var(--text-dim); break-inside: avoid; }
+@media (max-width: 800px) { .glos-section dl { column-count: 1; } }
+
+/* ===== FLOATING TOC (scroll-spy) ===== */
+.toc {
+  position: fixed; right: 18px; top: 100px;
+  width: 230px; max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+  font-size: 14px; z-index: 20;
+}
+.toc-title { font-family: var(--font-mono); font-size: 13px; color: var(--text-very-dim); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: 0; padding: 0; }
+.toc a { display: block; padding: 5px 10px; color: var(--text-dim); text-decoration: none; border-left: 2px solid transparent; line-height: 1.4; font-size: 14px; }
+.toc a.h3 { padding-left: 22px; font-size: 13px; }
+.toc a:hover { color: var(--text); background: var(--surface2); }
+.toc a.active { color: var(--transp); border-left-color: var(--transp); background: var(--transp-dim); }
+@media (max-width: 1380px) { .toc { display: none; } }
+
+/* ===== PRINT STYLESHEET ===== */
+@media print {
+  body { background: #fff !important; color: #111 !important; font-size: 11pt; padding: 0; background-image: none !important; }
+  .hdr h1 { -webkit-text-fill-color: #111 !important; background: none !important; color: #111 !important; }
+  .hdr .subtitle, .hdr .byline { color: #444 !important; }
+  .tabs-nav, .mm-toolbar, .mermaid-host::after, .mm-fs, .copy-btn, .toc, .status-legend, .anchor-link, .filter-banner, .section-actions { display: none !important; }
+  .tab-panel { display: block !important; page-break-before: always; }
+  .tab-panel:first-of-type { page-break-before: avoid; }
+  .caption, .card, .note, .principle, .sources, .dual .col, .layer, .mermaid-host, .glos-section {
+    background: #fff !important; border-color: #aaa !important; color: #111 !important;
+    box-shadow: none !important;
+  }
+  .caption .quote, .caption .explain, .caption .attrib, .card p, .card .ct, .card .cm,
+  .note, .principle .body, .principle .title, .principle .label,
+  .layer .what, .layer .our, .layer .name,
+  p, li, td, .mm-cap, .lede, h2, h3, h4 { color: #111 !important; }
+  h2, h3, h4 { border-color: #aaa !important; }
+  table.map th, table.map td { color: #111 !important; border-color: #aaa !important; }
+  table.map tr:nth-child(even) td { background: #f5f5f5 !important; }
+  .chip.exists { color: #15803d !important; background: #f0fdf4 !important; border-color: #15803d !important; }
+  .chip.planned { color: #a16207 !important; background: #fefce8 !important; border-color: #a16207 !important; }
+  .chip.tbd { color: #b91c1c !important; background: #fef2f2 !important; border-color: #b91c1c !important; }
+  .mermaid-host { resize: none !important; overflow: visible !important; height: auto !important; min-height: 0 !important; page-break-inside: avoid; padding: 8px; border: 1px solid #aaa !important; }
+  .mm-render { height: auto !important; cursor: default !important; overflow: visible !important; }
+  .mm-render svg { transform: none !important; max-width: 100% !important; height: auto !important; }
+  a { color: #1d4ed8 !important; }
+  code { background: #f3f4f6 !important; color: #111 !important; }
+  .glos { border-bottom: none !important; cursor: auto; }
+  .glos::after { display: none !important; }
+  .footer { color: #444 !important; border-color: #aaa !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <h1>Continuous Assessment</h1>
+    <div class="subtitle">The Boundary Manager &times; Projects model &mdash; the Boundary is the runtime control plane; a Project is the measurement of it. What buyers buy is continuous assessment via automation, not audits.</div>
+    <div class="byline">CLARK &middot; 2026-07-03 &middot; COMPANION TO transparency-architecture &middot; FOR BRIAN + KEVIN + NIC + ALL 3P DEVS</div>
+  </div>
+
+  <div class="status-legend" role="toolbar" aria-label="Filter by status">
+    <div class="sl" data-status-filter="exists" role="button" tabindex="0" title="Click to filter the doc to EXISTS only"><span class="chip exists">EXISTS</span> shipped &amp; verifiable today</div>
+    <div class="sl" data-status-filter="planned" role="button" tabindex="0" title="Click to filter the doc to PLANNED only"><span class="chip planned">PLANNED</span> designed, FR filed, not yet built</div>
+    <div class="sl" data-status-filter="tbd" role="button" tabindex="0" title="Click to filter the doc to TBD only"><span class="chip tbd">TBD</span> open question / naming not ratified</div>
+    <button class="reset-btn" id="filterReset" hidden>Show all &times;</button>
+  </div>
+  <div class="filter-banner" id="filterBanner">Filtering the doc to status: <strong id="filterBannerStatus">&mdash;</strong> &mdash; click the active chip again or "Show all" to clear.</div>
+
+  <div class="tabs-nav" role="tablist">
+    <button class="tab-btn active" data-tab="model" role="tab">1 &middot; The Model</button>
+    <button class="tab-btn" data-tab="types" role="tab">2 &middot; Program / Phase / Assessment</button>
+    <button class="tab-btn" data-tab="axes" role="tab">3 &middot; The Four Axes</button>
+    <button class="tab-btn" data-tab="scale" role="tab">4 &middot; Assessment at Scale + RDF</button>
+    <button class="tab-btn" data-tab="mocks" role="tab">5 &middot; Mocks</button>
+  </div>
+
+  <!-- ============================== TAB 1 ============================== -->
+  <div class="tab-panel active" data-panel="model" role="tabpanel">
+
+    <div class="caption">
+      <div class="quote">We are continuous assessment via automation. Period. Buyers will not buy audits; they buy continuous assessment via automation.</div>
+      <div class="attrib">&mdash; Brian Hierholzer, 2026-07-03</div>
+      <div class="explain">
+        Two apps, two roles, one seam. The <strong>Boundary</strong> is the runtime control plane &mdash; the live, operating controls / tools / data / IAM / Components as they run. It holds reality and is <strong>continuously assessed</strong>; it does not measure itself. A <strong>Project</strong> is the <strong>measurement</strong> of that runtime &mdash; a requirement-product measurement of the boundary's System state, rolled up by domain, in layerable lenses. This doc is the compliance lens on top of the transparency substrate in <code>transparency-architecture</code>.
+      </div>
+    </div>
+
+    <section>
+      <h2>The one thing to understand first</h2>
+      <p>If a design in any 3P app treats the boundary as a static manifest, or treats "an audit" as a first-class project / pipeline, it is the wrong design. <strong>Audit-as-a-project is dead</strong> (Tab&nbsp;2). The audit <em>report</em> still exists &mdash; it is a windowed projection of continuous System state (residual exhaust), not a separate thing you build. Read every claim through the status legend above; backend FR ids (<code>task-N</code>) are cited inline, tracker of record is zb/ui <code>.claude/docs/BACKEND_FEATURE_REQUESTS.md</code>.</p>
+    </section>
+
+    <section>
+      <h2>The swim-lane &mdash; two apps, two roles</h2>
+      <div class="lede">The Boundary Manager App renders the System (runtime). The Projects App renders the measurement of it. The project <em>measures</em> the runtime; it does not <em>own</em> it.</div>
+
+      <div class="mermaid-host" id="host-swim">
+        <div class="dia-id">Diagram 1</div>
+        <div class="mm-toolbar">
+          <button class="mm-btn" data-act="zoom-out" title="zoom out">&minus;</button>
+          <button class="mm-btn" data-act="zoom-in" title="zoom in">+</button>
+          <button class="mm-btn" data-act="fit" title="fit">&#9633;</button>
+          <button class="mm-btn" data-act="fs" title="fullscreen">⛶</button>
+        </div>
+        <div class="mm-render">
+          <div class="mermaid" id="dia-swim">
+flowchart LR
+  subgraph BM["BOUNDARY MANAGER — the System (runtime control plane)"]
+    direction TB
+    C["Components<br/>RACI responsibility units"]
+    SW["Software inventory"]
+    TL["Tools / enforcement"]
+    IAM["IAM · controls · data<br/>per-instance SBOMs"]
+  end
+  subgraph PR["PROJECTS — measurement + commitment"]
+    direction TB
+    M["Requirement-product measurements<br/>by domain · layerable lenses"]
+    F["Findings<br/>failed measurements"]
+  end
+  BM -->|"state firehose · continuously assessed"| M
+  M -.->|"measures the runtime (does not own it)"| BM
+  M --> F
+  classDef sys fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:1.5px;
+  classDef proj fill:#1d2130,stroke:#38bdf8,color:#e6e9f2,stroke-width:1.5px;
+  class C,SW,TL,IAM sys
+  class M,F proj
+          </div>
+        </div>
+      </div>
+      <div class="mm-cap">Shift+scroll to zoom inline; &#9633; to fit; ⛶ for fullscreen (Esc closes). Drag to pan.</div>
+
+      <div class="principle">
+        <div class="label">Vocabulary discipline &mdash; load-bearing</div>
+        <div class="title">In the project lens: measured / measurement / readiness</div>
+        <div class="body">The <strong>requirement product is the instrument</strong>; the <strong>System runtime is the measured</strong>. The project measures the runtime &mdash; it does not own it. Never say "the boundary's control" in the project lens. Inventory-completeness and tool-coverage are <strong>measurements</strong> (requirement products) on a measurement layer, not a boundary-side "control group." <strong>Findings = failed measurements</strong> (missing-component / inventory-mismatch / missing-tool / ineffective-control).</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Naming &mdash; what the thing is called at each layer</h2>
+      <p>It is <strong>not</strong> called a "project." A <code>platform.Project</code> is only the structural container.</p>
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:28%">Layer</th><th style="width:12%">Status</th><th>Name</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Product / what buyers buy</td><td><span class="chip tbd">TBD</span></td><td><strong>Continuous Assessment (via automation)</strong> &mdash; working product name, not ratified with Brian / Kevin.</td></tr>
+            <tr><td class="k">In-app umbrella</td><td><span class="chip tbd">TBD</span></td><td>a <strong>Compliance Readiness</strong> program (demo umbrella: "ZeroBias Compliance Readiness").</td></tr>
+            <tr><td class="k">Under the hood</td><td><span class="chip planned">PLANNED</span></td><td>Projects (a <strong>Program</strong> + its <strong>Phases</strong>) that <strong>measure</strong> a Boundary (a System).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== TAB 2 ============================== -->
+  <div class="tab-panel" data-panel="types" role="tabpanel">
+
+    <div class="caption">
+      <div class="quote">Audit = something reviewed as proof, passes or fails. That primitive survives and generates System state. The packaged annual deliverable is what is worthless.</div>
+      <div class="attrib">&mdash; Kevin &harr; Brian, reconciled 2026-07-03</div>
+      <div class="explain">
+        Three primary project <strong>types</strong> carry the logic: <strong style="color:var(--supply)">Program</strong> (the evergreen promise), <strong style="color:var(--demand)">Phase</strong> (the bounded build), <strong style="color:var(--transp)">Assessment</strong> (the bounded consumer of System state). Audit is a continuous <em>verb</em>, not a project.
+      </div>
+    </div>
+
+    <section>
+      <h2>Program / Phase / Assessment &mdash; the primary types</h2>
+      <div class="lede">One primary type per project, plus stackable accessory types (Tab&nbsp;3). A type bundles a lifecycle + a feature-set, and may imply a lifecycle (program &rArr; evergreen).</div>
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:16%">Type</th><th style="width:12%">Status</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="k"><strong style="color:var(--supply)">Program</strong><br/><code>evergreen</code></td><td><span class="chip planned">PLANNED</span><br/>SC-008 / task-74</td><td>The ongoing umbrella that never completes ("the promise"). <strong>Owns the canonical requirement set + the phase plan</strong>; related children roll up to it; a top-tier program serves as a <strong>portfolio</strong>. Discharges its requirements to the Boundary / System. Carries an explicit <strong>version anchor</strong> on its requirement set (the version any report cites). Absorbs the earlier "commitment" concept.</td></tr>
+            <tr><td class="k"><strong style="color:var(--demand)">Phase</strong><br/><code>standard</code></td><td><span class="chip planned">PLANNED</span></td><td>A bounded <strong>build</strong> project that <strong>rolls its requirements up to a program</strong>; on completion its residual <strong>promotes</strong> to the program's <strong>capabilities</strong> (this defines "phase done"). Requires a program parent.</td></tr>
+            <tr><td class="k"><strong style="color:var(--transp)">Assessment</strong><br/><code>standard</code></td><td><span class="chip tbd">TBD</span></td><td>A bounded project that performs an assessment ("audit without saying audit") &mdash; the point-in-time consumer that renders a deliverable from continuous System state (e.g. the blind-assessor's project). Assessment-vs-audit framing is a Brian / Kevin call.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mermaid-host" id="host-types">
+        <div class="dia-id">Diagram 2</div>
+        <div class="mm-toolbar">
+          <button class="mm-btn" data-act="zoom-out" title="zoom out">&minus;</button>
+          <button class="mm-btn" data-act="zoom-in" title="zoom in">+</button>
+          <button class="mm-btn" data-act="fit" title="fit">&#9633;</button>
+          <button class="mm-btn" data-act="fs" title="fullscreen">⛶</button>
+        </div>
+        <div class="mm-render">
+          <div class="mermaid" id="dia-types">
+flowchart TB
+  PG["PROGRAM (evergreen)<br/>owns requirement set + phase plan<br/>version anchor · never completes"]
+  PH1["PHASE (standard)<br/>bounded build · rolls up to program"]
+  PH2["PHASE (standard)<br/>bounded build · rolls up to program"]
+  CAP["Program CAPABILITIES<br/>residual promotes on phase-done"]
+  ST["SYSTEM STATE<br/>validated snapshot (state over point)"]
+  AS["ASSESSMENT (standard)<br/>renders deliverable from System state"]
+  PG --> PH1
+  PG --> PH2
+  PH1 -->|promotes residual| CAP
+  PH2 -->|promotes residual| CAP
+  CAP --> PG
+  ST --> AS
+  AS -.->|residual exhaust = report| PG
+  classDef prog fill:#1d2130,stroke:#fbbf24,color:#e6e9f2,stroke-width:1.5px;
+  classDef phase fill:#1d2130,stroke:#38bdf8,color:#e6e9f2,stroke-width:1.5px;
+  classDef ass fill:#1d2130,stroke:#c084fc,color:#e6e9f2,stroke-width:1.5px;
+  class PG,CAP prog
+  class PH1,PH2 phase
+  class AS,ST ass
+          </div>
+        </div>
+      </div>
+      <div class="mm-cap">Phases roll up to the evergreen Program and promote residual to its capabilities; an Assessment renders a report from continuous System state.</div>
+    </section>
+
+    <section>
+      <h2>Assessment (the verb) &rarr; System state (the noun) &rarr; Aperture (the lens)</h2>
+      <div class="stack">
+        <div class="layer l-shacl"><div class="name">Stateful assessment (the verb)</div><div class="what">Automated assessment across all System Components, near-real-time, at extreme granularity / frequency &mdash; a <strong>Component state firehose</strong>, rolled up at project / program layers.</div></div>
+        <div class="arr">&darr;</div>
+        <div class="layer l-system"><div class="name">System state (the noun)</div><div class="what">A validated-assessment snapshot at an interval &mdash; <strong>state over point</strong>.</div></div>
+        <div class="arr">&darr;</div>
+        <div class="layer l-proj"><div class="name">Aperture (the lens)</div><div class="what">Scope &times; time-window &times; frequency. Narrow = a point-in-time snapshot; wide = a year-long dataset. <strong>Aperture's primary job is DATA REDUCTION</strong> &mdash; it reduces the <em>view</em>, never the underlying records.</div><div class="our">A traditional "audit report" = residual exhaust = a windowed Aperture projection of System state, generated at any point.</div></div>
+      </div>
+      <div class="note info"><span class="nt">Aperture-the-lens is a boundary / runtime concept</span>Kevin, 2026-07-03: aperture-the-lens is distinct from the inert <code>aperture</code> <em>context tag</em> (Tab&nbsp;3). One reduces the assessment firehose to a consumable view; the other is just an organizational label.</div>
+
+      <h3>The assessment primitive &mdash; Check &rarr; Finding</h3>
+      <div class="note good"><span class="nt">Invariant whether run by people or bots</span>Kevin's "audit = something reviewed as proof, passes or fails" = the assessment primitive = a <strong>Check &rarr; Finding</strong> (pass/fail). It survives and <em>generates</em> System state. Brian's "audit is worthless" = the packaged annual deliverable. Both are true at different levels.</div>
+    </section>
+
+    <section>
+      <h2>Component &mdash; the boundary responsibility unit</h2>
+      <div class="note"><span class="nt" style="color:var(--entangle)">Component = a responsibility unit whose spine is RACI <span class="chip planned">PLANNED</span></span>Responsible / Accountable / Consulted / Informed over Parties + Roles. Single or grouped (same RACI &rarr; one component). Broad OSCAL-style types (software / service / hardware / &hellip; / policy / plan / procedure / standard) &times; technical|documentary. Carries an evidence obligation. <strong>Boundary "Teams" is dead &mdash; replaced by Parties + Roles + RACI.</strong></div>
+    </section>
+  </div>
+
+  <!-- ============================== TAB 3 ============================== -->
+  <div class="tab-panel" data-panel="axes" role="tabpanel">
+
+    <div class="caption">
+      <div class="quote">Load-bearing means NOT a tag. lifecycle and types drive behavior and structure, so they are structural. context and domain organize, so they are tags. project-tier is gone.</div>
+      <div class="attrib">&mdash; Kevin, project-model revision 2026-07-03</div>
+      <div class="explain">
+        The old single "project flavor" is now <strong>four orthogonal axes</strong>: two <strong>structural</strong> (the platform acts on them) and two <strong>tag</strong> axes (organizational / filtering). If your code folds engagement / domain / tier into one <code>projectTypeId</code>, this is what to unwind.
+      </div>
+    </div>
+
+    <section>
+      <h2>The four axes</h2>
+      <div class="mermaid-host" id="host-axes">
+        <div class="dia-id">Diagram 3</div>
+        <div class="mm-toolbar">
+          <button class="mm-btn" data-act="zoom-out" title="zoom out">&minus;</button>
+          <button class="mm-btn" data-act="zoom-in" title="zoom in">+</button>
+          <button class="mm-btn" data-act="fit" title="fit">&#9633;</button>
+          <button class="mm-btn" data-act="fs" title="fullscreen">⛶</button>
+        </div>
+        <div class="mm-render">
+          <div class="mermaid" id="dia-axes">
+flowchart TB
+  PJ["platform.Project"]
+  subgraph STRUCT["STRUCTURAL — the platform acts on it (SC-008 / task-74)"]
+    direction TB
+    LC["lifecycle<br/>standard | evergreen<br/>single-valued · defaults standard"]
+    TY["types<br/>primary: program / phase / assessment<br/>+ stackable accessories"]
+  end
+  subgraph TAGS["TAGS — organize / filter (tag PR #8)"]
+    direction TB
+    CX["project-context<br/>project / workspace / aperture / thread<br/>= projectTypeId · inert · not load-bearing"]
+    DM["project-domain<br/>compliance / security / privacy / financial / ..."]
+  end
+  PJ --> LC
+  PJ --> TY
+  PJ --> CX
+  PJ --> DM
+  classDef p fill:#1d2130,stroke:#c084fc,color:#e6e9f2,stroke-width:1.5px;
+  classDef s fill:#1d2130,stroke:#34d399,color:#e6e9f2,stroke-width:1.5px;
+  classDef t fill:#1d2130,stroke:#8c93a8,color:#e6e9f2,stroke-width:1.5px,stroke-dasharray:5 4;
+  class PJ p
+  class LC,TY s
+  class CX,DM t
+          </div>
+        </div>
+      </div>
+      <div class="mm-cap">Two structural axes (green, platform-enforced) and two tag axes (grey, organizational). <code>project-tier</code> is gone &mdash; depth is derivable from the containment tree.</div>
+
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:16%">Axis</th><th style="width:12%">Kind</th><th style="width:12%">Status</th><th>Values / rule</th></tr></thead>
+          <tbody>
+            <tr><td class="k"><code>lifecycle</code></td><td>structural</td><td><span class="chip planned">PLANNED</span></td><td>Enum, single-valued: <code>standard</code> (temporary; has an end) | <code>evergreen</code> (ongoing; never completes). Defaults to <code>standard</code> on create. A primary type may dictate it (program &rarr; evergreen).</td></tr>
+            <tr><td class="k"><code>types</code></td><td>structural</td><td><span class="chip planned">PLANNED</span></td><td>One <strong>primary</strong> (program / phase / assessment) + any number of <strong>stackable</strong> accessories (<code>engagement</code>, <code>transparency-entangled</code>, <code>template</code>, + domain-specific). Primary-first, with constraints (a phase needs a program parent; some types are mutually exclusive). An extensibility point &mdash; user-loadable feature packs "like making a Zoho app." <code>entanglement</code> is a feature, not structural.</td></tr>
+            <tr><td class="k"><code>project-context</code></td><td>tag</td><td><span class="chip planned">PLANNED</span></td><td>Organizational label: <code>project</code> / <code>workspace</code> / <code>aperture</code> / <code>thread</code> (extensible). "Tree-like if we want" &mdash; but <strong>NOT</strong> the structural parent-child hierarchy. Inert / not load-bearing. <strong>Renamed from <code>project-type</code> 2026-07-03.</strong> This is the axis <code>projectTypeId</code> points at.</td></tr>
+            <tr><td class="k"><code>project-domain</code></td><td>tag</td><td><span class="chip planned">PLANNED</span></td><td>The domain / GRC-vertical axis: <code>compliance</code> / <code>security</code> / <code>privacy</code> / <code>financial</code> / <code>clinical</code> / <code>quality</code> / <code>legal</code> / <code>esg</code> / <code>supply-chain</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="principle">
+        <div class="label">The rule</div>
+        <div class="title">Load-bearing &rArr; NOT a tag</div>
+        <div class="body"><code>lifecycle</code> / <code>types</code> drive behavior / structure &rarr; structural. <code>project-context</code> / <code>project-domain</code> organize &rarr; tags. Both structural axes are filterable on <code>searchProjects</code> (<code>lifecycles[]</code>, <code>types[]</code>) &mdash; superseding the engagement-query driver of PS-003 / PS-004, since <strong>engagement is now a <code>type</code></strong>.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What this means for <code>projectTypeId</code></h2>
+      <div class="note warn"><span class="nt">&#9888; The unwind (touches SME Mart / Parks)</span><code>projectTypeId</code> = the <code>project-context</code> tag axis (project / workspace / aperture / thread) &mdash; an organizational / nesting label, <strong>not load-bearing</strong>, and "tree-like if we want" (NOT an enforced matching depth label &mdash; entangled cross-org projects do <strong>not</strong> have to match). Net: <code>projectTypeId</code> carries <strong>only</strong> the context / nesting axis. Engagement, program, phase are <strong>types</strong> (structural); compliance / security / etc. are <strong>domain</strong> tags. If <code>projectTypeId</code> currently folds those in, that is what to unwind.</div>
+    </section>
+  </div>
+
+  <!-- ============================== TAB 4 ============================== -->
+  <div class="tab-panel" data-panel="scale" role="tabpanel">
+
+    <div class="caption">
+      <div class="quote">Assess with 100K assessors, pen-test with 10M pen-testers. Everyone in the marketplace is assessed all the time &mdash; a readiness mesh marketplace.</div>
+      <div class="attrib">&mdash; Brian Hierholzer, 2026-07-03 (AuditCrowd)</div>
+      <div class="explain">
+        Blind assessors, entangled at the task level into a seller's stack, build only <strong>automated assessment logic &rarr; findings</strong> against a digital twin. ZB dispatches to many, scores their logic, and &mdash; reflexively &mdash; assesses the assessors too. Assessment-at-scale is the AI moat: it trains ZB's own model with depth + variation.
+      </div>
+    </div>
+
+    <section>
+      <h2>Assessment at scale &mdash; the readiness mesh</h2>
+      <div class="cards">
+        <div class="card app-s">
+          <div class="ct" style="color:var(--supply);font-size:18px">Blind assessor / 3PAO</div>
+          <div class="cm">TBD</div>
+          <p>A separate party / project, entangled at the <strong>task level via linked projects</strong> into the seller's stack, working against a <strong>digital twin</strong>. Builds only automated assessment logic &rarr; findings. The logic is a scored product.</p>
+        </div>
+        <div class="card app-t">
+          <div class="ct" style="color:var(--transp);font-size:18px">AuditCrowd</div>
+          <div class="cm">TBD</div>
+          <p>The ranked / scored assessor crowd at extreme scale. Each supplier is assessed by ~<strong>500 different assessors</strong> on different parts of the stack (variation-maximizing); ZB ranks + scores them.</p>
+        </div>
+        <div class="card app-d">
+          <div class="ct" style="color:var(--ok);font-size:18px">Reflexive assessment</div>
+          <div class="cm">TBD</div>
+          <p>Assessors &mdash; and all transparency-marketplace participants &mdash; are themselves <strong>inside the ZB boundary and continuously assessed</strong>; their workstations boundary-scoped and hardened. Brian's "readiness mesh marketplace."</p>
+        </div>
+      </div>
+
+      <div class="mermaid-host" id="host-scale">
+        <div class="dia-id">Diagram 4</div>
+        <div class="mm-toolbar">
+          <button class="mm-btn" data-act="zoom-out" title="zoom out">&minus;</button>
+          <button class="mm-btn" data-act="zoom-in" title="zoom in">+</button>
+          <button class="mm-btn" data-act="fit" title="fit">&#9633;</button>
+          <button class="mm-btn" data-act="fs" title="fullscreen">⛶</button>
+        </div>
+        <div class="mm-render">
+          <div class="mermaid" id="dia-scale">
+flowchart LR
+  subgraph SUPPLY["SUPPLY SIDE — seller"]
+    direction TB
+    TWIN["seller stack<br/>digital twin (a System)"]
+    A1["blind assessor<br/>logic -> findings"]
+    A2["AuditCrowd<br/>~500 per supplier<br/>variation-maximizing"]
+  end
+  TC["TRANSPARENCY CENTER<br/>the shared surface BETWEEN parties<br/>findings published in · consumers read out"]
+  subgraph DEMAND["CONSUMERS — demand side"]
+    direction TB
+    BUY["buyers"]
+    REG["regulators"]
+    IG["inspectors general"]
+  end
+  TWIN -->|task-level entanglement| A1
+  TWIN --> A2
+  A1 -->|findings| TC
+  A2 -->|findings| TC
+  TC -->|read| BUY
+  TC -->|read| REG
+  TC -->|read| IG
+  MESH["READINESS MESH<br/>everyone (assessors included) is inside<br/>the ZB boundary · continuously assessed"]
+  SUPPLY -.->|reflexive| MESH
+  DEMAND -.->|reflexive| MESH
+  classDef sys fill:#1d2130,stroke:#f472b6,color:#e6e9f2,stroke-width:1.5px;
+  classDef crowd fill:#1d2130,stroke:#fbbf24,color:#e6e9f2,stroke-width:1.5px;
+  classDef tc fill:#1d2130,stroke:#34d399,color:#e6e9f2,stroke-width:2px;
+  classDef cons fill:#1d2130,stroke:#38bdf8,color:#e6e9f2,stroke-width:1.5px;
+  classDef mesh fill:#161925,stroke:#5a6178,color:#8c93a8,stroke-width:1px;
+  class TWIN sys
+  class A1,A2 crowd
+  class TC tc
+  class BUY,REG,IG cons
+  class MESH mesh
+          </div>
+        </div>
+      </div>
+      <div class="mm-cap">The Transparency Center sits <strong>between</strong> the parties: the supply side (seller + AuditCrowd) publishes findings <em>in</em>; consumers (buyers / regulators / IGs) read <em>out</em>. Everyone &mdash; assessors included &mdash; is inside the ZB boundary and continuously assessed (reflexive).</div>
+    </section>
+
+    <section>
+      <h2>RDF Compass alignment</h2>
+      <div class="lede">The model lands on the RDF-Compass vocabulary (see <code>transparency-architecture</code> &sect;11&ndash;12 for the full compass). The compliance-specific mappings:</div>
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:34%">Compliance concept</th><th>RDF-Compass / W3C</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Requirement</td><td><code>owl:Class</code> + <code>sh:NodeShape</code></td></tr>
+            <tr><td class="k">Check</td><td>SHACL validation</td></tr>
+            <tr><td class="k">Finding</td><td><code>sh:ValidationResult</code>; pass/fail = <code>sh:conforms</code> (validation-as-satisfaction, the C-1 amendment)</td></tr>
+            <tr><td class="k">Boundary</td><td><strong>System</strong></td></tr>
+            <tr><td class="k">System state</td><td>the validated-state snapshot</td></tr>
+            <tr><td class="k">Aperture</td><td>the projection over the System that produces System state</td></tr>
+            <tr><td class="k">Continuous assessment</td><td>append-only, hash-chained Records (C-3) + PROV-O provenance stream; read surface = Activity History (PS-006 / TS-002)</td></tr>
+            <tr><td class="k">Program requirement-set version</td><td>the evergreen program pins its version (C-5); reports cite the version</td></tr>
+            <tr><td class="k">Transparency Center report</td><td>the versioned RDF / JSON-LD / Turtle container (Brian's "residual exhaust")</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info"><span class="nt">Design guard (C-3)</span>The assessment store must be append-only / hash-chained. "Reduce the data set" means Aperture narrows the <em>view</em>, never prunes the ledger.</div>
+    </section>
+
+    <section>
+      <h2>Backend FRs</h2>
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:14%">FR</th><th style="width:12%">id</th><th>What</th><th style="width:10%">Owner</th><th style="width:14%">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="k">SC-008</td><td><code>task-74</code></td><td><code>lifecycle</code> + <code>types</code> structural attrs on <code>platform.Project</code> + <code>searchProjects</code> filters</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
+            <tr><td class="k">PS-003</td><td><code>task-30</code></td><td>generic <code>tagIds[]</code> filter on projectSearch (re-scoped off engagement)</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
+            <tr><td class="k">PS-004</td><td><code>task-34</code></td><td><code>searchProjects</code> filter for Engagement Projects</td><td>Nic</td><td><span class="chip exists">EXISTS</span></td></tr>
+            <tr><td class="k">RC-001</td><td><code>task-73</code></td><td>product catalog &rarr; requirement-products (private + global; pricing / licensing)</td><td>Kevin</td><td><span class="chip tbd">TBD</span></td></tr>
+            <tr><td class="k">CAL-001/002</td><td><code>task-67/68</code></td><td>Calendar model + event endpoints</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
+            <tr><td class="k">PS-006 / TS-002</td><td><code>task-46/47</code></td><td>Project / Task change history (RDF-Compass provenance read surface)</td><td>Chris</td><td><span class="chip planned">PLANNED</span></td></tr>
+            <tr><td class="k">tag PR #8</td><td>&mdash;</td><td><code>project-context</code> + <code>project-domain</code> tag-types (<code>zerobias-com/tag</code>)</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="glossary">Glossary</h2>
+      <div class="section-actions">
+        <button class="copy-btn" data-copy-target="copy-glossary" title="Copy the glossary as Markdown">📋 Copy glossary</button>
+      </div>
+      <template id="copy-glossary">## Glossary — Continuous Assessment model
+
+- **Continuous Assessment** — the product: continuous, automated measurement of a runtime System against a requirement set. What buyers buy (not audits).
+- **Boundary / System** — the runtime control plane: live controls / tools / data / IAM / components as they run. Continuously assessed; does not self-measure.
+- **System state** — a validated-assessment snapshot of the System at an interval ("state over point").
+- **Aperture** — the lens (scope x time-window x frequency) that reduces the assessment firehose to a consumable view; reduces the view, never the ledger.
+- **Program** — evergreen umbrella project (type=program); owns the requirement set + phase plan + version anchor; a top-tier program is a portfolio.
+- **Phase** — bounded build project (type=phase); rolls requirements up to a program; residual promotes to program capabilities on completion.
+- **Assessment** — bounded project (type=assessment) that renders a deliverable from continuous System state.
+- **Check -> Finding** — the assessment primitive: a pass/fail review, invariant whether run by people or bots; generates System state.
+- **Finding** — a failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).
+- **Component** — a boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary "Teams" is dead.)
+- **lifecycle** — structural enum on platform.Project: standard | evergreen.
+- **types** — structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).
+- **project-context** — inert tag axis (project/workspace/aperture/thread); what projectTypeId points at; not load-bearing.
+- **project-domain** — tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.
+- **AuditCrowd** — the ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.
+- **Readiness mesh** — every marketplace participant (assessors included) is inside the ZB boundary and continuously assessed.</template>
+      <div class="glos-section">
+        <dl>
+          <dt>Continuous Assessment</dt><dd>The product: continuous, automated measurement of a runtime System against a requirement set. What buyers buy (not audits).</dd>
+          <dt>Boundary / System</dt><dd>The runtime control plane: live controls / tools / data / IAM / components as they run. Continuously assessed; does not self-measure.</dd>
+          <dt>System state</dt><dd>A validated-assessment snapshot of the System at an interval ("state over point").</dd>
+          <dt>Aperture</dt><dd>The lens (scope &times; time-window &times; frequency) that reduces the assessment firehose to a consumable view; reduces the view, never the ledger.</dd>
+          <dt>Program</dt><dd>Evergreen umbrella project (<code>type=program</code>); owns the requirement set + phase plan + version anchor; a top-tier program is a portfolio.</dd>
+          <dt>Phase</dt><dd>Bounded build project (<code>type=phase</code>); rolls requirements up to a program; residual promotes to program capabilities on completion.</dd>
+          <dt>Assessment</dt><dd>Bounded project (<code>type=assessment</code>) that renders a deliverable from continuous System state.</dd>
+          <dt>Check &rarr; Finding</dt><dd>The assessment primitive: a pass/fail review, invariant whether run by people or bots; generates System state.</dd>
+          <dt>Finding</dt><dd>A failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).</dd>
+          <dt>Component</dt><dd>A boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary "Teams" is dead.)</dd>
+          <dt>lifecycle</dt><dd>Structural enum on <code>platform.Project</code>: <code>standard</code> | <code>evergreen</code>.</dd>
+          <dt>types</dt><dd>Structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).</dd>
+          <dt>project-context</dt><dd>Inert tag axis (project/workspace/aperture/thread); what <code>projectTypeId</code> points at; not load-bearing.</dd>
+          <dt>project-domain</dt><dd>Tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.</dd>
+          <dt>AuditCrowd</dt><dd>The ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.</dd>
+          <dt>Readiness mesh</dt><dd>Every marketplace participant (assessors included) is inside the ZB boundary and continuously assessed.</dd>
+        </dl>
+      </div>
+
+      <div class="sources">
+        <h3>Sources</h3>
+        <ul>
+          <li>Model source of truth: <code>~/Projects/zb/boundary-projects-mocks/MODEL.md</code> (kept current by the zb/ui Director).</li>
+          <li>Backend FRs: zb/ui <code>.claude/docs/BACKEND_FEATURE_REQUESTS.md</code>.</li>
+          <li>Transparency substrate + RDF compass: <a href="./transparency-architecture.md"><code>transparency-architecture.md</code></a> · <a href="./transparency-architecture.html"><code>transparency-architecture.html</code></a>.</li>
+          <li>Companion LLM doc: <a href="./continuous-assessment-model.md"><code>continuous-assessment-model.md</code></a>.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== TAB 5 ============================== -->
+  <div class="tab-panel" data-panel="mocks" role="tabpanel">
+    <section>
+      <h2>Mocks</h2>
+      <div class="note info"><span class="nt">Current snapshots &mdash; more landing next sync</span>These PNGs are current captures from the Boundary Manager &times; Projects mock workspace. The full interactive HTML mock set is being finalized by the zb/ui Director (<code>ui-meta-director</code>) and will be added on the next sync. Treat the visuals as directional, same as the model.</div>
+
+      <h3>Boundary Manager App &mdash; the System (runtime control plane)</h3>
+      <div class="mock-grid">
+        <figure class="mock-fig"><img src="mocks/bm-shell-overview.png" alt="Boundary Manager overview shell" loading="lazy"><figcaption>Boundary Manager &mdash; overview shell (the app frame).</figcaption></figure>
+        <figure class="mock-fig"><img src="mocks/bm-shell-operations-center.png" alt="Boundary Manager Operations Center shell" loading="lazy"><figcaption>Operations Center &mdash; Components / Software / Tools inventories (the runtime).</figcaption></figure>
+      </div>
+      <figure class="mock-fig"><img src="mocks/bm-components-list.png" alt="Components list mock" loading="lazy"><figcaption><code>bm-components-list</code> &mdash; Components as RACI responsibility units.</figcaption></figure>
+      <figure class="mock-fig"><img src="mocks/bm-component-detail.png" alt="Component detail mock" loading="lazy"><figcaption><code>bm-component-detail</code> &mdash; Component detail + SBOM tab + RACI panel.</figcaption></figure>
+
+      <h3>Projects App &mdash; measurement + commitment</h3>
+      <figure class="mock-fig"><img src="mocks/projects-cmmc-readiness.png" alt="CMMC readiness mock" loading="lazy"><figcaption><code>projects-cmmc-readiness</code> &mdash; CMMC readiness tree with framework / inventory / tool / effectiveness measurement layers.</figcaption></figure>
+      <figure class="mock-fig"><img src="mocks/projects-shell-empty.png" alt="Projects App empty shell" loading="lazy"><figcaption>Projects App &mdash; empty shell (the measurement + commitment app frame).</figcaption></figure>
+
+      <h4>Also in the set (HTML mocks, being finalized &mdash; not yet captured here)</h4>
+      <ul>
+        <li><strong>Boundary Manager:</strong> <code>bm-software-inventory</code>, <code>bm-tool-inventory</code>.</li>
+        <li><strong>Projects:</strong> <code>program-overview</code>, <code>program-readiness</code>, <code>projects-overview</code>, <code>projects-requirements</code>, <code>projects-coverage-forecast</code>, <code>projects-boards</code>, <code>projects-board-kanban</code> (<code>?b=findings|remediation|evidence</code>).</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="footer">CLARK &middot; 2026-07-03 &middot; CONTINUOUS ASSESSMENT &mdash; BOUNDARY MANAGER &times; PROJECTS &middot; COMPANION TO transparency-architecture &middot; SOURCE: boundary-projects-mocks/MODEL.md</div>
+
+</div>
+
+<!-- Floating TOC (scroll-spy) -->
+<aside class="toc" id="toc" aria-label="On this page">
+  <div class="toc-title">On this page</div>
+  <ul id="toc-list"></ul>
+</aside>
+
+<!-- Fullscreen overlay -->
+<div class="mm-fs" id="mmFs">
+  <div class="mm-toolbar">
+    <span class="label" id="mmFsLabel"></span>
+    <button class="mm-btn" data-act="zoom-out" title="zoom out">&minus;</button>
+    <button class="mm-btn" data-act="zoom-in" title="zoom in">+</button>
+    <button class="mm-btn" data-act="fit" title="fit">&#9633;</button>
+    <button class="mm-btn" data-act="close" title="close (Esc)">&#10005;</button>
+  </div>
+  <div class="mm-render" id="mmFsRender"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+// ===== TAB SWITCHING (re-fit mermaid in the activated panel) =====
+(function() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.toggle('active', p.getAttribute('data-panel') === key);
+      });
+      const panel = document.querySelector('.tab-panel[data-panel="' + key + '"]');
+      if (panel && window.renderPanel) window.renderPanel(panel);
+      if (panel && window.updateTocFor) window.updateTocFor(panel);
+      if (window.updateUrlForTab) window.updateUrlForTab(key);
+    });
+  });
+})();
+
+// ===== MERMAID INIT =====
+mermaid.initialize({
+  startOnLoad: false, theme: 'dark', darkMode: true, securityLevel: 'loose',
+  flowchart: { htmlLabels: true, curve: 'basis', nodeSpacing: 60, rankSpacing: 70, padding: 24, useMaxWidth: false, wrappingWidth: 280 },
+  themeVariables: {
+    fontSize: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    primaryColor: '#1d2130', primaryTextColor: '#e6e9f2', primaryBorderColor: '#c084fc', lineColor: '#8c93a8',
+    secondaryColor: '#161925', tertiaryColor: '#0e1018', background: '#0e1018',
+    clusterBkg: '#161925', clusterBorder: '#5a6178', edgeLabelBackground: '#161925'
+  }
+});
+
+// ===== PAN + ZOOM =====
+function attachPanZoom(host) {
+  const render = host.querySelector('.mm-render');
+  const state = { scale: 1, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
+  function apply() { const svg = render.querySelector('svg'); if (!svg) return; svg.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`; }
+  function zoom(factor, cx, cy) { const ns = Math.max(0.1, Math.min(8, state.scale * factor)); const k = ns / state.scale; state.tx = cx - k * (cx - state.tx); state.ty = cy - k * (cy - state.ty); state.scale = ns; apply(); }
+  function fit() {
+    const svg = render.querySelector('svg'); if (!svg) return;
+    let bb; try { bb = svg.getBBox(); } catch (_) { return; }
+    const rw = render.clientWidth, rh = render.clientHeight;
+    if (!rw || !rh || !bb.width || !bb.height) return;
+    const m = 20;
+    const s = Math.min((rw - m*2) / bb.width, (rh - m*2) / bb.height);
+    state.scale = Math.max(0.1, Math.min(8, s));
+    state.tx = (rw - bb.width * state.scale) / 2 - bb.x * state.scale;
+    state.ty = (rh - bb.height * state.scale) / 2 - bb.y * state.scale;
+    apply();
+  }
+  host.querySelectorAll('.mm-toolbar .mm-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const a = btn.dataset.act; const r = render.getBoundingClientRect();
+      if (a === 'zoom-in') zoom(1.3, r.width/2, r.height/2);
+      if (a === 'zoom-out') zoom(0.7, r.width/2, r.height/2);
+      if (a === 'fit') fit();
+      if (a === 'fs') openFullscreen(host);
+    });
+  });
+  render.addEventListener('mousedown', (e) => { state.dragging = true; state.sx = e.clientX - state.tx; state.sy = e.clientY - state.ty; render.classList.add('dragging'); });
+  window.addEventListener('mousemove', (e) => { if (!state.dragging) return; state.tx = e.clientX - state.sx; state.ty = e.clientY - state.sy; apply(); });
+  window.addEventListener('mouseup', () => { state.dragging = false; render.classList.remove('dragging'); });
+  render.addEventListener('wheel', (e) => {
+    if (!host.classList.contains('mm-fs') && !host.closest('.mm-fs.active')) { if (!e.shiftKey) return; }
+    e.preventDefault(); const r = render.getBoundingClientRect();
+    zoom(e.deltaY < 0 ? 1.3 : 0.7, e.clientX - r.left, e.clientY - r.top);
+  }, { passive: false });
+  host._panzoom = { fit, zoom, apply, state };
+}
+
+// ===== FULLSCREEN =====
+const fsEl = document.getElementById('mmFs');
+const fsRender = document.getElementById('mmFsRender');
+const fsLabel = document.getElementById('mmFsLabel');
+let fsActiveHost = null, fsOriginalParent = null;
+function openFullscreen(host) {
+  const svg = host.querySelector('.mm-render svg'); if (!svg) return;
+  fsActiveHost = host; fsOriginalParent = host.querySelector('.mm-render');
+  fsLabel.textContent = host.id.replace('host-', '').toUpperCase() + ' · fullscreen';
+  fsRender.innerHTML = ''; fsRender.appendChild(svg); fsEl.classList.add('active');
+  if (!fsEl._panZoomBound) { attachPanZoom(fsEl); fsEl._panZoomBound = true; }
+  requestAnimationFrame(() => { if (fsEl._panzoom) { fsEl._panzoom.state.scale = 1; fsEl._panzoom.state.tx = 0; fsEl._panzoom.state.ty = 0; fsEl._panzoom.fit(); } });
+}
+function closeFullscreen() {
+  if (!fsActiveHost) return;
+  const svg = fsRender.querySelector('svg');
+  if (svg && fsOriginalParent) {
+    fsOriginalParent.appendChild(svg); svg.style.transform = '';
+    if (fsActiveHost._panzoom) { fsActiveHost._panzoom.state.scale = 1; fsActiveHost._panzoom.state.tx = 0; fsActiveHost._panzoom.state.ty = 0; fsActiveHost._panzoom.fit(); }
+  }
+  fsEl.classList.remove('active'); fsActiveHost = null; fsOriginalParent = null;
+}
+fsEl.querySelectorAll('.mm-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const a = btn.dataset.act;
+    if (a === 'close') closeFullscreen();
+    if (a === 'zoom-in' && fsEl._panzoom) fsEl._panzoom.zoom(1.3, fsRender.clientWidth/2, fsRender.clientHeight/2);
+    if (a === 'zoom-out' && fsEl._panzoom) fsEl._panzoom.zoom(0.7, fsRender.clientWidth/2, fsRender.clientHeight/2);
+    if (a === 'fit' && fsEl._panzoom) fsEl._panzoom.fit();
+  });
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fsEl.classList.contains('active')) closeFullscreen(); });
+
+// ===== LAZY RENDER PER VISIBLE PANEL =====
+async function renderPanel(panel) {
+  const nodes = Array.from(panel.querySelectorAll('.mermaid:not([data-processed])'));
+  if (nodes.length) {
+    try { await mermaid.run({ nodes, suppressErrors: true }); } catch (_) {}
+  }
+  requestAnimationFrame(() => {
+    panel.querySelectorAll('.mermaid-host').forEach(host => {
+      if (!host._panzoom) attachPanZoom(host);
+      if (host._panzoom) host._panzoom.fit();
+    });
+  });
+}
+window.renderPanel = renderPanel;
+
+// ===== SECTION ANCHORS =====
+function slugify(s) {
+  return s.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60);
+}
+function buildAnchors() {
+  document.querySelectorAll('.tab-panel h2, .tab-panel h3').forEach(h => {
+    if (!h.id) {
+      let base = slugify(h.textContent), id = base, n = 2;
+      while (id && document.getElementById(id) && document.getElementById(id) !== h) id = base + '-' + (n++);
+      if (id) h.id = id;
+    }
+    if (h.querySelector('.anchor-link')) return;
+    const a = document.createElement('a');
+    a.href = '#' + h.id; a.className = 'anchor-link'; a.textContent = '¶';
+    a.title = 'Copy link to this section';
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = document.querySelector('.tab-btn.active');
+      const url = location.origin + location.pathname + (tab ? '?tab=' + tab.dataset.tab : '') + '#' + h.id;
+      navigator.clipboard.writeText(url).then(() => {
+        a.textContent = '✓';
+        setTimeout(() => { a.textContent = '¶'; }, 1500);
+      }).catch(() => {});
+    });
+    h.prepend(a);
+  });
+}
+
+// ===== URL STATE =====
+function updateUrlForTab(tab) {
+  const url = new URL(location.href);
+  url.searchParams.set('tab', tab);
+  history.replaceState(null, '', url);
+}
+window.updateUrlForTab = updateUrlForTab;
+
+// ===== STATUS FILTER =====
+function autoTagStatusBlocks() {
+  document.querySelectorAll('.tab-panel .chip.exists, .tab-panel .chip.planned, .tab-panel .chip.tbd').forEach(chip => {
+    const status = chip.classList.contains('exists') ? 'exists' : chip.classList.contains('planned') ? 'planned' : 'tbd';
+    const container = chip.closest('tr, .card, .note, li');
+    if (container && !container.dataset.status) container.dataset.status = status;
+  });
+  document.querySelectorAll('.tab-panel .card .cm').forEach(cm => {
+    const t = cm.textContent.trim().toLowerCase();
+    const map = { 'exists': 'exists', 'planned': 'planned', 'tbd': 'tbd' };
+    if (map[t]) {
+      const card = cm.closest('.card');
+      if (card && !card.dataset.status) card.dataset.status = map[t];
+    }
+  });
+}
+function setFilter(s) {
+  const reset = document.getElementById('filterReset');
+  const banner = document.getElementById('filterBannerStatus');
+  if (s) {
+    document.body.dataset.filter = s;
+    document.querySelectorAll('.status-legend .sl[data-status-filter]').forEach(x => x.classList.toggle('active', x.dataset.statusFilter === s));
+    if (reset) reset.hidden = false;
+    if (banner) banner.textContent = s.toUpperCase();
+  } else {
+    delete document.body.dataset.filter;
+    document.querySelectorAll('.status-legend .sl[data-status-filter]').forEach(x => x.classList.remove('active'));
+    if (reset) reset.hidden = true;
+  }
+  const active = document.querySelector('.tab-panel.active');
+  if (active && window.renderPanel) window.renderPanel(active);
+}
+function wireFilter() {
+  document.querySelectorAll('.status-legend .sl[data-status-filter]').forEach(el => {
+    const click = () => {
+      const current = document.body.dataset.filter;
+      setFilter(current === el.dataset.statusFilter ? null : el.dataset.statusFilter);
+    };
+    el.addEventListener('click', click);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); click(); } });
+  });
+  const reset = document.getElementById('filterReset');
+  if (reset) reset.addEventListener('click', () => setFilter(null));
+}
+
+// ===== COPY BUTTONS =====
+function wireCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    const orig = btn.textContent;
+    btn.addEventListener('click', async () => {
+      const tpl = document.getElementById(btn.dataset.copyTarget);
+      if (!tpl) return;
+      const txt = (tpl.content ? tpl.content.textContent : tpl.textContent).replace(/^\s+|\s+$/g, '');
+      try { await navigator.clipboard.writeText(txt); btn.textContent = '✓ copied'; btn.classList.add('copied'); }
+      catch (_) { btn.textContent = 'copy failed'; }
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+    });
+  });
+}
+
+// ===== GLOSSARY TOOLTIPS (auto-tag select containers) =====
+const GLOSSARY = {
+  'Continuous Assessment': 'The product: continuous, automated measurement of a runtime System against a requirement set. What buyers buy (not audits).',
+  'System state': 'A validated-assessment snapshot of the System at an interval ("state over point").',
+  'Aperture': 'The lens (scope x time-window x frequency) that reduces the assessment firehose to a consumable view; reduces the view, never the ledger.',
+  'System': 'A Boundary as the runtime control plane: live controls / tools / data / IAM / components as they run. Continuously assessed; does not self-measure.',
+  'Program': 'Evergreen umbrella project (type=program); owns the requirement set + phase plan + version anchor; a top-tier program is a portfolio.',
+  'Phase': 'Bounded build project (type=phase); rolls requirements up to a program; residual promotes to program capabilities on completion.',
+  'Assessment': 'Bounded project (type=assessment) that renders a deliverable from continuous System state.',
+  'Component': 'A boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary Teams is dead.)',
+  'Finding': 'A failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).',
+  'lifecycle': 'Structural enum on platform.Project: standard | evergreen.',
+  'types': 'Structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).',
+  'project-context': 'Inert tag axis (project/workspace/aperture/thread); what projectTypeId points at; not load-bearing.',
+  'project-domain': 'Tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.',
+  'AuditCrowd': 'The ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.',
+  'readiness mesh': 'Every marketplace participant (assessors included) is inside the ZB boundary and continuously assessed.',
+  'Boundary': 'The runtime control plane (a System). Holds reality; continuously assessed; does not measure itself.'
+};
+function tagGlossaryAll() {
+  const terms = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+  document.querySelectorAll('.caption .explain, .lede, .principle .body').forEach(root => {
+    const used = new Set();
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        if (p.closest('code, a, button, .glos, .chip, h1, h2, h3, h4')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = []; let n; while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(node => {
+      let text = node.nodeValue;
+      const matches = [];
+      terms.forEach(term => {
+        if (used.has(term)) return;
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp('(^|[^\\w])(' + escaped + ')(?=[^\\w]|$)');
+        const m = re.exec(text);
+        if (m) { const start = m.index + m[1].length; matches.push({ start, end: start + term.length, term }); used.add(term); }
+      });
+      if (!matches.length) return;
+      matches.sort((a, b) => a.start - b.start);
+      const clean = []; let lastEnd = -1;
+      matches.forEach(m => { if (m.start >= lastEnd) { clean.push(m); lastEnd = m.end; } });
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      clean.forEach(m => {
+        if (m.start > last) frag.appendChild(document.createTextNode(text.slice(last, m.start)));
+        const span = document.createElement('span');
+        span.className = 'glos'; span.setAttribute('data-def', GLOSSARY[m.term]); span.setAttribute('tabindex', '0');
+        span.textContent = text.slice(m.start, m.end);
+        frag.appendChild(span); last = m.end;
+      });
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+}
+
+// ===== FLOATING TOC (scroll-spy) =====
+let _tocObserver = null;
+function updateTocFor(panel) {
+  const list = document.getElementById('toc-list');
+  if (!list || !panel) return;
+  list.innerHTML = '';
+  const heads = Array.from(panel.querySelectorAll('h2, h3'));
+  heads.forEach(h => {
+    if (!h.id) return;
+    const a = document.createElement('a');
+    a.href = '#' + h.id; a.dataset.target = h.id;
+    a.textContent = h.textContent.replace(/^¶/, '').trim();
+    if (h.tagName === 'H3') a.classList.add('h3');
+    a.addEventListener('click', (e) => { e.preventDefault(); h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    const li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+  });
+  if (_tocObserver) _tocObserver.disconnect();
+  _tocObserver = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        document.querySelectorAll('#toc-list a').forEach(a => a.classList.toggle('active', a.dataset.target === en.target.id));
+      }
+    });
+  }, { rootMargin: '-20% 0px -65% 0px' });
+  heads.forEach(h => { if (h.id) _tocObserver.observe(h); });
+}
+window.updateTocFor = updateTocFor;
+
+// ===== ON LOAD =====
+async function renderAndBind() {
+  try { await document.fonts.ready; } catch (_) {}
+  buildAnchors();
+  autoTagStatusBlocks();
+  tagGlossaryAll();
+  wireFilter();
+  wireCopyButtons();
+  const params = new URLSearchParams(location.search);
+  const wantTab = params.get('tab');
+  if (wantTab) {
+    const target = document.querySelector('.tab-btn[data-tab="' + wantTab + '"]');
+    const current = document.querySelector('.tab-btn.active');
+    if (target && target !== current) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      target.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === wantTab));
+    }
+  }
+  const active = document.querySelector('.tab-panel.active');
+  if (active) { await renderPanel(active); updateTocFor(active); }
+  if (location.hash) {
+    setTimeout(() => { const el = document.querySelector(location.hash); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 250);
+  }
+}
+window.addEventListener('load', renderAndBind);
+</script>
+</body>
+</html>
