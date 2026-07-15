@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Transparency Center (ZeroBias Compliance Readiness) — entanglement, blind assessors, readiness mesh — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; }
+
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; font-weight:500; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.program{ background:#C5E1A5; }
+  .typechip{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; background:#33304d; color:#bcaef0; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; } .rsub b{ color:#c3c8d2; }
+
+  .ptabs{ display:flex; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  .wrap{ margin:14px 16px 24px; display:flex; gap:16px; align-items:flex-start; }
+  .col-l{ flex:1.5; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .col-r{ flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .panel > .head{ display:flex; align-items:center; justify-content:space-between; padding:8px 4px; gap:12px; }
+  .panel > .head h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .panel > .head .hint{ font-size:12px; color:#8a8f9a; font-weight:400; }
+  .pbody{ background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); padding:18px 20px; }
+
+  /* entanglement diagram */
+  .ent{ display:flex; align-items:stretch; gap:0; }
+  .party{ flex:1; background:#1b1b1b; border-radius:9px; padding:14px 15px; display:flex; flex-direction:column; gap:9px; }
+  .party.seller{ box-shadow:inset 0 0 0 1px #2f5233; } .party.buyer{ box-shadow:inset 0 0 0 1px #23384d; }
+  .party h3{ font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .party.seller h3{ color:#8fd06a; } .party.buyer h3{ color:#8fc7f0; }
+  .party .sub{ font-size:11px; color:#8a8f9a; }
+  .node{ background:#2a2a2a; border-radius:6px; padding:8px 10px; font-size:12.5px; color:#dfe3ea; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .node .mut{ font-size:10px; color:#7d828d; }
+  .node.pub{ box-shadow:inset 0 0 0 1px #2f5233; } .node.omit{ opacity:.45; }
+  .conn{ width:120px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:#7d828d; font-size:11px; text-align:center; }
+  .conn .tc{ background:#2a2418; color:#d9ad6b; border-radius:6px; padding:8px 10px; font-weight:700; font-size:12px; box-shadow:inset 0 0 0 1px #5c4a25; }
+  .conn .a{ width:100%; height:2px; background:linear-gradient(90deg,#2f5233,#5c4a25,#23384d); border-radius:2px; }
+  .lbl{ font-size:10px; color:#8a8f9a; letter-spacing:.03em; }
+
+  .assessor{ margin-top:16px; background:#1b1b1b; border-radius:9px; padding:14px 15px; box-shadow:inset 0 0 0 1px #3a2f4d; }
+  .assessor h3{ font-size:13px; font-weight:700; color:#bcaef0; display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .chain{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .cnode{ background:#2a2a2a; border-radius:6px; padding:9px 12px; font-size:12.5px; color:#dfe3ea; flex:none; }
+  .cnode b{ color:#fff; } .cnode .m{ display:block; font-size:10px; color:#7d828d; margin-top:2px; }
+  .carrow{ color:#6a6f78; font-size:16px; }
+  .blindtag{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; background:#33304d; color:#bcaef0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+
+  /* consumer cards */
+  .consumer{ display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+  .consumer:last-child{ border-bottom:none; }
+  .cav{ width:34px; height:34px; border-radius:7px; flex:none; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .cinfo{ flex:1; min-width:0; } .cinfo .cn{ font-size:14px; font-weight:600; color:#eaeaea; } .cinfo .cd{ font-size:12px; color:#9aa0aa; margin-top:2px; line-height:1.4; }
+  .csees{ font-size:11px; color:#7fd6a8; margin-top:3px; }
+
+  /* crowd metrics */
+  .metrics{ display:flex; gap:12px; flex-wrap:wrap; }
+  .metric{ flex:1; min-width:120px; background:#1b1b1b; border-radius:8px; padding:13px 14px; }
+  .metric .n{ font-size:24px; font-weight:700; color:#fff; line-height:1; } .metric .l{ font-size:11px; color:#8a8f9a; margin-top:6px; text-transform:uppercase; letter-spacing:.04em; }
+  .arow{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .arow:last-child{ border-bottom:none; }
+  .rank{ width:22px; flex:none; font-weight:700; color:#d9ad6b; font-size:13px; }
+  .aname{ flex:1; color:#dfe3ea; } .aname .m{ font-size:11px; color:#7d828d; }
+  .score{ font-weight:700; color:#8fd06a; font-variant-numeric:tabular-nums; }
+  .asmall{ font-size:11px; color:#7d828d; }
+
+  .mesh{ font-size:12.5px; color:#c3c8d2; line-height:1.55; background:#2a2418; border-left:3px solid #d9ad6b; border-radius:6px; padding:12px 14px; }
+  .mesh b{ color:#e6b15e; }
+  .tur{ color:#7fd6a8; }
+
+  /* ===== Entangled tasks ledger (Requirement <> Satisfaction pairs) ===== */
+  .ledger{ display:flex; flex-direction:column; }
+  .lgroup{ border-top:1px solid rgba(255,255,255,.08); padding-bottom:4px; }
+  .lgroup:first-child{ border-top:none; }
+  .lghead{ display:flex; align-items:center; gap:9px; padding:12px 4px 6px; }
+  .lghead .cpbadge{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .cpbadge.buyer{ background:#23384d; color:#8fc7f0; } .cpbadge.reg{ background:#2a2418; color:#d9ad6b; } .cpbadge.assessor{ background:#33304d; color:#bcaef0; }
+  .lghead .cpname{ font-size:13px; font-weight:700; color:#eaeaea; }
+  .lghead .cpkind{ font-size:11px; color:#8a8f9a; }
+  .colhdr{ display:grid; grid-template-columns:1fr 230px 1fr; gap:14px; padding:4px 4px 6px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; }
+  .colhdr span:nth-child(2){ text-align:center; }
+  .colhdr span:last-child{ text-align:right; }
+  .lrow{ display:grid; grid-template-columns:1fr 230px 1fr; gap:14px; align-items:center; padding:8px 4px; border-radius:8px; cursor:pointer; }
+  .lrow:hover{ background:rgba(255,255,255,.03); }
+  .lrow.sel{ background:rgba(3,175,240,.08); box-shadow:inset 0 0 0 1px #2f5a72; }
+  .tcard{ background:#2a2a2a; border-radius:7px; padding:9px 11px; min-width:0; }
+  .tcard.right{ text-align:right; }
+  .tcard .tn{ font-size:13px; color:#eaeaea; font-weight:500; line-height:1.3; }
+  .tcard .tmeta{ font-size:10.5px; color:#7d828d; margin-top:3px; }
+  .tcard.dim{ opacity:.5; }
+  .tstat{ display:inline-flex; align-items:center; gap:5px; height:19px; padding:0 8px; border-radius:4px; font-size:10.5px; font-weight:600; margin-top:6px; }
+  .tstat::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .tcard.right .tstat{ flex-direction:row-reverse; }
+  .tstat.ok{ background:#1f3d17; color:#8fd06a; } .tstat.warn{ background:#4a3320; color:#e6b15e; }
+  .tstat.bad{ background:#5a2020; color:#f0a09c; } .tstat.mute{ background:#3a3a3a; color:#9aa0aa; }
+  .lmid{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .linkchip{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:5px; background:#2a2418; color:#d9ad6b; font-size:11px; font-weight:700; box-shadow:inset 0 0 0 1px #5c4a25; }
+  .linkchip.blind{ background:#2a2440; color:#bcaef0; box-shadow:inset 0 0 0 1px #4a3d6b; }
+  .linkarrow{ display:flex; align-items:center; gap:3px; width:100%; }
+  .linkarrow .line{ flex:1; height:2px; border-radius:2px; background:linear-gradient(90deg,#2f5233,#5c4a25,#23384d); }
+  .linkarrow .ah{ color:#6a6f78; font-size:11px; margin-top:-2px; }
+  .linkstate{ font-size:10px; color:#8a8f9a; text-align:center; }
+  .linkstate.live{ color:#7fd6a8; } .linkstate.omit{ color:#7d828d; } .linkstate.bad{ color:#f0a09c; }
+  .prov{ font-size:9.5px; color:#6a6f78; }
+
+  /* twinned kanban drill-in */
+  .twin{ display:grid; grid-template-columns:1fr 160px 1fr; gap:0; align-items:stretch; }
+  .tboard{ background:#1b1b1b; border-radius:9px; padding:12px 13px; }
+  .tboard.seller{ box-shadow:inset 0 0 0 1px #2f5233; } .tboard.cp{ box-shadow:inset 0 0 0 1px #23384d; }
+  .tbhead{ font-size:12.5px; font-weight:700; }
+  .tboard.seller .tbhead{ color:#8fd06a; } .tboard.cp .tbhead{ color:#8fc7f0; }
+  .tbsub{ font-size:10.5px; color:#7d828d; margin:2px 0 11px; }
+  .tlanes{ display:flex; gap:8px; }
+  .tlane{ flex:1; min-width:0; }
+  .lane-h{ font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; padding:0 0 6px; }
+  .kcard{ background:#2a2a2a; border-radius:6px; padding:7px 9px; font-size:11px; color:#cfd3da; margin-bottom:6px; line-height:1.3; }
+  .kcard.linked{ box-shadow:0 0 0 2px #03aff0; background:#22303a; color:#fff; font-weight:500; }
+  .kcard .kid{ font-size:9px; color:#7d828d; display:block; margin-top:3px; }
+  .twinmid{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:0 8px; text-align:center; }
+  .twinmid .tm-line{ width:100%; height:2px; background:linear-gradient(90deg,#2f5233,#03aff0,#23384d); border-radius:2px; }
+  .twinmid .tm-t{ font-size:12px; font-weight:700; color:#d9ad6b; }
+  .twinmid .tm-s{ font-size:10px; color:#7fd6a8; line-height:1.3; }
+  .twinmid .tm-p{ font-size:9.5px; color:#6a6f78; }
+
+  /* demand-side fan-out chips + measured-by */
+  .dgrid{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+  .dchip{ display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:5px; background:#23384d; color:#8fc7f0; font-size:11px; font-weight:600; }
+  .dchip.ins{ background:#2a2440; color:#bcaef0; }
+  .measby{ display:inline-flex; align-items:center; gap:4px; font-size:9.5px; color:#bcaef0; }
+  .measby::before{ content:""; width:5px; height:5px; border-radius:50%; background:#bcaef0; }
+  .lgnote{ font-size:12px; color:#c3c8d2; line-height:1.5; background:#2a2440; border-left:3px solid #bcaef0; border-radius:6px; padding:11px 14px; margin:2px 4px 12px; }
+  .lgnote b{ color:#cdbcf5; }
+</style>
+</head>
+<body>
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Program" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb"><a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a><span class="sep">/</span></div>
+          <div class="rtitle-row">
+            <h1>Transparency Center</h1>
+            <span class="ptype program">Program</span>
+            <span class="typechip">transparency-entangled</span>
+            <span class="chip active">Active</span>
+          </div>
+          <span class="rsub">Buyers, regulators, inspectors general and sellers consume <b>findings</b> here. Sellers publish a tunable subset of their readiness; assessment is performed by <b>blind assessors</b> against a <b>digital twin</b>, entangled at the task level via linked projects. Everyone in the marketplace is themselves continuously assessed &mdash; a <b class="tur">readiness mesh</b>.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="program-overview.html">Overview</a>
+      <a href="program-readiness.html">Readiness</a>
+      <a href="projects-system-state.html">System State</a>
+      <a href="transparency-center.html" class="active">Transparency Center</a>
+      <a href="#">Requirements</a>
+      <a href="#">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <div class="wrap">
+      <div class="col-l">
+
+        <!-- How measurement flows -->
+        <section class="panel">
+          <div class="head"><h2>How measurement flows</h2><span class="hint">seller does the work &middot; blind 3PAOs measure it once &middot; findings fan out to the whole demand side</span></div>
+          <div class="pbody">
+            <div class="ent">
+              <div class="party seller">
+                <h3>Seller &mdash; ZeroBias</h3>
+                <span class="sub">internal readiness &middot; broad, across frameworks</span>
+                <div class="node pub">CMMC L2 &middot; 70%</div>
+                <div class="node pub">FedRAMP Moderate &middot; 41%</div>
+                <div class="node pub">SOC 2 2022 &middot; 88%</div>
+                <div class="node">+ 4 more frameworks</div>
+                <div class="node omit">Internal POA&amp;M &middot; commercials <span class="mut">omitted</span></div>
+                <span class="sub" style="color:#7fd6a8;">superset &mdash; broader than any transparency projection</span>
+              </div>
+              <div class="conn">
+                <span class="lbl">measured by &rarr;</span>
+                <div class="tc" style="background:#2a2440;color:#bcaef0;box-shadow:inset 0 0 0 1px #4a3d6b;">AuditCrowd<br>3PAOs</div>
+                <span class="lbl" style="font-size:9px;">blind &middot; digital twin<br>measures once</span>
+                <div class="a"></div>
+                <span class="lbl">findings / conformance &rarr;</span>
+              </div>
+              <div class="party buyer" style="box-shadow:inset 0 0 0 1px #4a3320;">
+                <h3 style="color:#e6b15e;">Demand side &mdash; global</h3>
+                <span class="sub">all consume the SAME 3PAO findings &middot; 1:N &middot; tunable omission per party</span>
+                <div class="dgrid">
+                  <span class="dchip">Buyers</span>
+                  <span class="dchip">FedRAMP PMO</span>
+                  <span class="dchip">CMMC PMO</span>
+                  <span class="dchip">Cyber-AB</span>
+                  <span class="dchip">DIBCAC</span>
+                  <span class="dchip">Inspectors General</span>
+                  <span class="dchip">Regulators</span>
+                  <span class="dchip ins">Insurers / underwriters</span>
+                </div>
+                <span class="sub" style="margin-top:7px;">across states &amp; countries &mdash; worldwide footprint</span>
+              </div>
+            </div>
+
+            <div class="assessor">
+              <h3><span class="blindtag">blind</span> 3PAO measurement &mdash; the universal conduit (not a per-party lane)</h3>
+              <div class="chain">
+                <div class="cnode"><b>Assessor project</b><span class="m">entangled at TASK level via linked projects</span></div>
+                <span class="carrow">&rarr;</span>
+                <div class="cnode"><b>Digital twin</b><span class="m">of the seller stack &mdash; assessor never sees internals</span></div>
+                <span class="carrow">&rarr;</span>
+                <div class="cnode"><b>Automated logic</b><span class="m">SHACL-style checks (a scored product)</span></div>
+                <span class="carrow">&rarr;</span>
+                <div class="cnode" style="box-shadow:inset 0 0 0 1px #4a3320;"><b>Findings &rarr; ALL demand parties</b><span class="m">measured once, delivered to every buyer / PMO / body / IG / regulator / insurer</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AuditCrowd -->
+        <section class="panel">
+          <div class="head"><h2>AuditCrowd</h2><span class="hint">ranked &amp; scored assessor crowd &middot; variation is the value</span></div>
+          <div class="pbody">
+            <div class="metrics" style="margin-bottom:16px;">
+              <div class="metric"><div class="n">~500</div><div class="l">assessors / supplier</div></div>
+              <div class="metric"><div class="n">100K</div><div class="l">assessors mobilizable</div></div>
+              <div class="metric"><div class="n">10M</div><div class="l">pen-testers</div></div>
+              <div class="metric"><div class="n">88%</div><div class="l">stack coverage</div></div>
+            </div>
+            <div class="arow"><span class="rank">1</span><span class="aname">enclave-hardening-labs <span class="m">&middot; IAM &amp; enclave · 2,140 assessments</span></span><span class="score">98.4</span></div>
+            <div class="arow"><span class="rank">2</span><span class="aname">redcell-supplychain <span class="m">&middot; SBOM / provenance · 1,802 assessments</span></span><span class="score">96.1</span></div>
+            <div class="arow"><span class="rank">3</span><span class="aname">crypto-attest-io <span class="m">&middot; KMS / crypto · 1,455 assessments</span></span><span class="score">94.7</span></div>
+            <div class="arow"><span class="rank">4</span><span class="aname">netflow-verifiers <span class="m">&middot; network / egress · 1,190 assessments</span></span><span class="score">92.0</span></div>
+            <div class="asmall" style="margin-top:12px;">Each supplier is assessed by many specialists on <b style="color:#c3c8d2;">different parts of the stack</b> &mdash; maximizing distinct assessments. ZB sources, ranks and scores them; the scored logic is a marketplace product.</div>
+          </div>
+        </section>
+
+        <!-- Internal readiness vs transparency projection -->
+        <section class="panel">
+          <div class="head"><h2>Internal readiness vs the transparency projection</h2><span class="hint">one internal readiness &rarr; many entangled projections, worldwide</span></div>
+          <div class="pbody">
+            <div class="mesh" style="background:#1b2430;border-left-color:#8fc7f0;color:#c3c8d2;"><b style="color:#8fc7f0;">Internal readiness is the superset.</b> A supplier's internal readiness spans <b style="color:#c3c8d2;">more frameworks</b> than any single transparency view. Each buyer / regulator sees only a <b style="color:#c3c8d2;">projection</b> (tunable omission) &mdash; and the same internal readiness is projected into <b style="color:#c3c8d2;">lots of different entangled projects</b>, to lots of different demand parties, across a <b style="color:#c3c8d2;">global footprint</b> (states, countries). Transparency data is repetitive by design: it reuses the crowd's assessment logic.</div>
+            <div class="metrics" style="margin-top:14px;">
+              <div class="metric"><div class="n">7</div><div class="l">internal frameworks</div></div>
+              <div class="metric"><div class="n tur" style="color:#7fd6a8;">1 : N</div><div class="l">projections / demand parties</div></div>
+              <div class="metric"><div class="n">🌐</div><div class="l">global footprint</div></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+      <div class="col-r">
+
+        <!-- Demand side -->
+        <section class="panel">
+          <div class="head"><h2>Demand side &mdash; who consumes findings</h2><span class="hint">all via 3PAO-delivered findings &middot; global</span></div>
+          <div class="pbody">
+            <div class="consumer"><span class="cav" style="background:#233247;">🏛️</span><div class="cinfo"><div class="cn">Buyers</div><div class="cd">Primes &amp; customers evaluating supplier readiness under NDA.</div><div class="csees">3PAO findings on their supplied scope</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#233247;">🏢</span><div class="cinfo"><div class="cn">PMOs &mdash; FedRAMP PMO, CMMC PMO</div><div class="cd">Program offices tracking authorization &amp; program conformance.</div><div class="csees">3PAO conformance across the program</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#2a2418;">🎓</span><div class="cinfo"><div class="cn">Accreditation &amp; assessment bodies</div><div class="cd">Cyber-AB, DIBCAC &mdash; accredit and verify the ecosystem.</div><div class="csees">version-pinned conformance + evidence trail</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#3a2f4d;">🔍</span><div class="cinfo"><div class="cn">Inspectors General</div><div class="cd">Oversight bodies auditing the supply chain continuously.</div><div class="csees">full state-over-time via aperture</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#2a2418;">⚖️</span><div class="cinfo"><div class="cn">Regulators</div><div class="cd">Framework authorities verifying continuous conformance.</div><div class="csees">version-pinned conformance</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#2a2440;">🛡️</span><div class="cinfo"><div class="cn">Insurers / underwriters</div><div class="cd">Cyber-insurance underwriters pricing risk from live readiness.</div><div class="csees">continuous risk posture + open findings</div></div></div>
+            <div class="consumer"><span class="cav" style="background:#1f3d17;">🏭</span><div class="cinfo"><div class="cn">Sellers <span style="font-size:10px;color:#7d828d;font-weight:400;">(supply / publisher)</span></div><div class="cd">Publish a tunable subset per demand party; benefit from being demonstrably ready.</div><div class="csees">controls: what is published vs omitted</div></div></div>
+          </div>
+        </section>
+
+        <!-- Readiness mesh -->
+        <section class="panel">
+          <div class="head"><h2>Readiness mesh</h2><span class="hint">reflexive assessment</span></div>
+          <div class="pbody">
+            <div class="mesh"><b>The crowd is itself assessed.</b> Every assessor's workstation is inside the ZB platform boundary and continuously assessed &mdash; and so is every transparency-marketplace participant. Security of the mesh is guaranteed by making the mesh <b>part of the assessed boundary</b>. Fractal: the assessors of the supply chain are themselves in the supply chain.</div>
+            <div class="metrics" style="margin-top:14px;">
+              <div class="metric"><div class="n tur" style="color:#7fd6a8;">100%</div><div class="l">participants assessed</div></div>
+              <div class="metric"><div class="n">24/7</div><div class="l">continuous</div></div>
+            </div>
+            <div class="asmall" style="margin-top:14px;line-height:1.5;">Assessment depth + variation at this scale is the training corpus for ZB's own SLM/LLM &mdash; mechanized via the ZB harness + control plane. <span style="color:#9aa0aa;">The moat: depth + variation like no one else.</span></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ===== Entangled tasks: Requirement <> Satisfaction pairs ===== -->
+    <section class="panel" style="margin:0 16px 10px;">
+      <div class="head">
+        <h2>Entangled tasks &mdash; Requirement &harr; Satisfaction pairs</h2>
+        <span class="hint">each pair is a task-to-task typed link across an entangled pair of projects &middot; the link carries direction, publish/omit &amp; provenance &middot; click a pair to twin its boards</span>
+      </div>
+      <div class="pbody">
+        <div class="colhdr"><span>Satisfaction &mdash; seller, 3PAO-measured (supply)</span><span>entanglement link &middot; measured by</span><span>Requirement &mdash; demand party</span></div>
+        <div class="ledger" id="entLedger">
+
+          <div class="lgnote"><b>The same 3PAO finding is delivered to every demand party.</b> One blind measurement against the digital twin &mdash; e.g. AC.L2-3.1.1 conforms, or the MFA finding F-2241, by <span style="color:#bcaef0;">enclave-hardening-labs</span> &mdash; fans out to the buyer, the PMO / accreditation body, and the insurer alike (F-2241 appears under Buyer <i>and</i> Insurer below). Transparency views are repetitive projections; omission is tunable per party.</div>
+
+          <!-- Buyer -->
+          <div class="lgroup">
+            <div class="lghead"><span class="cpbadge buyer">Buyer</span><span class="cpname">Prime Contractor</span><span class="cpkind">&middot; consumes 3PAO findings on supplied scope</span></div>
+
+            <div class="lrow sel"
+                 data-pairlabel="AC.L2-3.1.1 &middot; Buyer: Prime Contractor"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Prime Contractor &mdash; Supplier-req" data-cpsub="Requirements board (demand)"
+                 data-sat="Access-control proof" data-satid="S-1042" data-satstate="Done"
+                 data-req="Require AC.L2-3.1.1" data-reqid="R-77" data-reqstate="Accepted"
+                 data-link="satisfies" data-linkstate="conforms &middot; published &rarr;" data-measuredby="enclave-hardening-labs">
+              <div class="tcard"><div class="tn">Access-control proof (AC.L2-3.1.1)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1042</div><span class="tstat ok">Done</span></div>
+              <div class="lmid"><span class="linkchip">satisfies</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by enclave-hardening-labs</span><span class="linkstate live">conforms &middot; published &rarr;</span><span class="prov">sh:conforms &middot; hash-chained</span></div>
+              <div class="tcard right"><div class="tn">Require AC.L2-3.1.1 on supplied scope</div><div class="tmeta">in: Prime Contractor / Supplier-req &middot; task R-77</div><span class="tstat ok">Accepted</span></div>
+            </div>
+
+            <div class="lrow"
+                 data-pairlabel="IA.L2-3.5.3 &middot; Buyer: Prime Contractor"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Prime Contractor &mdash; Supplier-req" data-cpsub="Requirements board (demand)"
+                 data-sat="MFA enforcement" data-satid="S-1099" data-satstate="In progress"
+                 data-req="Require MFA on priv access" data-reqid="R-79" data-reqstate="Pending"
+                 data-link="verifies" data-linkstate="finding F-2241 &middot; delivered &rarr;" data-measuredby="enclave-hardening-labs">
+              <div class="tcard"><div class="tn">MFA enforcement (IA.L2-3.5.3)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1099</div><span class="tstat warn">In progress</span></div>
+              <div class="lmid"><span class="linkchip blind">verifies</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by enclave-hardening-labs</span><span class="linkstate bad">finding F-2241 &middot; delivered &rarr;</span><span class="prov">open finding &middot; hash-chained</span></div>
+              <div class="tcard right"><div class="tn">Require MFA on privileged access</div><div class="tmeta">in: Prime Contractor / Supplier-req &middot; task R-79</div><span class="tstat warn">Pending</span></div>
+            </div>
+
+            <div class="lrow"
+                 data-pairlabel="SBOM attestation &middot; Buyer: Prime Contractor"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Prime Contractor &mdash; Supplier-req" data-cpsub="Requirements board (demand)"
+                 data-sat="SBOM attestation" data-satid="S-1044" data-satstate="Done"
+                 data-req="SBOM for delivered components" data-reqid="R-80" data-reqstate="Accepted"
+                 data-link="attests-to" data-linkstate="conforms &middot; published &rarr;" data-measuredby="redcell-supplychain">
+              <div class="tcard"><div class="tn">SBOM attestation (delivered components)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1044</div><span class="tstat ok">Done</span></div>
+              <div class="lmid"><span class="linkchip">attests-to</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by redcell-supplychain</span><span class="linkstate live">conforms &middot; published &rarr;</span><span class="prov">sh:conforms &middot; hash-chained</span></div>
+              <div class="tcard right"><div class="tn">SBOM for delivered components</div><div class="tmeta">in: Prime Contractor / Supplier-req &middot; task R-80</div><span class="tstat ok">Accepted</span></div>
+            </div>
+
+            <div class="lrow"
+                 data-pairlabel="Commercials (omitted) &middot; Buyer: Prime Contractor"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Prime Contractor &mdash; Supplier-req" data-cpsub="Requirements board (demand)"
+                 data-sat="Pricing / commercials" data-satid="S-0900" data-satstate="To do"
+                 data-req="(not published to buyer)" data-reqid="&mdash;" data-reqstate="Omitted"
+                 data-link="mirrors" data-linkstate="OMITTED &middot; tunable">
+              <div class="tcard dim"><div class="tn">Pricing / commercials</div><div class="tmeta">in: ZeroBias / internal &middot; task S-0900</div><span class="tstat mute">Not shared</span></div>
+              <div class="lmid"><span class="linkchip" style="opacity:.6;">mirrors</span><div class="linkarrow"><span class="line" style="opacity:.4;"></span></div><span class="linkstate omit">OMITTED &middot; tunable omission</span><span class="prov">seller controls visibility</span></div>
+              <div class="tcard right dim"><div class="tn">(subset not published)</div><div class="tmeta">no mirrored requirement on buyer side</div><span class="tstat mute">Omitted</span></div>
+            </div>
+          </div>
+
+          <!-- PMO / accreditation body -->
+          <div class="lgroup">
+            <div class="lghead"><span class="cpbadge reg">PMO / Body</span><span class="cpname">CMMC PMO &middot; Cyber-AB</span><span class="cpkind">&middot; version-pinned conformance from the same 3PAO findings</span></div>
+
+            <div class="lrow"
+                 data-pairlabel="SC.L2-3.13.16 &middot; PMO/Body: CMMC PMO"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="CMMC PMO &mdash; 800-171 R3" data-cpsub="Conformance board (demand)"
+                 data-sat="CUI-at-rest control" data-satid="S-1051" data-satstate="Done"
+                 data-req="800-171 R3 3.13.16 @v4.2" data-reqid="G-12" data-reqstate="Conformant"
+                 data-link="satisfies" data-linkstate="conforms @v4.2" data-measuredby="crypto-attest-io">
+              <div class="tcard"><div class="tn">CUI-at-rest control (SC.L2-3.13.16)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1051</div><span class="tstat ok">Done</span></div>
+              <div class="lmid"><span class="linkchip">satisfies</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by crypto-attest-io</span><span class="linkstate live">conforms &middot; version-pinned @v4.2</span><span class="prov">sh:conforms &middot; RDF container</span></div>
+              <div class="tcard right"><div class="tn">NIST 800-171 R3 &sect;3.13.16 @v4.2</div><div class="tmeta">in: CMMC PMO / 800-171 R3 &middot; req G-12</div><span class="tstat ok">Conformant</span></div>
+            </div>
+
+            <div class="lrow"
+                 data-pairlabel="AU.L2-3.3.1 &middot; PMO/Body: CMMC PMO"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="CMMC PMO &mdash; 800-171 R3" data-cpsub="Conformance board (demand)"
+                 data-sat="Audit-record retention" data-satid="S-1033" data-satstate="Done"
+                 data-req="800-171 R3 3.3.1 @v4.2" data-reqid="G-08" data-reqstate="Conformant"
+                 data-link="satisfies" data-linkstate="conforms @v4.2" data-measuredby="enclave-hardening-labs">
+              <div class="tcard"><div class="tn">Audit-record retention (AU.L2-3.3.1)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1033</div><span class="tstat ok">Done</span></div>
+              <div class="lmid"><span class="linkchip">satisfies</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by enclave-hardening-labs</span><span class="linkstate live">conforms &middot; version-pinned @v4.2</span><span class="prov">sh:conforms &middot; RDF container</span></div>
+              <div class="tcard right"><div class="tn">NIST 800-171 R3 &sect;3.3.1 @v4.2</div><div class="tmeta">in: CMMC PMO / 800-171 R3 &middot; req G-08</div><span class="tstat ok">Conformant</span></div>
+            </div>
+          </div>
+
+          <!-- Insurer -->
+          <div class="lgroup">
+            <div class="lghead"><span class="cpbadge" style="background:#2a2440;color:#bcaef0;">Insurer</span><span class="cpname">Global Cyber Underwriters</span><span class="cpkind">&middot; prices risk from the same 3PAO findings &middot; global</span></div>
+
+            <div class="lrow"
+                 data-pairlabel="Risk posture &middot; Insurer: Global Cyber Underwriters"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Global Cyber Underwriters &mdash; underwriting" data-cpsub="Underwriting board (demand)"
+                 data-sat="Continuous risk posture" data-satid="S-1042" data-satstate="Done"
+                 data-req="Underwriting risk feed @Q3" data-reqid="U-14" data-reqstate="Rated"
+                 data-link="attests-to" data-linkstate="66% &middot; 1 open finding" data-measuredby="AuditCrowd (aggregate)">
+              <div class="tcard"><div class="tn">Continuous risk posture (66% &middot; 1 open finding)</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; rollup S-1042</div><span class="tstat ok">Done</span></div>
+              <div class="lmid"><span class="linkchip">attests-to</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by AuditCrowd (aggregate)</span><span class="linkstate live">66% &middot; 1 open finding</span><span class="prov">live posture &middot; hash-chained</span></div>
+              <div class="tcard right"><div class="tn">Underwriting risk feed @Q3</div><div class="tmeta">in: Global Cyber Underwriters / underwriting &middot; req U-14</div><span class="tstat warn">Rated</span></div>
+            </div>
+
+            <div class="lrow"
+                 data-pairlabel="MFA finding F-2241 &middot; Insurer: Global Cyber Underwriters"
+                 data-satproj="ZeroBias &mdash; CMMC L2" data-reqproj="Global Cyber Underwriters &mdash; underwriting" data-cpsub="Underwriting board (demand)"
+                 data-sat="MFA enforcement" data-satid="S-1099" data-satstate="In progress"
+                 data-req="Material-finding notice" data-reqid="U-15" data-reqstate="Flagged"
+                 data-link="verifies" data-linkstate="finding F-2241 &middot; delivered &rarr;" data-measuredby="enclave-hardening-labs">
+              <div class="tcard"><div class="tn">MFA enforcement (IA.L2-3.5.3) &mdash; open finding</div><div class="tmeta">in: ZeroBias / CMMC L2 &middot; task S-1099</div><span class="tstat warn">In progress</span></div>
+              <div class="lmid"><span class="linkchip blind">verifies</span><div class="linkarrow"><span class="line"></span><span class="ah">&#9654;</span></div><span class="measby">measured by enclave-hardening-labs</span><span class="linkstate bad">finding F-2241 &middot; delivered &rarr;</span><span class="prov">same finding as Buyer row &middot; hash-chained</span></div>
+              <div class="tcard right"><div class="tn">Material-finding notice (F-2241)</div><div class="tmeta">in: Global Cyber Underwriters / underwriting &middot; req U-15</div><span class="tstat bad">Flagged</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Twinned boards drill-in (updates on ledger selection) ===== -->
+    <section class="panel" style="margin:0 16px 24px;">
+      <div class="head"><h2>Twinned boards &mdash; selected pair</h2><span class="hint" id="twinCap">AC.L2-3.1.1 &middot; Buyer: Prime Contractor</span></div>
+      <div class="pbody">
+        <div class="twin">
+          <div class="tboard seller">
+            <div class="tbhead" id="twinSatProj">ZeroBias &mdash; CMMC L2</div>
+            <div class="tbsub">Evidence board (supply)</div>
+            <div class="tlanes">
+              <div class="tlane"><div class="lane-h">To do</div><div id="slaneTodo"><div class="kcard">CM.L2-3.4.2 hardening<span class="kid">S-1101</span></div></div></div>
+              <div class="tlane"><div class="lane-h">In progress</div><div id="slaneProg"><div class="kcard">SC.L2-3.13.11 FIPS<span class="kid">S-1103</span></div></div></div>
+              <div class="tlane"><div class="lane-h">Done</div><div id="slaneDone"><div class="kcard linked" id="twinSatCard">Access-control proof<span class="kid" id="twinSatId">S-1042</span></div></div></div>
+            </div>
+          </div>
+          <div class="twinmid">
+            <span class="tm-t" id="twinLinkType">satisfies</span>
+            <div class="tm-line"></div>
+            <span class="tm-s" id="twinLinkState">conforms &middot; published &rarr;</span>
+            <span class="measby" id="twinMeasured">measured by enclave-hardening-labs</span>
+            <span class="tm-p">entangled task link<br>(watch-change &rarr; enact)</span>
+          </div>
+          <div class="tboard cp">
+            <div class="tbhead" id="twinReqProj">Prime Contractor &mdash; Supplier-req</div>
+            <div class="tbsub" id="twinCpSub">Requirements board (demand)</div>
+            <div class="tlanes">
+              <div class="tlane"><div class="lane-h">Asked</div><div id="claneAsked"><div class="kcard">SBOM for components<span class="kid">R-80</span></div></div></div>
+              <div class="tlane"><div class="lane-h">Pending</div><div id="clanePending"><div class="kcard">MFA on priv access<span class="kid">R-79</span></div></div></div>
+              <div class="tlane"><div class="lane-h">Accepted</div><div id="claneAccepted"><div class="kcard linked" id="twinReqCard">Require AC.L2-3.1.1<span class="kid" id="twinReqId">R-77</span></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="asmall" style="margin-top:13px;line-height:1.5;">One logical requirement, <b style="color:#c3c8d2;">two task endpoints</b> in two projects, joined by one typed link. The board is only a lane view &mdash; the pair lives on the link. When the seller's satisfaction task flips to <span class="tur">conforms</span>, the entanglement propagates the state to the counterparty's requirement task (subject to the seller's tunable omission).</div>
+      </div>
+    </section>
+  </main>
+
+<script>
+/* Entangled-tasks ledger -> twinned-boards drill-in.
+   Clicking a Req<>Sat pair moves the two linked cards into the lane matching their state and
+   updates the connector. Mirrors the "watch-change-in-one-project-enact-in-another" mechanic. */
+(function(){
+  var rows = document.querySelectorAll('#entLedger .lrow');
+  var cap = document.getElementById('twinCap');
+  var satProj = document.getElementById('twinSatProj'), reqProj = document.getElementById('twinReqProj'), cpSub = document.getElementById('twinCpSub');
+  var satCard = document.getElementById('twinSatCard'), satId = document.getElementById('twinSatId');
+  var reqCard = document.getElementById('twinReqCard'), reqId = document.getElementById('twinReqId');
+  var linkType = document.getElementById('twinLinkType'), linkState = document.getElementById('twinLinkState');
+  var measured = document.getElementById('twinMeasured');
+  var slaneTodo = document.getElementById('slaneTodo'), slaneProg = document.getElementById('slaneProg'), slaneDone = document.getElementById('slaneDone');
+  var claneAsked = document.getElementById('claneAsked'), clanePending = document.getElementById('clanePending'), claneAccepted = document.getElementById('claneAccepted');
+  function slane(s){ return s === 'Done' ? slaneDone : s === 'In progress' ? slaneProg : slaneTodo; }
+  function clane(s){ return (s === 'Accepted' || s === 'Conformant' || s === 'Conforms') ? claneAccepted : (s === 'Omitted' || s === 'Asked') ? claneAsked : clanePending; }
+  function select(row){
+    rows.forEach(function(r){ r.classList.remove('sel'); });
+    row.classList.add('sel');
+    var d = row.dataset;
+    cap.innerHTML = d.pairlabel;
+    satProj.innerHTML = d.satproj; reqProj.innerHTML = d.reqproj; cpSub.textContent = d.cpsub;
+    satCard.firstChild.textContent = d.sat + ' '; satId.innerHTML = d.satid;
+    reqCard.firstChild.textContent = d.req + ' '; reqId.innerHTML = d.reqid;
+    linkType.textContent = d.link; linkState.innerHTML = d.linkstate;
+    measured.textContent = d.measuredby ? 'measured by ' + d.measuredby : 'not measured — omitted';
+    slane(d.satstate).appendChild(satCard);
+    clane(d.reqstate).appendChild(reqCard);
+  }
+  rows.forEach(function(r){ r.addEventListener('click', function(){ select(r); }); });
+})();
+</script>
+</body>
+</html>

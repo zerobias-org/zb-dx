@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boundary Manager — Operations Center / Components (composited on real BM shell)</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1232px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/bm-shell-operations-center.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* boundary header */
+  .phead{ padding:16px 20px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:16px; background:#424242; padding:14px 18px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:56px; height:56px; flex:none; display:flex; align-items:center; justify-content:center; color:#8fd06a; }
+  .ricon svg{ width:44px; height:44px; }
+  .rmain{ display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ background:#1e1e1e; color:#8fd0a6; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; text-decoration:none; }
+  .rcrumb .cchip:hover{ background:#262b30; }
+  .rtitle-row{ display:flex; align-items:center; gap:12px; }
+  .titlerow h1{ font-size:22px; font-weight:500; }
+  .rsub{ font-size:13px; color:#9aa0aa; }
+
+  /* operations-center sub-tabs (real: Controls | Parties | Roles | Components) */
+  .subtabs{ display:flex; align-items:center; gap:30px; padding:0 26px; margin-top:14px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .subtabs a{ color:#9aa0aa; text-decoration:none; font-size:15px; font-weight:500; padding:12px 0; position:relative; }
+  .subtabs a.active{ color:#fff; }
+  .subtabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+  .octag{ font-size:11px; color:#7d828d; margin-left:auto; align-self:center; padding-bottom:2px; }
+
+  /* toolbar */
+  .toolbar{ display:flex; align-items:center; gap:12px; padding:16px 24px 12px; }
+  .selbox{ display:inline-flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; color:#c3c8d2; font-size:13px; cursor:pointer; }
+  .selbox .lb{ color:#8a8f9a; }
+  .selbox svg{ width:15px; height:15px; color:#8a8f9a; }
+  .searchbox{ display:flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; width:320px; color:#8a8f9a; font-size:13px; }
+  .searchbox svg{ width:16px; height:16px; }
+  .spacer{ flex:1; }
+  .addbtn{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px; background:#03aff0; color:#04222e; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
+  .addbtn svg{ width:16px; height:16px; }
+
+  /* table */
+  .tablewrap{ margin:0 24px 8px; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ text-align:left; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a;
+            padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.12); white-space:nowrap; }
+  thead th.num{ text-align:right; }
+  tbody tr{ border-bottom:1px solid rgba(255,255,255,.06); cursor:pointer; }
+  tbody tr:hover{ background:rgba(255,255,255,.035); }
+  tbody tr.disabled{ cursor:default; opacity:.72; }
+  tbody tr.disabled:hover{ background:transparent; }
+  td{ padding:13px 16px; font-size:13px; color:#dfe3ea; vertical-align:middle; }
+  /* name cell */
+  .namecell{ display:flex; align-items:center; gap:12px; }
+  .tico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .tico svg{ width:18px; height:18px; }
+  .nm{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .nm .n1{ font-size:14px; color:#fff; font-weight:500; }
+  .nm .n2{ font-size:11px; color:#8a8f9a; font-family:"SFMono-Regular",Menlo,Consolas,monospace; }
+  /* type chip */
+  .tchip{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:4px; font-size:12px; font-weight:500; }
+  .tchip.vm{ background:#233247; color:#8fc7f0; } .tchip.ctr{ background:#1f3a33; color:#79d0b1; }
+  .tchip.cloud{ background:#3a3320; color:#e6c15e; } .tchip.k8s{ background:#2e2747; color:#b39ae6; }
+  .tchip svg{ width:13px; height:13px; }
+  /* componentType + format (real Component model) */
+  .ctype2{ display:inline-flex; align-items:center; height:21px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .ctype2.service{ background:#233247; color:#8fc7f0; } .ctype2.software{ background:#2e2747; color:#b39ae6; }
+  .ctype2.hardware{ background:#1f3a33; color:#79d0b1; } .ctype2.interconnection{ background:#233247; color:#8fc7f0; }
+  .ctype2.policy,.ctype2.plan,.ctype2.process_procedure{ background:#3a3320; color:#e6c15e; }
+  .fmt2{ display:inline-flex; align-items:center; height:19px; padding:0 8px; border-radius:4px; font-size:10px; font-weight:600; margin-left:6px; }
+  .fmt2.technical{ background:#2a2a2a; color:#9fb6cc; border:1px solid #4a4a4a; } .fmt2.documentary{ background:#33281a; color:#d6bf8a; border:1px solid #5a4520; }
+  .grpbadge{ display:inline-flex; align-items:center; height:16px; padding:0 6px; border-radius:3px; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; background:#3a3320; color:#e6c15e; margin-left:7px; }
+  /* accountable (RACI) cell */
+  .acccell{ display:flex; align-items:center; gap:8px; }
+  .accdot{ width:24px; height:24px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; font-size:10px; font-weight:700; }
+  .accname{ font-size:13px; color:#dfe3ea; }
+  .attpill{ display:inline-flex; align-items:center; height:22px; padding:0 11px; border-radius:999px; font-size:11px; font-weight:600; background:#22384a; color:#6ea8d8; }
+  .stpill.attested{ background:#22384a; color:#6ea8d8; } .stpill.attested .d{ background:#6ea8d8; }
+  .bench{ font-size:12px; color:#c3c8d2; } .bench .bs{ color:#8a8f9a; }
+  /* compliance cell */
+  .comp{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+  .comp .cbar{ width:88px; height:7px; border-radius:4px; background:#2a2a2a; overflow:hidden; }
+  .comp .cbar span{ display:block; height:100%; border-radius:4px; }
+  .comp .cpct{ width:38px; text-align:right; font-weight:600; }
+  .cg{ color:#8fd06a; } .ca{ color:#e6b15e; } .cr{ color:#f0a09c; }
+  .bg-g{ background:#8fd06a; } .bg-a{ background:#e6b15e; } .bg-r{ background:#f0a09c; }
+  .reqs{ text-align:right; color:#c3c8d2; } .reqs .u{ color:#8a8f9a; font-size:11px; }
+  .when{ color:#9aa0aa; white-space:nowrap; }
+  .stpill{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .stpill .d{ width:6px; height:6px; border-radius:50%; }
+  .stpill.assessed{ background:#1f3d17; color:#8fd06a; } .stpill.assessed .d{ background:#8fd06a; }
+  .stpill.stale{ background:#4a3320; color:#e6b15e; } .stpill.stale .d{ background:#e6b15e; }
+  .stpill.none{ background:#3a3f47; color:#aab0ba; } .stpill.none .d{ background:#aab0ba; }
+  .linkarrow{ color:#5a6472; }
+  tbody tr:hover .linkarrow{ color:#9fb6cc; }
+  /* pagination */
+  .pager{ display:flex; align-items:center; justify-content:flex-end; gap:18px; margin:0 24px 26px; padding:12px 4px; color:#9aa0aa; font-size:12px; }
+  .pager .pg{ display:flex; align-items:center; gap:6px; }
+  .pager .pbtn{ width:28px; height:28px; border-radius:6px; border:1px solid #4a4a4a; background:#2a2a2a; display:flex; align-items:center; justify-content:center; color:#9aa0aa; }
+  .pager .pbtn svg{ width:14px; height:14px; }
+  .pager .pbtn.dis{ opacity:.4; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div class="rmain">
+          <div class="rcrumb"><a class="cchip" href="#">Platform</a></div>
+          <div class="rtitle-row"><h1>Platform</h1><span class="stpill assessed"><span class="d"></span>Active</span></div>
+          <span class="rsub">Operations Center &mdash; the boundary's internal control reality: controls, responsible parties, and the component/asset inventory that evidence is collected from.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operations Center sub-tabs -->
+    <nav class="subtabs">
+      <a href="#">Controls</a>
+      <a href="#">Parties</a>
+      <a href="#">Roles</a>
+      <a href="#" class="active">Components</a>
+      <a href="bm-software-inventory.html">Software</a>
+      <a href="bm-tool-inventory.html">Tools</a>
+      <span class="octag">Operations Center</span>
+    </nav>
+
+    <div class="toolbar">
+      <span class="selbox"><span class="lb">Type:</span> All types <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="selbox"><span class="lb">Standard:</span> All <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Search components&hellip;</span>
+      <span class="spacer"></span>
+      <button class="addbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add component</button>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:21%;">Component</th>
+            <th style="width:13%;">Type / Format</th>
+            <th style="width:15%;">Accountable</th>
+            <th style="width:16%;">Standard</th>
+            <th class="num" style="width:13%;">Compliance</th>
+            <th class="num" style="width:7%;">Reqs</th>
+            <th style="width:8%;">Assessed</th>
+            <th style="width:7%;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"><!-- rendered --></tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <span>Rows per page: 10</span>
+      <span>1&ndash;10 of 42</span>
+      <span class="pg">
+        <span class="pbtn dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+        <span class="pbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>
+      </span>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    // icons by real componentType (OSCAL-style enum)
+    const ICON = {
+      service:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="7" rx="1"/><rect x="2" y="14" width="20" height="7" rx="1"/><line x1="6" y1="6.5" x2="6.01" y2="6.5"/><line x1="6" y1="17.5" x2="6.01" y2="17.5"/></svg>',
+      software:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 10l-2 2 2 2M16 10l2 2-2 2"/></svg>',
+      hardware:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+      interconnection:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+      policy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+      plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><rect x="5" y="6" width="14" height="15" rx="1"/><path d="M9 11h6M9 15h4"/></svg>',
+      process_procedure:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>'
+    };
+    const TLABEL = { service:'service', software:'software', hardware:'hardware', interconnection:'interconnect', policy:'policy', plan:'plan', process_procedure:'procedure' };
+    // A Component = a responsibility unit (RACI). componentType is broad (technical OR documentary);
+    // it may be a single asset or a group (same RACI). Accountable party is the discerning owner.
+    const ROWS = [
+      {name:'prod-app-01',        sub:'i-0af31c9e · RHEL 9',        ctype:'service',  cfmt:'technical',   acc:'M. Chen',         bench:'RHEL 9 STIG',              ver:'V2R3',   pct:94, reqs:38, when:'Jun 27', st:'assessed', href:'bm-component-detail.html?c=vm'},
+      {name:'nginx:1.27-prod',    sub:'registry.acme.io/edge/nginx',ctype:'software', cfmt:'technical',   acc:'M. Chen',         bench:'CIS Docker',               ver:'1.6.0',  pct:80, reqs:22, when:'Jun 28', st:'assessed', href:'bm-component-detail.html?c=ctr'},
+      {name:'AWS Cloud',          sub:'aws-org · 12 accounts',      ctype:'service',  cfmt:'technical',   acc:'Cloud Platform Lead', bench:'AWS Foundational SBP',  ver:'2024',   pct:96, reqs:31, when:'Jun 29', st:'assessed', covers:4200},
+      {name:'prod-db-01',         sub:'i-0c72ab41 · RHEL 9',        ctype:'service',  cfmt:'technical',   acc:'Data Team Lead',  bench:'RHEL 9 STIG + CIS PostgreSQL', ver:'V2R3', pct:88, reqs:31, when:'Jun 26', st:'assessed'},
+      {name:'Access Control Policy', sub:'v3.2 · org-wide',         ctype:'policy',   cfmt:'documentary', acc:'CISO',            bench:'SCF · IAC domain',         ver:'2025.2', attested:true, reqs:14, when:'Jun 20', st:'attested'},
+      {name:'System Security Plan',  sub:'SSP · CUI enclave',       ctype:'plan',     cfmt:'documentary', acc:'Compliance Office', bench:'NIST 800-171 R3 SSP',    ver:'R3',     attested:true, reqs:110, when:'Jun 18', st:'attested'},
+      {name:'prod-eks-cluster',   sub:'eks/prod · v1.29',           ctype:'service',  cfmt:'technical',   acc:'Platform SRE Team', bench:'CIS Kubernetes',         ver:'1.9.0',  pct:82, reqs:24, when:'Jun 27', st:'assessed'},
+      {name:'Incident Response Procedure', sub:'IR-PROC · v2.1',    ctype:'process_procedure', cfmt:'documentary', acc:'SecOps Lead', bench:'SCF · IRO domain',   ver:'2025.2', attested:true, reqs:8,  when:'Jun 15', st:'attested'},
+      {name:'vault-01',           sub:'i-0f21d8a9 · RHEL 9',        ctype:'software', cfmt:'technical',   acc:'Security Eng',    bench:'RHEL 9 STIG',              ver:'V2R3',   pct:96, reqs:34, when:'Jun 27', st:'assessed'},
+      {name:'edge-lb-01',         sub:'i-0e19f3d0 · Ubuntu 22.04',  ctype:'service',  cfmt:'technical',   acc:'Network Team',    bench:'CIS Ubuntu 22.04 L1',      ver:'1.0.0',  pct:76, reqs:28, when:'Jun 25', st:'stale'}
+    ];
+    function tier(p){ return p>=90?'g':p>=75?'a':'r'; }
+    function initials(n){ return n.split(/[\s.]+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+    const tbody = document.getElementById('tbody');
+    let html = '';
+    ROWS.forEach(r => {
+      const clickable = !!r.href;
+      const comp = r.attested
+        ? `<div class="comp"><span class="attpill">Attested</span></div>`
+        : (() => { const t = tier(r.pct); return `<div class="comp"><span class="cbar"><span class="bg-${t}" style="width:${r.pct}%"></span></span><span class="cpct c${t}">${r.pct}%</span></div>`; })();
+      html += `<tr class="${clickable?'':'disabled'}" ${clickable?`data-href="${r.href}"`:''}>`
+        + `<td><div class="namecell"><span class="tico">${ICON[r.ctype]}</span>`
+        +   `<div class="nm"><span class="n1">${r.name}${r.covers?`<span class="grpbadge">grouped · ${r.covers.toLocaleString()}</span>`:''}</span><span class="n2">${r.sub}</span></div></div></td>`
+        + `<td><span class="ctype2 ${r.ctype}">${TLABEL[r.ctype]}</span><span class="fmt2 ${r.cfmt}">${r.cfmt}</span></td>`
+        + `<td><div class="acccell"><span class="accdot">${initials(r.acc)}</span><span class="accname">${r.acc}</span></div></td>`
+        + `<td><span class="bench">${r.bench} <span class="bs">${r.ver}</span></span></td>`
+        + `<td>${comp}</td>`
+        + `<td class="reqs">${r.reqs} <span class="u">${r.attested?'cov':'sat'}</span></td>`
+        + `<td class="when">${r.when}</td>`
+        + `<td><span class="stpill ${r.st}"><span class="d"></span>${r.st==='assessed'?'Assessed':r.st==='stale'?'Stale':r.st==='attested'?'Attested':'Not run'}</span></td>`
+        + `</tr>`;
+    });
+    tbody.innerHTML = html;
+    tbody.querySelectorAll('tr[data-href]').forEach(tr =>
+      tr.addEventListener('click', () => location.href = tr.dataset.href));
+  })();
+  </script>
+
+</body>
+</html>

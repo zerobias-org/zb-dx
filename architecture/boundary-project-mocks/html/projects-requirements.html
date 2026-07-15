@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Requirements tab (anchored mappings; crosswalks advisory) — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* header */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .cchip.eng{ background:#2a2418; color:#d9ad6b; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; flex:none; }
+  .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; line-height:1.5; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; }
+
+  /* page tabs */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* summary strip */
+  .sstrip{ display:flex; gap:0; margin:16px 16px 0; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .scell{ padding:14px 20px; display:flex; flex-direction:column; gap:3px; }
+  .scell + .scell{ border-left:1px solid rgba(255,255,255,.08); }
+  .scell .sv{ font-size:26px; font-weight:600; color:#fff; line-height:1; }
+  .scell .sl{ font-size:12px; color:#9aa0aa; }
+  .scell .sv.g{ color:#8fd06a; } .scell .sv.a{ color:#e6b15e; } .scell .sv.r{ color:#f0a09c; } .scell .sv.n{ color:#9fb6cc; }
+  .scell.note{ flex:1; justify-content:center; }
+  .scell.note .nt{ font-size:12px; color:#c3c8d2; line-height:1.5; }
+  .scell.note .nt b{ color:#fff; }
+
+  /* toolbar */
+  .toolbar{ display:flex; align-items:center; gap:10px; padding:14px 16px 10px; }
+  .fchip{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:#2a2a2a; color:#9aa0aa; border:1px solid #4a4a4a; }
+  .fchip.sel{ background:#23384d; color:#cfe6f7; border-color:#03aff0; }
+  .fchip .ct{ font-size:11px; padding:0 6px; background:rgba(255,255,255,.10); border-radius:8px; }
+  .searchbox{ display:flex; align-items:center; gap:9px; height:32px; padding:0 12px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; width:280px; color:#8a8f9a; font-size:13px; margin-left:6px; }
+  .searchbox svg{ width:15px; height:15px; }
+  .spacer{ flex:1; }
+  .addbtn{ display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 14px; background:#03aff0; color:#04222e; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
+  .addbtn svg{ width:16px; height:16px; }
+
+  /* table */
+  .tablewrap{ margin:0 16px 8px; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ text-align:left; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a; padding:11px 16px; border-bottom:1px solid rgba(255,255,255,.12); white-space:nowrap; }
+  tbody tr{ border-bottom:1px solid rgba(255,255,255,.06); }
+  tbody tr:hover{ background:rgba(255,255,255,.03); }
+  td{ padding:12px 16px; font-size:13px; color:#dfe3ea; vertical-align:middle; }
+  .req .rc{ font-size:13px; color:#fff; font-weight:500; }
+  .req .rt{ font-size:12px; color:#9aa0aa; margin-top:2px; }
+  .srcchip{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:4px; background:#233247; color:#8fc7f0; font-size:12px; font-weight:500; }
+  /* evidence chip — proof behind the anchored control; links to the boundary asset where applicable */
+  .evtag{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:4px; background:#1f3d17; color:#8fd06a; font-size:12px; font-weight:500; text-decoration:none; }
+  .evtag svg{ width:12px; height:12px; flex:none; }
+  .evtag.doc{ background:#2a2f38; color:#9fb6cc; } .evtag.partial{ background:#4a3320; color:#e6b15e; }
+  .evtag[href]:hover{ filter:brightness(1.15); }
+  .evnone{ color:#8a8f9a; font-size:12px; }
+  /* anchored control cell */
+  .anchor{ display:flex; align-items:center; gap:9px; }
+  .anchor .aico{ width:24px; height:24px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; background:#1f3d17; color:#8fd06a; }
+  .anchor .aico svg{ width:14px; height:14px; }
+  .anchor .an{ font-size:13px; color:#eaeaea; } .anchor .ai{ font-family:"SFMono-Regular",Menlo,Consolas,monospace; font-size:11px; color:#8a8f9a; }
+  .unmapped{ display:inline-flex; align-items:center; gap:7px; color:#f0a09c; font-size:12px; font-weight:500; }
+  .unmapped .dash{ width:24px; height:24px; border-radius:6px; background:#5a2020; display:flex; align-items:center; justify-content:center; }
+  .unmapped .dash svg{ width:14px; height:14px; }
+  /* crosswalk suggestion cell */
+  .xwsug{ display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#9aa0aa; }
+  .advbadge{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:4px; background:#2e2747; color:#b39ae6; font-size:10px; font-weight:600; letter-spacing:.03em; }
+  .accepted{ display:inline-flex; align-items:center; gap:5px; color:#8fd06a; font-size:11px; }
+  .accepted svg{ width:12px; height:12px; }
+  .xwsug .via{ color:#c3c8d2; }
+  /* status */
+  .stbadge{ display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:4px; font-size:11px; font-weight:600; }
+  .stbadge.sat{ background:#1f3d17; color:#8fd06a; } .stbadge.partial{ background:#4a3320; color:#e6b15e; } .stbadge.gap{ background:#5a2020; color:#f0a09c; }
+  .morerow{ padding:12px 16px; border-top:1px solid rgba(255,255,255,.08); }
+  .pager{ display:flex; align-items:center; gap:14px; font-size:12px; color:#9aa0aa; }
+  .pager .pnav{ display:inline-flex; align-items:center; gap:2px; margin-left:auto; }
+  .pager .pbtn{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:5px; color:#c3c8d2; cursor:pointer; }
+  .pager .pbtn:hover{ background:rgba(255,255,255,.06); } .pager .pbtn.disabled{ color:#5c616b; }
+  .pager .pbtn svg{ width:16px; height:16px; }
+
+  /* expanded mapping drawer (the anchor UI, showing crosswalks AS suggestions) */
+  .drawer{ background:#383838; border-top:1px solid rgba(255,255,255,.12); border-bottom:1px solid rgba(255,255,255,.12); padding:14px 20px 16px; }
+  .drawer .dh{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .drawer .dh .dt{ font-size:13px; font-weight:600; color:#fff; }
+  .drawer .dsub{ font-size:12px; color:#9aa0aa; margin-bottom:12px; }
+  .drawer .dsub b{ color:#e6b15e; }
+  .sugrow{ display:flex; align-items:center; gap:12px; padding:10px 12px; background:#2b2b2b; border:1px solid #4a4a4a; border-radius:8px; margin-bottom:8px; }
+  .sugrow .aico{ width:26px; height:26px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .sugrow .aico svg{ width:15px; height:15px; }
+  .sugrow .sm{ flex:1; min-width:0; }
+  .sugrow .sn{ font-size:13px; color:#eaeaea; } .sugrow .si{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .sugrow .conf{ font-size:11px; color:#b39ae6; }
+  .acceptbtn{ display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 13px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid #4a4a4a; background:#2a2a2a; color:#c3c8d2; }
+  .acceptbtn.primary{ background:#1f5a30; border-color:#2f7a44; color:#bff0cf; }
+  .drawer .other{ font-size:12px; color:#8a8f9a; margin-top:2px; }
+  .drawer .other a{ color:#03aff0; text-decoration:none; }
+  .mlink{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:12px; font-weight:500; text-decoration:none; }
+  .mlink svg{ width:14px; height:14px; }
+
+  /* row click affordance */
+  tbody tr.req{ cursor:pointer; }
+  tbody tr.req.active{ background:rgba(3,175,240,.10); box-shadow:inset 3px 0 0 #03aff0; }
+
+  /* side drawer — canonical mat-drawer position="end" (replaces the accordion) */
+  /* mat-drawer-container — drawer scoped to THIS parent (the table region), side mode PUSHES the content, NO backdrop.
+     Width ~1/3 of the page; JS grows the container so the drawer can extend below the table when its content is taller. */
+  .dcont{ position:relative; overflow:hidden; transition:min-height .24s cubic-bezier(.2,.7,.3,1); }
+  .mat-content{ transition:margin-right .24s cubic-bezier(.2,.7,.3,1); }
+  .dcont.open .mat-content{ margin-right:33.4%; }
+  .sdrawer{ position:absolute; top:0; right:0; height:100%; width:33.4%; background:#2b2b2b; border-left:1px solid rgba(255,255,255,.14); box-shadow:-6px 0 18px rgba(0,0,0,.28); transform:translateX(103%); transition:transform .24s cubic-bezier(.2,.7,.3,1); display:flex; flex-direction:column; }
+  .sdrawer.open{ transform:translateX(0); }
+  .sdhead{ display:flex; align-items:flex-start; gap:12px; padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .sdcode{ font-size:12px; font-weight:700; letter-spacing:.03em; color:#8fc7f0; background:#233247; padding:2px 8px; border-radius:4px; display:inline-block; }
+  .sdhead h2{ font-size:17px; font-weight:600; color:#fff; margin-top:9px; line-height:1.3; }
+  .sdstatusrow{ display:flex; align-items:center; gap:14px; margin-top:12px; }
+  .sdclose{ margin-left:auto; width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#9aa0aa; cursor:pointer; flex:none; }
+  .sdclose:hover{ background:rgba(255,255,255,.08); } .sdclose svg{ width:18px; height:18px; }
+  .navlink{ display:inline-flex; align-items:center; gap:7px; color:#03aff0; font-size:13px; font-weight:600; text-decoration:none; }
+  .navlink svg{ width:15px; height:15px; }
+  .sdbody{ flex:1; overflow:visible; padding:18px 20px; }
+  .sdsec{ margin-bottom:24px; }
+  .sdsec .sl{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .sdsec .sl .cnt{ color:#c3c8d2; letter-spacing:0; text-transform:none; font-weight:500; }
+  .sdsec .sl .advbadge{ letter-spacing:0; }
+  .xwhelp{ font-size:12px; color:#9aa0aa; line-height:1.5; margin-bottom:12px; }
+  /* crosswalk path selector */
+  .xwchips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .xwchip{ display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 12px; border-radius:16px; font-size:12px; font-weight:500; cursor:pointer; background:#2a2a2a; color:#c3c8d2; border:1px solid #4a4a4a; }
+  .xwchip.sel{ background:#2e2747; color:#cbb8f0; border-color:#6a5fb0; }
+  .xwchip .xdot{ width:7px; height:7px; border-radius:50%; }
+  .xwchip .xdot.real{ background:#8fd06a; } .xwchip .xdot.pending{ background:#e6b15e; }
+  /* candidate control rows (from selected crosswalk) */
+  .candlist{ display:flex; flex-direction:column; gap:8px; }
+  .candrow{ display:flex; align-items:center; gap:12px; padding:11px 13px; background:#333; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
+  .candrow .cico{ width:30px; height:30px; border-radius:7px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .candrow .cico svg{ width:16px; height:16px; }
+  .candrow .cm{ flex:1; min-width:0; }
+  .candrow .cn{ font-size:13px; color:#eaeaea; font-weight:500; display:flex; align-items:center; gap:8px; }
+  .candrow .satdot{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .satdot.sat{ background:#8fd06a; } .satdot.partial{ background:#e6b15e; } .satdot.gap{ background:#f0a09c; }
+  .candrow .ci{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .candrow .ci .via{ color:#b39ae6; }
+  .anchorbtn{ display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid #2f7a44; background:#1f5a30; color:#bff0cf; flex:none; }
+  .anchorbtn svg{ width:13px; height:13px; }
+  .anchorbtn.done{ background:#2a2f37; border-color:#4a4a4a; color:#8fd06a; cursor:default; }
+  .browsebtn{ display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; border:1px solid #4a4a4a; background:#2a2a2a; color:#c3c8d2; }
+  .browsebtn svg{ width:16px; height:16px; }
+  .sdfoot{ font-size:12px; color:#8a8f9a; line-height:1.6; border-top:1px solid rgba(255,255,255,.08); padding-top:14px; }
+  .sdfoot a{ color:#03aff0; text-decoration:none; }
+  /* anchored control row (with remove) */
+  .ancrow{ display:flex; align-items:center; gap:12px; padding:11px 13px; background:#333; border:1px solid rgba(255,255,255,.08); border-radius:8px; margin-bottom:8px; }
+  .ancrow .aico{ width:32px; height:32px; border-radius:7px; flex:none; display:flex; align-items:center; justify-content:center; background:#1f3d17; color:#8fd06a; }
+  .ancrow.partial .aico{ background:#4a3320; color:#e6b15e; }
+  .ancrow .aico svg{ width:17px; height:17px; }
+  .ancrow .am{ flex:1; min-width:0; }
+  .ancrow .an{ font-size:13px; color:#fff; font-weight:500; }
+  .ancrow .ai{ font-family:Menlo,Consolas,monospace; font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .ancrow .aev{ display:inline-flex; align-items:center; gap:5px; font-size:11px; color:#8fd06a; text-decoration:none; margin-top:4px; }
+  .ancrow .aev svg{ width:11px; height:11px; }
+  .ancrow .arm{ margin-left:auto; width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#8a8f9a; cursor:pointer; flex:none; }
+  .ancrow .arm:hover{ background:rgba(255,255,255,.08); color:#f0a09c; } .ancrow .arm svg{ width:15px; height:15px; }
+  .ancnone{ font-size:12px; color:#f0a09c; padding:10px 13px; background:#3a2626; border:1px solid #5a3030; border-radius:8px; }
+  .anchorcard{ display:flex; align-items:center; gap:12px; padding:12px 14px; background:#333; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
+  .anchorcard .ac-ico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#1f3d17; color:#8fd06a; }
+  .anchorcard.gap .ac-ico{ background:#5a2020; color:#f0a09c; }
+  .anchorcard .ac-ico svg{ width:19px; height:19px; }
+  .anchorcard .ac-n{ font-size:14px; color:#fff; font-weight:500; } .anchorcard .ac-i{ font-family:Menlo,Consolas,monospace; font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .anchorcard .ac-change{ margin-left:auto; font-size:12px; color:#03aff0; cursor:pointer; }
+  .evcard{ display:flex; align-items:center; gap:10px; padding:11px 14px; background:#333; border:1px solid rgba(255,255,255,.08); border-radius:8px; font-size:13px; color:#eaeaea; text-decoration:none; }
+  .evcard svg{ width:16px; height:16px; color:#8fd06a; flex:none; } .evcard.none{ color:#8a8f9a; }
+  /* proof-task card — the requirement→control mapping auto-populates the proof task (Kevin, 2026-07-02) */
+  .proofcard{ display:flex; gap:12px; padding:13px 14px; border-radius:8px; border:1px solid rgba(255,255,255,.08); }
+  .proofcard.auto{ background:#1c2a1a; border-color:#2f5a30; }
+  .proofcard.adhoc{ background:#2f2a20; border-color:#5a4a28; }
+  .proofcard .pc-ico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .proofcard.auto .pc-ico{ background:#1f3d17; color:#8fd06a; } .proofcard.adhoc .pc-ico{ background:#4a3a1c; color:#e6b15e; }
+  .proofcard .pc-ico svg{ width:19px; height:19px; }
+  .proofcard .pc-m{ min-width:0; }
+  .proofcard .pc-t{ font-size:14px; font-weight:600; color:#fff; display:flex; align-items:center; gap:8px; }
+  .autobadge{ font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:1px 7px; border-radius:3px; background:#1f3d17; color:#8fd06a; }
+  .adhocbadge{ font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:1px 7px; border-radius:3px; background:#4a3a1c; color:#e6b15e; }
+  .proofcard .pc-s{ font-size:12px; color:#b9beca; line-height:1.5; margin-top:5px; }
+  .proofcard .pc-s b{ color:#e6ecf5; }
+  .proofcard .pc-link{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#8fd06a; text-decoration:none; margin-top:9px; }
+  .proofcard .pc-link svg{ width:13px; height:13px; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>CMMC Level 2</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+          </div>
+          <span class="rsub">Requirements from the pinned Framework, each <b>anchored</b> to an internal control the boundary satisfies. Crosswalks only <b>suggest</b> the mapping.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html">Overview</a>
+      <a href="projects-cmmc-readiness.html">Readiness</a>
+      <a href="projects-requirements.html" class="active">Requirements</a>
+      <a href="projects-boards.html">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <section class="sstrip">
+      <div class="scell"><span class="sv">110</span><span class="sl">requirements (CMMC L2)</span></div>
+      <div class="scell"><span class="sv g">86</span><span class="sl">anchored to a control</span></div>
+      <div class="scell"><span class="sv a">10</span><span class="sl">partial</span></div>
+      <div class="scell"><span class="sv r">14</span><span class="sl">gap / unmapped</span></div>
+      <div class="scell note"><div class="nt">This list <b>is the pinned framework's requirements</b> (CMMC v2.0 L2) &mdash; nothing else. Need a bespoke requirement? That's its own <b>custom Framework</b> pinned as a child project. Each requirement is <b>anchored</b> to a boundary control (a crosswalk only <b>suggests</b> which); the anchor + its evidence drive Readiness %.</div></div>
+    </section>
+
+    <div class="toolbar">
+      <span class="fchip sel">All <span class="ct">110</span></span>
+      <span class="fchip">Gaps <span class="ct">14</span></span>
+      <span class="fchip">Partial <span class="ct">10</span></span>
+      <span class="fchip">Unmapped <span class="ct">6</span></span>
+      <span class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Search requirements&hellip;</span>
+      <span class="spacer"></span>
+      <span style="font-size:12px;color:#8a8f9a;">Requirements come from the pinned framework &mdash; need a bespoke one? <a href="#" style="color:#03aff0;text-decoration:none;">Author a custom Framework</a></span>
+    </div>
+
+    <!-- mat-drawer-container: drawer scoped to this parent (the table region); side mode pushes, no backdrop -->
+    <div class="dcont" id="dcont">
+      <div class="mat-content">
+      <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%;">Requirement</th>
+            <th style="width:18%;">Evidence</th>
+            <th style="width:22%;">Anchored internal control</th>
+            <th style="width:20%;">Crosswalk suggestion</th>
+            <th style="width:10%;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="req">
+            <td><div class="rc">AC.L2-3.1.1</div><div class="rt">Limit system access to authorized users</div></td>
+            <td><a class="evtag" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>prod-app-01 &middot; STIG</a></td>
+            <td><div class="anchor"><span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Access Enforcement Control</div><div class="ai">IC-AC-01</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171 R3</span></div></td>
+            <td><span class="stbadge sat">Satisfied</span></td>
+          </tr>
+          <tr class="req">
+            <td><div class="rc">AC.L2-3.1.2</div><div class="rt">Limit access to permitted transactions &amp; functions</div></td>
+            <td><a class="evtag partial" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>prod-app-01 &middot; STIG</a></td>
+            <td><div class="anchor"><span class="aico" style="background:#4a3320;color:#e6b15e;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Least-Privilege Standard</div><div class="ai">IC-AC-02</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171A R3</span></div></td>
+            <td><span class="stbadge partial">Partial</span></td>
+          </tr>
+          <tr class="req">
+            <td><div class="rc">AU.L2-3.3.1</div><div class="rt">Create and retain system audit records</div></td>
+            <td><a class="evtag" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>prod-app-01 &middot; STIG</a></td>
+            <td><div class="anchor"><span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Audit Logging Standard</div><div class="ai">IC-AU-01</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171 R3</span></div></td>
+            <td><span class="stbadge sat">Satisfied</span></td>
+          </tr>
+          <tr class="req">
+            <td><div class="rc">CM.L2-3.4.1</div><div class="rt">Establish and maintain baseline configurations</div></td>
+            <td><a class="evtag" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>prod-app-01 &middot; STIG</a></td>
+            <td><div class="anchor"><span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Baseline Config Management</div><div class="ai">IC-CM-01</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171 R3</span></div></td>
+            <td><span class="stbadge sat">Satisfied</span></td>
+          </tr>
+
+          <!-- a GAP requirement — clicking the row opens the side drawer to choose an anchor -->
+          <tr class="req">
+            <td><div class="rc">CM.L2-3.4.2</div><div class="rt">Establish and enforce security configuration settings</div></td>
+            <td><span class="evnone">&mdash; no evidence</span></td>
+            <td><span class="unmapped"><span class="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg></span>not anchored</span></td>
+            <td><div class="xwsug"><span class="advbadge">2 suggestions</span> <span class="via">choose an anchor</span></div></td>
+            <td><span class="stbadge gap">Gap</span></td>
+          </tr>
+
+          <tr class="req">
+            <td><div class="rc">IA.L2-3.5.3</div><div class="rt">Multifactor authentication for privileged accounts</div></td>
+            <td><span class="evtag doc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>MFA policy + IdP</span></td>
+            <td><div class="anchor"><span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Multi-Factor Authentication</div><div class="ai">IC-IA-03</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171 R3</span></div></td>
+            <td><span class="stbadge sat">Satisfied</span></td>
+          </tr>
+          <tr class="req">
+            <td><div class="rc">SC.L2-3.13.8</div><div class="rt">Protect confidentiality of CUI in transit (TLS)</div></td>
+            <td><a class="evtag" href="bm-component-detail.html?c=ctr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>nginx &middot; CIS TLS</a></td>
+            <td><div class="anchor"><span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">TLS / Encryption Standard</div><div class="ai">IC-SC-04</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST CSF 2.0</span></div></td>
+            <td><span class="stbadge sat">Satisfied</span></td>
+          </tr>
+          <tr class="req">
+            <td><div class="rc">SI.L2-3.14.1</div><div class="rt">Identify and correct system flaws in a timely manner</div></td>
+            <td><a class="evtag partial" href="bm-component-detail.html?c=ctr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Trivy &middot; nginx</a></td>
+            <td><div class="anchor"><span class="aico" style="background:#4a3320;color:#e6b15e;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><div><div class="an">Vulnerability Management</div><div class="ai">IC-SI-01</div></div></div></td>
+            <td><div class="xwsug"><span class="accepted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>accepted</span> <span class="advbadge">advisory</span> <span class="via">NIST 800-171 R3</span></div></td>
+            <td><span class="stbadge partial">Partial</span></td>
+          </tr>
+
+          <tr><td colspan="5" class="morerow"><div class="pager">
+            <span>Showing <b style="color:#e6e9f2;">1&ndash;8</b> of <b style="color:#e6e9f2;">110</b> requirements</span>
+            <a class="mlink" href="projects-coverage-forecast.html" style="display:inline-flex;">compare against other frameworks in Coverage forecast <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+            <span class="pnav">
+              <span class="pbtn disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+              <span class="pbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+            </span>
+          </div></td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+      <!-- mat-drawer position="end", mode="side": opens on row click, pushes the table, no backdrop -->
+      <aside class="sdrawer" id="reqDrawer" aria-hidden="true">
+    <div class="sdhead">
+      <div style="min-width:0;">
+        <span class="sdcode" id="sdCode"></span>
+        <h2 id="sdTitle"></h2>
+        <div class="sdstatusrow">
+          <span id="sdStatus" class="stbadge sat"></span>
+          <a class="navlink" href="projects-cmmc-readiness.html">View in Readiness tree <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+        </div>
+      </div>
+      <span class="sdclose" id="sdClose" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span>
+    </div>
+    <div class="sdbody">
+      <div class="sdsec">
+        <div class="sl">Anchored control(s) <span class="cnt" id="sdAncCount"></span></div>
+        <div id="sdAnchor"></div>
+      </div>
+      <div class="sdsec">
+        <div class="sl">Map a control via crosswalk <span class="advbadge">advisory</span></div>
+        <div class="xwhelp">Crosswalks suggest candidate controls &mdash; choose a crosswalk path, then anchor the internal control(s) that actually satisfy this requirement. Crosswalks don't decide; you do.</div>
+        <div class="xwchips" id="sdXwChips"></div>
+        <div class="candlist" id="sdCandidates"></div>
+      </div>
+      <div class="sdsec">
+        <div class="sl">Or choose directly</div>
+        <button class="browsebtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Browse all Platform controls&hellip;</button>
+      </div>
+      <div class="sdsec">
+        <div class="sl">Proof task</div>
+        <div id="sdProof"></div>
+      </div>
+      <div class="sdfoot">A requirement is only different from a plain task because you map <b style="color:#c3c8d2;">how you discharge it</b> to a boundary control. That mapping <b style="color:#c3c8d2;">auto-populates the proof task</b>; with no mapping it's just a blank ad-hoc task. Status is <b style="color:#c3c8d2;">derived</b> from the anchored controls' evidence &mdash; all satisfied &rarr; Satisfied, some &rarr; Partial, none &rarr; Gap.</div>
+    </div>
+  </aside>
+    </div>
+  </main>
+
+<script>
+(function(){
+  var SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>';
+  var CHECK  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+  var VM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+  var CTR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>';
+  var DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  var LBL = {sat:'Satisfied', partial:'Partial', gap:'Gap'};
+
+  // The boundary's internal controls (with the satisfaction the boundary's evidence proves).
+  var CTRL = {
+    'IC-AC-01':{n:'Access Enforcement Control', sat:'sat', ev:{ic:VM,l:'prod-app-01 · RHEL 9 STIG',href:'bm-component-detail.html?c=vm'}},
+    'IC-AC-02':{n:'Least-Privilege Standard', sat:'partial', ev:{ic:VM,l:'prod-app-01 · STIG (partial)',href:'bm-component-detail.html?c=vm'}},
+    'IC-AC-05':{n:'Identity Governance Standard', sat:'sat', ev:{ic:DOC,l:'IdP governance export',href:null}},
+    'IC-AC-07':{n:'Account Lockout Control', sat:'partial', ev:{ic:VM,l:'prod-app-01 · STIG (partial)',href:'bm-component-detail.html?c=vm'}},
+    'IC-AU-01':{n:'Audit Logging Standard', sat:'sat', ev:{ic:VM,l:'prod-app-01 · STIG',href:'bm-component-detail.html?c=vm'}},
+    'IC-CM-01':{n:'Baseline Config Management', sat:'sat', ev:{ic:VM,l:'prod-app-01 · STIG',href:'bm-component-detail.html?c=vm'}},
+    'IC-CM-02':{n:'CIS Hardening Baseline (containers)', sat:'gap', ev:null},
+    'IC-CM-05':{n:'Change Control Standard', sat:'sat', ev:{ic:DOC,l:'change-control policy',href:null}},
+    'IC-IA-03':{n:'Multi-Factor Authentication', sat:'sat', ev:{ic:DOC,l:'MFA policy + IdP export',href:null}},
+    'IC-SC-04':{n:'TLS / Encryption Standard', sat:'sat', ev:{ic:CTR,l:'nginx · CIS TLS',href:'bm-component-detail.html?c=ctr'}},
+    'IC-SC-09':{n:'Cryptographic Standards', sat:'partial', ev:{ic:DOC,l:'crypto standard (draft)',href:null}},
+    'IC-SI-01':{n:'Vulnerability Management', sat:'partial', ev:{ic:CTR,l:'Trivy · nginx (partial)',href:'bm-component-detail.html?c=ctr'}}
+  };
+  // Per-requirement: current anchored control ids (the load-bearing choice) + crosswalk paths, each with candidate [ctrlId, via].
+  var REQ = {
+    'AC.L2-3.1.1':{t:'Limit system access to authorized users', anchored:['IC-AC-01'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-AC-01','SCF IAC-01'],['IC-AC-05','SCF IAC-07']]},
+      {id:'171',label:'CMMC → NIST 800-171 R3',real:true, cand:[['IC-AC-01','800-171 3.1.1']]},
+      {id:'iso',label:'CMMC → ISO 27002',real:false, cand:[['IC-AC-01','ISO A.8.2'],['IC-AC-05','ISO A.8.5']]} ]},
+    'AC.L2-3.1.2':{t:'Limit access to permitted transactions & functions', anchored:['IC-AC-02'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-AC-02','SCF IAC-10'],['IC-AC-01','SCF IAC-01']]},
+      {id:'171',label:'CMMC → NIST 800-171 R3',real:true, cand:[['IC-AC-02','800-171 3.1.2']]} ]},
+    'AU.L2-3.3.1':{t:'Create and retain system audit records', anchored:['IC-AU-01'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-AU-01','SCF MON-01']]},
+      {id:'csf',label:'CMMC → NIST CSF 2.0',real:false, cand:[['IC-AU-01','CSF DE.AE']]} ]},
+    'CM.L2-3.4.1':{t:'Establish and maintain baseline configurations', anchored:['IC-CM-01'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-CM-01','SCF CFG-02'],['IC-CM-05','SCF CHG-01']]},
+      {id:'171',label:'CMMC → NIST 800-171 R3',real:true, cand:[['IC-CM-01','800-171 3.4.1']]} ]},
+    'CM.L2-3.4.2':{t:'Establish and enforce security configuration settings', anchored:[], gap:'The nginx container fails CIS hardening (18 rules), so no satisfied control covers this yet. A crosswalk suggests candidates — anchor one, but the gap persists until its evidence passes.', xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-CM-02','SCF CFG-03'],['IC-CM-01','SCF CFG-02']]},
+      {id:'171',label:'CMMC → NIST 800-171 R3',real:true, cand:[['IC-CM-02','800-171 3.4.2']]} ]},
+    'IA.L2-3.5.3':{t:'Multifactor authentication for privileged accounts', anchored:['IC-IA-03'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-IA-03','SCF IAC-06']]},
+      {id:'iso',label:'CMMC → ISO 27002',real:false, cand:[['IC-IA-03','ISO A.8.5']]} ]},
+    'SC.L2-3.13.8':{t:'Protect confidentiality of CUI in transit (TLS)', anchored:['IC-SC-04'], xw:[
+      {id:'csf',label:'CMMC → NIST CSF 2.0',real:false, cand:[['IC-SC-04','CSF PR.DS-2'],['IC-SC-09','CSF PR.DS-5']]},
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-SC-04','SCF CRY-03']]} ]},
+    'SI.L2-3.14.1':{t:'Identify and correct system flaws in a timely manner', anchored:['IC-SI-01'], xw:[
+      {id:'scf',label:'CMMC → SCF 2025.2.1',real:true, cand:[['IC-SI-01','SCF VPM-02']]},
+      {id:'171',label:'CMMC → NIST 800-171 R3',real:true, cand:[['IC-SI-01','800-171 3.14.1']]} ]}
+  };
+
+  var drawer=document.getElementById('reqDrawer'), dcont=document.getElementById('dcont');
+  var elCode=document.getElementById('sdCode'), elTitle=document.getElementById('sdTitle'), elStatus=document.getElementById('sdStatus'),
+      elAnchor=document.getElementById('sdAnchor'), elCount=document.getElementById('sdAncCount'),
+      elChips=document.getElementById('sdXwChips'), elCand=document.getElementById('sdCandidates'),
+      elProof=document.getElementById('sdProof');
+  var BOLT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>';
+  var ARROW= '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+  var PEN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  var activeRow=null, curCode=null, curXw=0;
+
+  function deriveStatus(d){
+    if(!d.anchored.length) return 'gap';
+    var s = d.anchored.map(function(id){ return CTRL[id].sat; });
+    if(s.every(function(x){return x==='sat';})) return 'sat';   // every anchored control satisfied
+    if(s.every(function(x){return x==='gap';})) return 'gap';   // anchored, but none satisfied -> still a gap
+    return 'partial';                                           // mixed
+  }
+
+  function renderAnchored(d){
+    var st = deriveStatus(d);
+    elStatus.className='stbadge '+st; elStatus.textContent=LBL[st];
+    elCount.textContent = d.anchored.length ? '('+d.anchored.length+')' : '';
+    if(activeRow){ var b=activeRow.querySelector('.stbadge'); if(b){ b.className='stbadge '+st; b.textContent=LBL[st]; } }
+    if(!d.anchored.length){
+      elAnchor.innerHTML='<div class="ancnone">Not anchored yet. '+(d.gap||'Choose an internal control below to anchor this requirement.')+'</div>';
+      return;
+    }
+    elAnchor.innerHTML = d.anchored.map(function(id){
+      var c=CTRL[id], ev='';
+      if(c.ev){ var tag=c.ev.href?'a':'span', h=c.ev.href?' href="'+c.ev.href+'"':''; ev='<'+tag+' class="aev"'+h+'>'+c.ev.ic+' '+c.ev.l+'</'+tag+'>'; }
+      else { ev='<span class="aev" style="color:#e6b15e;">no evidence yet</span>'; }
+      return '<div class="ancrow'+(c.sat==='sat'?'':' partial')+'"><span class="aico">'+SHIELD+'</span>'
+        + '<div class="am"><div class="an">'+c.n+'</div><div class="ai">'+id+' · '+LBL[c.sat]+'</div>'+ev+'</div>'
+        + '<span class="arm" data-rm="'+id+'" title="Remove anchor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>';
+    }).join('');
+  }
+  function renderProofTask(d){
+    if(!d.anchored.length){
+      elProof.innerHTML = '<div class="proofcard adhoc"><div class="pc-ico">'+PEN+'</div>'
+        + '<div class="pc-m"><div class="pc-t">Ad-hoc task <span class="adhocbadge">blank</span></div>'
+        + '<div class="pc-s">No control mapped &mdash; so this is just a plain task. The proof task opens <b>blank</b>; whoever is assigned answers it and attaches evidence by hand.</div></div></div>';
+      return;
+    }
+    var names = d.anchored.map(function(id){ return CTRL[id].n+' ('+id+')'; }).join(', ');
+    elProof.innerHTML = '<div class="proofcard auto"><div class="pc-ico">'+BOLT+'</div>'
+      + '<div class="pc-m"><div class="pc-t">Auto-populated proof task <span class="autobadge">auto</span></div>'
+      + '<div class="pc-s">Because <b>'+names+'</b> is declared in the boundary, the system already knows the queries to run &mdash; the proof task is <b>pre-filled</b> with that evidence. It’s still a real task: assigned, reviewed, approved. Anchoring is what makes this requirement more than a blank task.</div>'
+      + '<a class="pc-link" href="projects-board-kanban.html?b=evidence">'+ARROW+'Evidence Collection &middot; '+curCode+' proof</a></div></div>';
+  }
+  function renderChips(d){
+    elChips.innerHTML = d.xw.map(function(x,i){
+      return '<span class="xwchip'+(i===curXw?' sel':'')+'" data-xw="'+i+'"><span class="xdot '+(x.real?'real':'pending')+'"></span>'+x.label+'</span>';
+    }).join('');
+  }
+  function renderCand(d){
+    var x=d.xw[curXw];
+    elCand.innerHTML = x.cand.map(function(pair){
+      var id=pair[0], via=pair[1], c=CTRL[id], on=d.anchored.indexOf(id)>=0;
+      var btn = on ? '<span class="anchorbtn done">'+CHECK+' anchored</span>'
+                   : '<button class="anchorbtn" data-anc="'+id+'">'+CHECK+' Anchor</button>';
+      return '<div class="candrow"><span class="cico">'+SHIELD+'</span>'
+        + '<div class="cm"><div class="cn"><span class="satdot '+c.sat+'"></span>'+c.n+'</div>'
+        + '<div class="ci">'+id+' · '+LBL[c.sat]+' · <span class="via">via '+via+'</span></div></div>'
+        + btn + '</div>';
+    }).join('');
+  }
+  function grow(){
+    dcont.style.minHeight='';
+    // let layout settle, then size the container to the taller of table vs drawer content
+    var need = Math.max(dcont.querySelector('.mat-content').offsetHeight, drawer.scrollHeight);
+    dcont.style.minHeight = need + 'px';
+  }
+  function renderAll(){ var d=REQ[curCode]; renderAnchored(d); renderProofTask(d); renderChips(d); renderCand(d); grow(); }
+
+  function open(code,row){
+    var d=REQ[code]; if(!d) return;
+    curCode=code; curXw=0;
+    elCode.textContent=code; elTitle.textContent=d.t;
+    drawer.classList.add('open'); dcont.classList.add('open'); drawer.setAttribute('aria-hidden','false');
+    if(activeRow) activeRow.classList.remove('active');
+    activeRow=row; if(row) row.classList.add('active');
+    renderAll();
+  }
+  function close(){
+    drawer.classList.remove('open'); dcont.classList.remove('open'); dcont.style.minHeight=''; drawer.setAttribute('aria-hidden','true');
+    if(activeRow){ activeRow.classList.remove('active'); activeRow=null; }
+  }
+
+  // delegated clicks inside the drawer: chip switch, anchor, remove
+  drawer.addEventListener('click', function(e){
+    var chip=e.target.closest('.xwchip'); if(chip){ curXw=+chip.getAttribute('data-xw'); renderAll(); return; }
+    var anc=e.target.closest('.anchorbtn[data-anc]'); if(anc){ var id=anc.getAttribute('data-anc'); var d=REQ[curCode]; if(d.anchored.indexOf(id)<0) d.anchored.push(id); renderAll(); return; }
+    var rm=e.target.closest('.arm[data-rm]'); if(rm){ var rid=rm.getAttribute('data-rm'); var dd=REQ[curCode]; dd.anchored=dd.anchored.filter(function(x){return x!==rid;}); renderAll(); return; }
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('tbody tr.req'), function(row){
+    row.addEventListener('click', function(e){
+      if(e.target.closest('a')) return;
+      var codeEl=row.querySelector('.rc'); if(!codeEl) return;
+      open(codeEl.textContent.trim(), row);
+    });
+  });
+  document.getElementById('sdClose').addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+})();
+</script>
+</body>
+</html>

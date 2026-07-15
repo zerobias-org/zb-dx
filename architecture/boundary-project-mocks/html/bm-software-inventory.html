@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boundary Manager — Operations Center / Software components (SBOM rollup, composited on real BM shell)</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1232px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/bm-shell-operations-center.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* boundary header */
+  .phead{ padding:16px 20px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:16px; background:#424242; padding:14px 18px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:56px; height:56px; flex:none; display:flex; align-items:center; justify-content:center; color:#8fd06a; }
+  .ricon svg{ width:44px; height:44px; }
+  .rmain{ display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ background:#1e1e1e; color:#8fd0a6; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; text-decoration:none; }
+  .rcrumb .cchip:hover{ background:#262b30; }
+  .rtitle-row{ display:flex; align-items:center; gap:12px; }
+  .titlerow h1{ font-size:22px; font-weight:500; }
+  .rsub{ font-size:13px; color:#9aa0aa; }
+
+  /* operations-center sub-tabs */
+  .subtabs{ display:flex; align-items:center; gap:30px; padding:0 26px; margin-top:14px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .subtabs a{ color:#9aa0aa; text-decoration:none; font-size:15px; font-weight:500; padding:12px 0; position:relative; }
+  .subtabs a.active{ color:#fff; }
+  .subtabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+  .octag{ font-size:11px; color:#7d828d; margin-left:auto; align-self:center; padding-bottom:2px; }
+
+  /* lens pointer bar (boundary reality -> project verb) */
+  .lensbar{ display:flex; align-items:center; gap:10px; margin:14px 24px 0; padding:10px 14px; background:#20313d; border-left:3px solid #03aff0; font-size:12px; color:#a8c9dd; }
+  .lensbar svg{ width:16px; height:16px; flex:none; color:#03aff0; }
+  .lensbar b{ color:#d7e6f0; font-weight:600; }
+  .lensbar a{ color:#6fc3f0; text-decoration:none; font-weight:600; margin-left:auto; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .lensbar a svg{ color:#6fc3f0; }
+
+  /* stat strip (reality KPIs) */
+  .statrow{ display:flex; gap:1px; margin:14px 24px 0; background:rgba(255,255,255,.06); box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .stat{ flex:1; background:#424242; padding:14px 18px; }
+  .stat .sv{ font-size:26px; font-weight:600; color:#fff; line-height:1; }
+  .stat .sv.warn{ color:#e6b15e; } .stat .sv.vuln{ color:#f0a09c; }
+  .stat .sl{ font-size:12px; color:#8a8f9a; margin-top:6px; }
+
+  /* toolbar */
+  .toolbar{ display:flex; align-items:center; gap:12px; padding:16px 24px 12px; }
+  .selbox{ display:inline-flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; color:#c3c8d2; font-size:13px; cursor:pointer; }
+  .selbox .lb{ color:#8a8f9a; }
+  .selbox svg{ width:15px; height:15px; color:#8a8f9a; }
+  .searchbox{ display:flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; width:340px; color:#8a8f9a; font-size:13px; }
+  .searchbox svg{ width:16px; height:16px; }
+  .spacer{ flex:1; }
+  .srcnote{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; color:#8a8f9a; font-size:12px; }
+  .srcnote svg{ width:15px; height:15px; color:#8fd06a; }
+
+  /* table */
+  .tablewrap{ margin:0 24px 8px; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ text-align:left; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a;
+            padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.12); white-space:nowrap; }
+  thead th.num{ text-align:right; }
+  tbody tr{ border-bottom:1px solid rgba(255,255,255,.06); }
+  tbody tr:hover{ background:rgba(255,255,255,.035); }
+  tbody tr.miss{ background:rgba(214,191,138,.05); }
+  td{ padding:13px 16px; font-size:13px; color:#dfe3ea; vertical-align:middle; }
+  /* name cell */
+  .namecell{ display:flex; align-items:center; gap:12px; }
+  .tico{ width:30px; height:30px; border-radius:7px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .tico svg{ width:16px; height:16px; }
+  .nm{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .nm .n1{ font-size:14px; color:#fff; font-weight:500; font-family:"SFMono-Regular",Menlo,Consolas,monospace; }
+  .nm .n2{ font-size:11px; color:#8a8f9a; }
+  /* type chip */
+  .ctype{ display:inline-flex; align-items:center; height:21px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .ctype.ospkg{ background:#233247; color:#8fc7f0; } .ctype.library{ background:#2e2747; color:#b39ae6; } .ctype.application{ background:#1f3a33; color:#79d0b1; }
+  .ver{ font-family:"SFMono-Regular",Menlo,Consolas,monospace; font-size:12px; color:#c3c8d2; }
+  .ver .multi{ color:#8a8f9a; font-size:11px; }
+  .sup{ color:#c3c8d2; }
+  .licbadge{ display:inline-flex; align-items:center; height:21px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:500; background:#2a2a2a; color:#b7bcc6; border:1px solid #4a4a4a; }
+  .licbadge.paid{ background:#3a2e18; color:#e6b15e; border-color:#5a4520; }
+  .usedby{ text-align:right; color:#c3c8d2; } .usedby .u{ color:#8a8f9a; font-size:11px; }
+  .vulncell{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+  .vdot{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .vdot.crit{ background:#f0655e; } .vdot.high{ background:#e6844e; } .vdot.med{ background:#e6b15e; } .vdot.low{ background:#6ea8d8; } .vdot.none{ background:#4a4f57; }
+  .vnum{ width:22px; text-align:right; font-weight:600; }
+  .vnum.has{ color:#f0a09c; } .vnum.clean{ color:#7d828d; }
+  .invstat{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .invstat .d{ width:6px; height:6px; border-radius:50%; }
+  .invstat.in{ background:#1f3d17; color:#8fd06a; } .invstat.in .d{ background:#8fd06a; }
+  .invstat.miss{ background:#3a3320; color:#d6bf8a; } .invstat.miss .d{ background:#d6bf8a; }
+  /* pagination */
+  .pager{ display:flex; align-items:center; justify-content:flex-end; gap:18px; margin:0 24px 26px; padding:12px 4px; color:#9aa0aa; font-size:12px; }
+  .pager .pg{ display:flex; align-items:center; gap:6px; }
+  .pager .pbtn{ width:28px; height:28px; border-radius:6px; border:1px solid #4a4a4a; background:#2a2a2a; display:flex; align-items:center; justify-content:center; color:#9aa0aa; }
+  .pager .pbtn svg{ width:14px; height:14px; }
+  .pager .pbtn.dis{ opacity:.4; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div class="rmain">
+          <div class="rcrumb"><a class="cchip" href="#">Platform</a></div>
+          <div class="rtitle-row"><h1>Platform</h1><span class="invstat in"><span class="d"></span>Active</span></div>
+          <span class="rsub">Operations Center &mdash; the boundary's internal reality: controls, responsible parties, and the component / software / tool inventory that evidence is collected from.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operations Center sub-tabs -->
+    <nav class="subtabs">
+      <a href="#">Controls</a>
+      <a href="#">Parties</a>
+      <a href="#">Roles</a>
+      <a href="bm-components-list.html">Components</a>
+      <a href="#" class="active">Software</a>
+      <a href="bm-tool-inventory.html">Tools</a>
+      <span class="octag">Operations Center</span>
+    </nav>
+
+    <!-- lens pointer: reality here, verb in project -->
+    <div class="lensbar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg>
+      <span>Software components (SBOM items) rolled up from every boundary <b>Component's</b> SBOM manifest &mdash; a Component is the responsibility unit, these are the software items it runs and must produce evidence for. Inventory reality. The <b>inventory-completeness control</b> and <b>missing-component findings</b> are measured in the project readiness lens.</span>
+      <a href="projects-cmmc-readiness.html">Inventory control &amp; findings in project <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+    </div>
+
+    <div class="statrow">
+      <div class="stat"><div class="sv" id="kTotal">1,247</div><div class="sl">unique software components</div></div>
+      <div class="stat"><div class="sv" id="kAssets">42</div><div class="sl">source assets (SBOMs)</div></div>
+      <div class="stat"><div class="sv warn" id="kMiss">11</div><div class="sl">not tracked in inventory</div></div>
+      <div class="stat"><div class="sv vuln" id="kVuln">96</div><div class="sl">with vulnerabilities</div></div>
+      <div class="stat"><div class="sv" id="kSup">84</div><div class="sl">distinct suppliers / producers</div></div>
+    </div>
+
+    <div class="toolbar">
+      <span class="selbox"><span class="lb">Type:</span> All types <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="selbox"><span class="lb">Tracked:</span> All <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="selbox"><span class="lb">Vulns:</span> Any <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Search components&hellip;</span>
+      <span class="spacer"></span>
+      <span class="srcnote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg> Auto-populated from 42 component SBOMs</span>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:22%;">Component</th>
+            <th style="width:10%;">Type</th>
+            <th style="width:12%;">Version(s)</th>
+            <th style="width:15%;">Supplier / producer</th>
+            <th style="width:12%;">License</th>
+            <th class="num" style="width:10%;">Used by</th>
+            <th class="num" style="width:9%;">Vulns</th>
+            <th style="width:10%;">Inventory</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"><!-- rendered --></tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <span>Rows per page: 16</span>
+      <span>1&ndash;16 of 1,247</span>
+      <span class="pg">
+        <span class="pbtn dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+        <span class="pbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>
+      </span>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const ICON = {
+      ospkg:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>',
+      library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v16H4zM14 4h6v16h-6z"/></svg>',
+      application:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>'
+    };
+    const TLABEL = { ospkg:'os-pkg', library:'library', application:'application' };
+    // severity rank for the "worst" dot
+    const SEV = ['none','low','med','high','crit'];
+    const ROWS = [
+      {name:'openssl',        purl:'pkg:generic/openssl',       type:'ospkg',       vers:['3.0.7','3.3.0'], sup:'OpenSSL Project',       lic:'Apache-2.0',   used:18, vuln:3, worst:'high', inv:'in'},
+      {name:'log4j-core',     purl:'pkg:maven/org.apache.logging.log4j', type:'library', vers:['2.17.1'],  sup:'Apache Software Fdn',   lic:'Apache-2.0',   used:2,  vuln:1, worst:'crit', inv:'in'},
+      {name:'linux-kernel',   purl:'pkg:generic/kernel',        type:'ospkg',       vers:['5.14.0-427'],    sup:'Red Hat',               lic:'GPL-2.0',      used:12, vuln:1, worst:'high', inv:'in'},
+      {name:'glibc',          purl:'pkg:generic/glibc',         type:'ospkg',       vers:['2.34-83'],       sup:'Red Hat / GNU',         lic:'LGPL-2.1',     used:9,  vuln:0, worst:'none', inv:'in'},
+      {name:'systemd',        purl:'pkg:generic/systemd',       type:'ospkg',       vers:['252-32'],        sup:'Red Hat',               lic:'LGPL-2.1',     used:9,  vuln:2, worst:'med',  inv:'in'},
+      {name:'curl',           purl:'pkg:generic/curl',          type:'ospkg',       vers:['7.76.1','8.7.1'],sup:'curl',                  lic:'curl',         used:21, vuln:3, worst:'high', inv:'in'},
+      {name:'openssh-server', purl:'pkg:generic/openssh',       type:'ospkg',       vers:['8.7p1-38'],      sup:'OpenBSD',               lic:'BSD-3-Clause', used:8,  vuln:0, worst:'none', inv:'in'},
+      {name:'python3',        purl:'pkg:generic/python',        type:'ospkg',       vers:['3.9.18'],        sup:'Python Software Fdn',   lic:'PSF-2.0',      used:5,  vuln:1, worst:'med',  inv:'in'},
+      {name:'zlib',           purl:'pkg:generic/zlib',          type:'library',     vers:['1.3.1'],         sup:'zlib',                  lic:'Zlib',         used:14, vuln:0, worst:'none', inv:'in'},
+      {name:'pcre2',          purl:'pkg:generic/pcre2',         type:'library',     vers:['10.43'],         sup:'PCRE',                  lic:'BSD-3-Clause', used:7,  vuln:0, worst:'none', inv:'in'},
+      {name:'musl',           purl:'pkg:apk/musl',              type:'ospkg',       vers:['1.2.5-r0'],      sup:'Alpine',                lic:'MIT',          used:6,  vuln:0, worst:'none', inv:'in'},
+      {name:'nginx',          purl:'pkg:generic/nginx',         type:'application', vers:['1.27.0'],        sup:'nginx / F5',            lic:'BSD-2-Clause', used:3,  vuln:1, worst:'med',  inv:'in'},
+      {name:'datadog-agent',  purl:'pkg:generic/datadog-agent', type:'application', vers:['7.52.1'],        sup:'Datadog',               lic:'proprietary', paid:true, used:22, vuln:0, worst:'none', inv:'in'},
+      {name:'libwebp',        purl:'pkg:generic/libwebp',       type:'library',     vers:['1.2.0-8'],       sup:'Google / Red Hat',      lic:'BSD-3-Clause', used:4,  vuln:1, worst:'high', inv:'miss'},
+      {name:'ngx-brotli',     purl:'pkg:generic/ngx-brotli',    type:'library',     vers:['1.0.0rc'],       sup:'Google',                lic:'MIT',          used:1,  vuln:0, worst:'none', inv:'miss'},
+      {name:'geoip2-module',  purl:'pkg:generic/geoip2-module', type:'library',     vers:['3.4'],           sup:'MaxMind',               lic:'Apache-2.0',   used:1,  vuln:0, worst:'none', inv:'miss'}
+    ];
+    const tbody = document.getElementById('tbody');
+    let html = '';
+    ROWS.forEach(r => {
+      const verMain = r.vers[0];
+      const verExtra = r.vers.length>1 ? ` <span class="multi">+${r.vers.length-1}</span>` : '';
+      const vhas = r.vuln>0;
+      html += `<tr class="${r.inv==='miss'?'miss':''}">`
+        + `<td><div class="namecell"><span class="tico">${ICON[r.type]}</span>`
+        +   `<div class="nm"><span class="n1">${r.name}</span><span class="n2">${r.purl}</span></div></div></td>`
+        + `<td><span class="ctype ${r.type}">${TLABEL[r.type]}</span></td>`
+        + `<td><span class="ver">${verMain}${verExtra}</span></td>`
+        + `<td><span class="sup">${r.sup}</span></td>`
+        + `<td><span class="licbadge${r.paid?' paid':''}">${r.lic}</span></td>`
+        + `<td class="usedby">${r.used} <span class="u">asset${r.used===1?'':'s'}</span></td>`
+        + `<td><div class="vulncell"><span class="vdot ${vhas?r.worst:'none'}"></span>`
+        +   `<span class="vnum ${vhas?'has':'clean'}">${r.vuln}</span></div></td>`
+        + `<td><span class="invstat ${r.inv}"><span class="d"></span>${r.inv==='in'?'In inventory':'Not tracked'}</span></td>`
+        + `</tr>`;
+    });
+    tbody.innerHTML = html;
+  })();
+  </script>
+
+</body>
+</html>

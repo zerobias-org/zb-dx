@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — CMMC Readiness tab (composited on real Portal shell)</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* content flows in the iframe region of the REAL portal shell (header 68px, rail 64px); page scrolls naturally */
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* resource header card */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon svg, .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .cchip:hover{ background:#262b30; }
+  .rcrumb .cchip.eng{ background:#2a2418; color:#d9ad6b; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; }
+  .rright{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex:none; }
+  .rright-actions{ display:flex; align-items:center; gap:4px; }
+  .jumpbtn{ display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:transparent; color:#cfcfcf; cursor:pointer; border:none; padding:0; }
+  .jumpbtn:hover{ background:rgba(255,255,255,.06); border-radius:4px; }
+  .jumpbtn svg{ width:20px; height:20px; }
+  .actions-btn{ display:flex; align-items:center; gap:4px; height:32px; padding:0 12px; border:1px solid rgba(255,255,255,.30);
+                border-radius:4px; color:#e3e3e3; font-size:13px; cursor:pointer; background:transparent; }
+  .actions-btn svg{ width:16px; height:16px; color:#cfcfcf; }
+
+  /* chips */
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; line-height:1.5; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .chip.vis{ background:#555a63; color:#e6e9f2; }
+  /* project-context chip — Nic's shipped colours (pastel bg, dark text) */
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; flex:none; }
+  .ptype.program{ background:#C5E1A5; } .ptype.workspace{ background:#90CAF9; }
+  .ptype.aperture{ background:#F48FB1; } .ptype.thread{ background:#CE93D8; }
+
+  /* page tabs */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+  .ptab-group{ position:relative; display:inline-flex; align-items:center; }
+  .ptab-group > a{ display:inline-flex; align-items:center; gap:5px; }
+  .ptab-group .caret{ width:12px; height:12px; opacity:.65; }
+
+  /* health pills */
+  .hp{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 11px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.03em; flex:none; white-space:nowrap; }
+  .hp .hpd{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .hp.ontrack{ background:#1f3d17; color:#8fd06a; }   .hp.ontrack .hpd{ background:#8fd06a; }
+  .hp.atrisk{ background:#4a3320; color:#e6b15e; }     .hp.atrisk .hpd{ background:#e6b15e; }
+  .hp.blocked{ background:#5a2020; color:#f0a09c; }    .hp.blocked .hpd{ background:#f0a09c; }
+
+  /* readiness summary card (hero) */
+  .summary{ background:transparent; margin:0 16px; }
+  .summary > .shead{ display:flex; align-items:center; gap:12px; padding:10px 4px 8px; }
+  .summary > .shead h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .summary > .shead .updated{ margin-left:auto; font-size:12px; color:#8a8f9a; }
+  .sbody{ display:flex; align-items:stretch; background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .szone{ padding:18px 22px; display:flex; flex-direction:column; gap:12px; }
+  .szone + .szone{ border-left:1px solid rgba(255,255,255,.08); }
+  .zlabel{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#7d828d; }
+  .zprog{ flex:none; width:400px; }
+  .progrow{ display:flex; align-items:center; gap:14px; }
+  .progrow .big{ font-size:38px; font-weight:600; color:#fff; line-height:1; }
+  .progrow .pmeta{ display:flex; flex-direction:column; gap:6px; }
+  .obar{ width:230px; height:10px; border-radius:5px; background:#2a2a2a; overflow:hidden; }
+  .obar .of{ display:block; height:100%; background:#03aff0; border-radius:5px; }
+  .progrow .pmeta .pl{ font-size:12px; color:#9aa0aa; }
+  .statusbar{ display:flex; height:12px; border-radius:4px; overflow:hidden; width:100%; }
+  .statusbar span{ display:block; height:100%; }
+  .st-sat{ background:#8fd06a; } .st-partial{ background:#e6b15e; } .st-gap{ background:#f0a09c; }
+  .statuslegend{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; font-size:12px; color:#9aa0aa; }
+  .statuslegend .it{ display:flex; align-items:center; gap:6px; }
+  .statuslegend .sw{ width:10px; height:10px; border-radius:2px; }
+  /* zone: computed-from */
+  .zfrom{ flex:1; }
+  .fromnote{ font-size:13px; color:#c3c8d2; line-height:1.5; }
+  .fromnote b{ color:#fff; font-weight:600; }
+  .xwbadge{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:4px; background:#23384d; color:#74b8e6; font-size:12px; font-weight:500; }
+
+  /* 2-col grid */
+  .gridwrap{ margin:14px 16px 24px; }
+  .grid{ display:flex; gap:16px; align-items:flex-start; }
+  .col-l{ flex:1.55; min-width:0; display:flex; flex-direction:column; gap:0; }
+  .col-r{ flex:1; min-width:0; display:flex; flex-direction:column; gap:0; }
+  .panel{ background:transparent; }
+  .panel > .head{ display:flex; align-items:center; justify-content:space-between; padding:8px 4px; }
+  .panel > .head h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .panel > .head .hint{ font-size:12px; color:#8a8f9a; font-weight:400; }
+  .panel > .head + .pbody{ background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+
+  /* control tree */
+  .tree{ padding:8px 8px 12px; font-size:14px; }
+  .tnode{ display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:6px; color:#eaeaea; }
+  .tnode:hover{ background:rgba(255,255,255,.04); }
+  .tnode .dot{ width:11px; height:11px; border-radius:50%; flex:none; }
+  .dot.sat{ background:#8fd06a; } .dot.partial{ background:#e6b15e; } .dot.gap{ background:#f0a09c; }
+  .indent1{ padding-left:22px; } .indent2{ padding-left:46px; } .indent3{ padding-left:74px; }
+  .tguide{ color:#6f7480; flex:none; }
+  .tname{ flex:none; }
+  .tnode.self .tname{ font-weight:600; color:#fff; }
+  .tnode .grow{ flex:1; }
+  .tnode .cnt{ font-size:12px; color:#9aa0aa; white-space:nowrap; text-align:right; flex:none; }
+  .tnode .cnt .s{ color:#8fd06a; } .tnode .cnt .p{ color:#e6b15e; } .tnode .cnt .g{ color:#f0a09c; }
+  .tnode .miniprog{ display:inline-flex; align-items:center; gap:8px; flex:none; }
+  .tnode .miniprog .bar{ width:90px; height:6px; border-radius:3px; background:#2a2a2a; overflow:hidden; }
+  .tnode .miniprog .bar .fill{ display:block; height:100%; background:#03aff0; border-radius:3px; }
+  .tnode .miniprog .pct{ font-size:12px; color:#cfcfcf; width:34px; text-align:right; }
+  .stbadge{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; flex:none; }
+  .stbadge.sat{ background:#1f3d17; color:#8fd06a; } .stbadge.partial{ background:#4a3320; color:#e6b15e; } .stbadge.gap{ background:#5a2020; color:#f0a09c; }
+  /* asset leaf row */
+  .aleaf{ display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:6px; color:#cfd3da; }
+  .aleaf:hover{ background:rgba(255,255,255,.03); }
+  .aleaf .aico{ width:22px; height:22px; border-radius:5px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .aleaf .aico svg{ width:14px; height:14px; }
+  .aleaf .aname{ font-size:13px; color:#dfe3ea; }
+  .aleaf .abench{ font-size:12px; color:#8a8f9a; }
+  .aleaf .arep{ margin-left:auto; font-size:12px; color:#9aa0aa; white-space:nowrap; }
+  .aleaf .arep b{ color:#8fd06a; font-weight:600; }
+  .gaptask{ display:flex; align-items:center; gap:8px; padding:6px 8px; margin:2px 0 2px 74px; border-left:2px solid #f0a09c; background:rgba(240,160,156,.06); border-radius:0 4px 4px 0; font-size:12px; color:#e6b6b3; }
+  .gaptask .tk{ display:inline-flex; align-items:center; height:18px; padding:0 7px; border-radius:3px; background:#5a2020; color:#f0a09c; font-size:10px; font-weight:700; text-transform:uppercase; }
+  /* tree filter bar + scroll container */
+  .treefilter{ display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid rgba(255,255,255,.08); position:sticky; top:0; background:#424242; z-index:2; }
+  .fchip{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:#2a2a2a; color:#9aa0aa; border:1px solid #4a4a4a; }
+  .fchip.sel{ background:#23384d; color:#cfe6f7; border-color:#03aff0; }
+  .fchip .ct{ font-size:11px; padding:0 6px; background:rgba(255,255,255,.10); border-radius:8px; }
+  .treescroll{ max-height:618px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#555 #2a2a2a; }
+  .treescroll::-webkit-scrollbar{ width:10px; } .treescroll::-webkit-scrollbar-thumb{ background:#555; border-radius:5px; } .treescroll::-webkit-scrollbar-track{ background:#2a2a2a; }
+  .chev{ width:13px; height:13px; color:#8a8f9a; flex:none; }
+  .moreprac{ font-size:12px; color:#7d828d; padding:5px 8px 5px 74px; font-style:italic; }
+
+  /* framework + crosswalk panel */
+  .fwpick{ display:flex; align-items:center; gap:8px; padding:12px 14px 6px; flex-wrap:wrap; }
+  .fwchip{ display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 12px; border-radius:6px; font-size:13px; font-weight:500; background:#2a2a2a; color:#c3c8d2; border:1px solid #4a4a4a; cursor:pointer; }
+  .fwchip.sel{ background:#23384d; color:#cfe6f7; border-color:#03aff0; }
+  .fwchip .lv{ font-size:11px; opacity:.8; }
+  .fwadd{ width:30px; height:30px; border-radius:6px; border:1px dashed #5a5a5a; color:#8a8f9a; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .seclabel{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#7d828d; padding:10px 16px 4px; }
+  .xwrow{ display:flex; align-items:center; gap:11px; padding:9px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .xwrow:first-of-type{ border-top:none; }
+  .xwmain{ flex:1; min-width:0; }
+  .xwname{ font-size:13px; color:#eaeaea; }
+  .xwmeta{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .xwmeta .real{ color:#74b8e6; }
+  .xwmeta .pending{ color:#e6b15e; }
+  /* toggle */
+  .tg{ width:38px; height:21px; border-radius:11px; background:#3a3a3a; position:relative; flex:none; cursor:pointer; transition:background .15s; }
+  .tg::after{ content:""; position:absolute; top:2px; left:2px; width:17px; height:17px; border-radius:50%; background:#9aa0aa; transition:left .15s,background .15s; }
+  .tg.on{ background:#1f5a30; } .tg.on::after{ left:19px; background:#8fd06a; }
+  /* domain expand/collapse caret */
+  .tchev{ width:16px; height:16px; flex:none; display:inline-flex; align-items:center; justify-content:center; color:#8a8f9a; transition:transform .12s ease; }
+  .tchev svg{ width:12px; height:12px; }
+  .tnode.indent1{ cursor:pointer; }
+  .tnode.indent1:not(.collapsed) > .tchev{ transform:rotate(90deg); }
+  .tnode.indent1:hover > .tchev{ color:#cfcfcf; }
+  /* milestones */
+  .ms{ display:flex; align-items:center; gap:11px; padding:10px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .ms .mic{ width:26px; height:26px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#74b8e6; }
+  .ms .mic svg{ width:15px; height:15px; }
+  .ms .mtxt{ flex:1; }
+  .ms .mtitle{ font-size:13px; color:#eaeaea; }
+  .ms .msub{ font-size:11px; color:#8a8f9a; margin-top:1px; }
+  .ms .mtarget{ font-size:12px; color:#cfcfcf; text-align:right; white-space:nowrap; }
+  .ms .mtarget b{ color:#fff; }
+  .ms .mtarget .du{ font-size:11px; color:#8a8f9a; }
+  .mtitlerow{ display:flex; align-items:center; gap:8px; }
+  /* CalendarEvent health chip (mirrors calendar.model CALENDAR_HEALTH_CHIP_CLASS) */
+  .evchip{ display:inline-flex; align-items:center; height:18px; padding:0 7px; border-radius:4px; font-size:10px; font-weight:600; flex:none; }
+  .evchip.upcoming{ background:#2a2f38; color:#9fb6cc; }
+  .evchip.duesoon{ background:#4a3320; color:#e6b15e; }
+  .evchip.overdue{ background:#5a2020; color:#f0a09c; }
+  .evchip.met{ background:#1f3d17; color:#8fd06a; }
+  .evtype{ font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; }
+  .mlink{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:12px; font-weight:500; cursor:pointer; }
+
+  /* ===== Measurement layers (§2g — project measures the runtime boundary) ===== */
+  .mlayer{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .mlayer:first-child{ border-top:none; }
+  .mlayer.primary{ background:rgba(3,175,240,.05); }
+  .mlicon{ width:32px; height:32px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .mlicon svg{ width:17px; height:17px; }
+  .mlmain{ flex:1; min-width:0; }
+  .mlname{ font-size:13px; color:#eaeaea; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .mldom{ font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#b39ae6; background:#2e2747; padding:1px 6px; border-radius:3px; }
+  .mlbar{ width:100%; height:8px; border-radius:4px; background:#2a2a2a; overflow:hidden; margin-top:7px; }
+  .mlbar span{ display:block; height:100%; border-radius:4px; }
+  .mlbar span.g{ background:#8fd06a; } .mlbar span.a{ background:#e6b15e; } .mlbar span.r{ background:#f0a09c; }
+  .mlsub{ font-size:11px; color:#8a8f9a; margin-top:6px; }
+  .mlsub a{ color:#f0a09c; text-decoration:none; font-weight:600; }
+  .mlright{ flex:none; text-align:right; width:66px; }
+  .mlpct{ font-size:20px; font-weight:600; line-height:1; }
+  .mlpct.g{ color:#8fd06a; } .mlpct.a{ color:#e6b15e; } .mlpct.r{ color:#f0a09c; }
+  .mllbl{ font-size:10px; color:#8a8f9a; margin-top:3px; }
+  .mlink svg{ width:14px; height:14px; }
+  .lensrow{ display:flex; align-items:center; gap:8px; }
+  .lens{ display:inline-flex; align-items:center; height:28px; padding:0 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:#2a2a2a; color:#9aa0aa; border:1px solid #4a4a4a; }
+  .lens.sel{ background:#33304d; color:#bcaef0; border-color:#6a5fb0; }
+  .addbtn{ width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#03aff0; cursor:pointer; }
+  .addbtn svg{ width:16px; height:16px; }
+
+  /* ===== Assets lens (assets-centric re-group of the SAME leaf assessments) ===== */
+  .kindchip{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; flex:none; }
+  .kindchip.vm{ background:#20313d; color:#6fc3f0; }
+  .kindchip.ctr{ background:#2e2747; color:#b39ae6; }
+  .kindchip.cloud{ background:#17342a; color:#7fd6a8; }
+  .kindchip.sys{ background:#233247; color:#8fc7f0; }
+  .tnode .abench{ font-size:12px; color:#8a8f9a; flex:none; margin-left:2px; }
+  .tnode.collapser{ cursor:pointer; }
+  .tnode.collapser > .tchev{ transform:rotate(0deg); }
+  .tnode.collapser:not(.collapsed) > .tchev{ transform:rotate(90deg); }
+  .assetnote{ font-size:11px; color:#8a8f9a; padding:5px 8px 7px 74px; line-height:1.4; }
+  .assetnote b{ color:#c3c8d2; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon">
+          <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54">
+        </span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>CMMC Level 2</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+            <span style="color:#8a8f9a;font-size:13px;margin-left:2px;">observing</span>
+            <a href="bm-component-detail.html?c=vm" title="Open in Boundary Manager" style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:6px;background:#1f3d17;color:#8fd06a;font-size:13px;font-weight:600;text-decoration:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+              Platform
+            </a>
+          </div>
+          <span class="rsub">A <b>CMMC v2.0 Level 2 lens</b> observing <b>Platform</b> (internal controls: NIST 800-171 R3), estimating readiness &mdash; CMMC requirements are anchored to the boundary's controls; only gaps become tasks.</span>
+        </div>
+        <div class="rright">
+          <button class="jumpbtn" title="Jump to boundary">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21,11 L14,4 v4 H10 a6,6 0 0,0 -6,6 v6 h2 v-6 a4,4 0 0,1 4,-4 h4 v4 L21,11 z"/></svg>
+          </button>
+          <button class="actions-btn">Actions <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html">Overview</a>
+      <a href="projects-cmmc-readiness.html" class="active">Readiness</a>
+      <a href="projects-requirements.html">Requirements</a>
+      <a href="projects-boards.html">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <!-- HERO: readiness summary -->
+    <section class="summary">
+      <div class="shead"><h2>CMMC Level 2 Readiness</h2><span class="updated">Computed from boundary &middot; updated 6 min ago</span></div>
+      <div class="sbody">
+        <div class="szone zprog">
+          <span class="zlabel">Readiness</span>
+          <div class="progrow">
+            <span class="big" id="rPct">70%</span>
+            <div class="pmeta">
+              <span class="hp atrisk" id="rPill"><span class="hpd"></span>At risk</span>
+              <span class="obar"><span class="of" id="rObar" style="width:70%"></span></span>
+              <span class="pl" id="rPl">68 satisfied &middot; 18 partial &middot; 24 gap &nbsp;(110 practices)</span>
+            </div>
+          </div>
+          <div class="statusbar">
+            <span class="st-sat" style="width:61.8%"></span>
+            <span class="st-partial" style="width:16.4%"></span>
+            <span class="st-gap" style="width:21.8%"></span>
+          </div>
+          <div class="statuslegend">
+            <span class="it"><span class="sw st-sat"></span>Satisfied <span id="rLegSat">68</span></span>
+            <span class="it"><span class="sw st-partial"></span>Partial <span id="rLegPar">18</span></span>
+            <span class="it"><span class="sw st-gap"></span>Gap <span id="rLegGap">24</span></span>
+          </div>
+        </div>
+        <div class="szone zfrom">
+          <span class="zlabel">How this is computed</span>
+          <div class="fromnote">
+            Readiness is <b>not owned by the boundary</b> &mdash; it is computed here in the project from the
+            <b>anchored requirement &rarr; internal-control mappings</b>: each CMMC practice is mapped to a control the
+            <b>Platform</b> satisfies. Crosswalks only <b>suggested</b> those mappings (advisory) &mdash;
+            they don't drive the number. Partial coverage rolls up as a percentage (a mostly-met practice counts
+            <b>partial</b>); only genuine <b>gaps</b> become tasks.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;align-items:center;">
+            <span class="xwbadge">86 anchored mappings</span>
+            <span class="xwbadge" style="background:#1f3d17;color:#8fd06a;">1 boundary referenced</span>
+            <a class="mlink" href="projects-requirements.html">Requirements &amp; mappings
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="gridwrap">
+      <div class="grid">
+
+        <!-- LEFT: control tree (controls-centric lens) -->
+        <div class="col-l">
+          <section class="panel">
+            <div class="head">
+              <h2>Control tree <span class="hint">&mdash; CMMC v2.0 Level 2</span></h2>
+              <div class="lensrow">
+                <span class="lens sel">Controls</span>
+                <span class="lens" title="Re-group the same leaf assessments by asset type">Assets</span>
+              </div>
+            </div>
+            <div class="pbody">
+              <div id="viewControls">
+              <div class="treefilter">
+                <span class="fchip sel">All <span class="ct">110</span></span>
+                <span class="fchip">Gaps <span class="ct">14</span></span>
+                <span class="fchip">Partial <span class="ct">22</span></span>
+                <span style="margin-left:auto;font-size:11px;color:#8a8f9a;">14 domains &middot; CMMC v2.0 L2</span>
+              </div>
+              <div class="treescroll">
+              <div class="tree">
+
+                <!-- workspace self -->
+                <div class="tnode self">
+                  <span class="dot partial" id="rWsDot"></span>
+                  <span class="tname">CMMC Level 2</span>
+                  <span class="ptype workspace">Framework</span>
+                  <span class="grow"></span>
+                  <span class="cnt" id="rWsCnt"><span class="s">68 sat</span> &middot; <span class="p">18 partial</span> &middot; <span class="g">24 gap</span></span>
+                  <span class="miniprog"><span class="bar"><span class="fill" id="rWsFill" style="width:70%"></span></span><span class="pct" id="rWsPct">70%</span></span>
+                </div>
+
+                <!-- AC aperture -->
+                <div class="tnode indent1" data-dom data-tot="22" data-sat="13" data-par="5" data-gap="4">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot partial"></span>
+                  <span class="tname">AC &mdash; Access Control</span>
+                  <span class="ptype aperture">Domain</span>
+                  <span class="grow"></span>
+                  <span class="cnt">22 practices &middot; <span class="s">17 sat</span> &middot; <span class="p">4 partial</span></span>
+                </div>
+                <div class="tnode indent2">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot sat"></span>
+                  <span class="tname">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span>
+                  <span class="ptype thread">Practice</span>
+                  <span class="grow"></span>
+                  <span class="stbadge sat">Satisfied</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                  <span class="aname">prod-app-01</span><span class="abench">VM &middot; RHEL 9 STIG V2R3</span>
+                  <span class="arep"><b>381/412</b> pass &middot; 38 reqs</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+                  <span class="aname">nginx:1.27-prod</span><span class="abench">Container &middot; CIS Docker 1.6.0</span>
+                  <span class="arep"><b>74/96</b> pass &middot; 22 reqs</span>
+                </div>
+                <div class="tnode indent2">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot partial"></span>
+                  <span class="tname">AC.L2-3.1.2 &mdash; Limit access to permitted transactions and functions</span>
+                  <span class="ptype thread">Practice</span>
+                  <span class="grow"></span>
+                  <span class="stbadge partial">Partial</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                  <span class="aname">prod-app-01</span><span class="abench">VM &middot; RHEL 9 STIG V2R3</span>
+                  <span class="arep"><b>381/412</b> pass &middot; 38 reqs</span>
+                </div>
+                <div class="gaptask">
+                  <span class="tk">Task</span>
+                  Restrict sudoers to role-based functions on RHEL fleet
+                  <span style="margin-left:auto;color:#9aa0aa;">To&nbsp;Do</span>
+                </div>
+                <div class="moreprac">+ 20 more AC practices</div>
+
+                <!-- AU aperture -->
+                <div class="tnode indent1" data-dom data-tot="9" data-sat="8" data-par="1" data-gap="0">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot sat"></span>
+                  <span class="tname">AU &mdash; Audit &amp; Accountability</span>
+                  <span class="ptype aperture">Domain</span>
+                  <span class="grow"></span>
+                  <span class="cnt">9 practices &middot; <span class="s">9 sat</span></span>
+                </div>
+                <div class="tnode indent2">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot sat"></span>
+                  <span class="tname">AU.L2-3.3.1 &mdash; Create and retain system audit records</span>
+                  <span class="ptype thread">Practice</span>
+                  <span class="grow"></span>
+                  <span class="stbadge sat">Satisfied</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                  <span class="aname">prod-app-01</span><span class="abench">VM &middot; RHEL 9 STIG V2R3</span>
+                  <span class="arep"><b>381/412</b> pass &middot; 38 reqs</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+                  <span class="aname">nginx:1.27-prod</span><span class="abench">Container &middot; CIS Docker 1.6.0</span>
+                  <span class="arep"><b>74/96</b> pass &middot; 22 reqs</span>
+                </div>
+
+                <div class="moreprac">+ 8 more AU practices</div>
+
+                <!-- CM aperture -->
+                <div class="tnode indent1" data-dom data-tot="9" data-sat="5" data-par="1" data-gap="3">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot gap"></span>
+                  <span class="tname">CM &mdash; Configuration Management</span>
+                  <span class="ptype aperture">Domain</span>
+                  <span class="grow"></span>
+                  <span class="cnt">9 practices &middot; <span class="s">6 sat</span> &middot; <span class="g">3 gap</span></span>
+                </div>
+                <div class="tnode indent2">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot sat"></span>
+                  <span class="tname">CM.L2-3.4.1 &mdash; Establish and maintain baseline configurations</span>
+                  <span class="ptype thread">Practice</span>
+                  <span class="grow"></span>
+                  <span class="stbadge sat">Satisfied</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                  <span class="aname">prod-app-01</span><span class="abench">VM &middot; RHEL 9 STIG V2R3</span>
+                  <span class="arep"><b>381/412</b> pass &middot; 38 reqs</span>
+                </div>
+                <div class="tnode indent2">
+                  <span class="tguide">&#9492;&#9472;</span>
+                  <span class="dot gap"></span>
+                  <span class="tname">CM.L2-3.4.2 &mdash; Establish and enforce security configuration settings</span>
+                  <span class="ptype thread">Practice</span>
+                  <span class="grow"></span>
+                  <span class="stbadge gap">Gap</span>
+                </div>
+                <div class="aleaf indent3">
+                  <span class="aico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+                  <span class="aname">nginx:1.27-prod</span><span class="abench">Container &middot; CIS Docker 1.6.0</span>
+                  <span class="arep" style="color:#f0a09c;">18 failing rules</span>
+                </div>
+                <div class="gaptask">
+                  <span class="tk">Task</span>
+                  Apply CIS hardening profile to nginx container image
+                  <span style="margin-left:auto;color:#9aa0aa;">To&nbsp;Do</span>
+                </div>
+                <div class="moreprac">+ 7 more CM practices</div>
+
+                <!-- remaining 11 CMMC L2 domains (collapsed) -->
+                <div class="tnode indent1" data-dom data-tot="3" data-sat="2" data-par="0" data-gap="1"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot sat"></span><span class="tname">AT &mdash; Awareness &amp; Training</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">3 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="4" data-sat="2" data-par="1" data-gap="1"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot partial"></span><span class="tname">CA &mdash; Security Assessment</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">4 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="11" data-sat="6" data-par="2" data-gap="3"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot gap"></span><span class="tname">IA &mdash; Identification &amp; Authentication</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">11 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="3" data-sat="2" data-par="0" data-gap="1"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot sat"></span><span class="tname">IR &mdash; Incident Response</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">3 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="6" data-sat="4" data-par="1" data-gap="1"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot partial"></span><span class="tname">MA &mdash; Maintenance</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">6 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="9" data-sat="5" data-par="1" data-gap="3"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot gap"></span><span class="tname">MP &mdash; Media Protection</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">9 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="6" data-sat="4" data-par="1" data-gap="1"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot sat"></span><span class="tname">PE &mdash; Physical Protection</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">6 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="2" data-sat="2" data-par="0" data-gap="0"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot sat"></span><span class="tname">PS &mdash; Personnel Security</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">2 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="3" data-sat="2" data-par="1" data-gap="0"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot partial"></span><span class="tname">RA &mdash; Risk Assessment</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">3 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="16" data-sat="9" data-par="3" data-gap="4"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot gap"></span><span class="tname">SC &mdash; System &amp; Communications Protection</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">16 practices</span></div>
+                <div class="tnode indent1" data-dom data-tot="7" data-sat="4" data-par="1" data-gap="2"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg><span class="dot partial"></span><span class="tname">SI &mdash; System &amp; Information Integrity</span><span class="ptype aperture">Domain</span><span class="grow"></span><span class="cnt">7 practices</span></div>
+
+              </div>
+              </div>
+              </div><!-- /#viewControls -->
+
+              <!-- ===== ASSETS LENS: same leaf assessments, re-grouped by asset ===== -->
+              <div id="viewAssets" style="display:none;">
+              <div class="treefilter">
+                <span class="fchip sel">All assets <span class="ct">11</span></span>
+                <span class="fchip">With gaps <span class="ct">3</span></span>
+                <span class="fchip">Failing rules <span class="ct">40</span></span>
+                <span style="margin-left:auto;font-size:11px;color:#8a8f9a;">same leaf assessments &middot; grouped by asset &middot; 89% benchmark conformance</span>
+              </div>
+              <div class="treescroll">
+              <div class="tree">
+
+                <!-- system self -->
+                <div class="tnode self">
+                  <span class="dot partial"></span>
+                  <span class="tname">Platform</span>
+                  <span class="kindchip sys">System</span>
+                  <span class="grow"></span>
+                  <span class="cnt">11 assets assessed &middot; <span class="s">8 clean</span> &middot; <span class="g">3 with gaps</span></span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:89%"></span></span><span class="pct">89%</span></span>
+                </div>
+
+                <!-- ===== Virtual Machines ===== -->
+                <div class="tnode indent1 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">Virtual Machines</span>
+                  <span class="kindchip vm">VM &middot; RHEL 9 STIG V2R3</span>
+                  <span class="grow"></span>
+                  <span class="cnt">3 assets &middot; 1111/1236 rules</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:90%"></span></span><span class="pct">90%</span></span>
+                </div>
+
+                <!-- prod-app-01 (expanded) -->
+                <div class="tnode indent2 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">prod-app-01</span>
+                  <span class="abench">RHEL 9 STIG V2R3</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">381/412</b> pass &middot; 38 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:92%"></span></span><span class="pct">92%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>38 requirements</b> across <b>9 domains</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AU.L2-3.3.1 &mdash; Create and retain system audit records</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">CM.L2-3.4.1 &mdash; Establish and maintain baseline configurations</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot partial"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.8 &mdash; Implement cryptographic mechanisms in transit</span><span class="ptype thread">Practice</span><span class="abench" style="color:#e6b15e;">4 STIG rules open</span><span class="grow"></span><span class="stbadge partial">Partial</span></div>
+                <div class="moreprac">+ 34 more requirements evidenced by prod-app-01</div>
+
+                <!-- prod-app-02 (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">prod-app-02</span>
+                  <span class="abench">RHEL 9 STIG V2R3</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">372/412</b> pass &middot; 37 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:90%"></span></span><span class="pct">90%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>37 requirements</b> across <b>9 domains</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AU.L2-3.3.1 &mdash; Create and retain system audit records</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 35 more requirements evidenced by prod-app-02</div>
+
+                <!-- enclave-host-2 (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot partial"></span>
+                  <span class="tname">enclave-host-2</span>
+                  <span class="abench">RHEL 9 STIG V2R3</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">358/412</b> pass &middot; 36 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:87%"></span></span><span class="pct">87%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>36 requirements</b> across <b>8 domains</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot partial"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.11 &mdash; Employ FIPS-validated cryptography</span><span class="ptype thread">Practice</span><span class="abench" style="color:#e6b15e;">6 STIG rules open</span><span class="grow"></span><span class="stbadge partial">Partial</span></div>
+                <div class="moreprac">+ 34 more requirements evidenced by enclave-host-2</div>
+
+                <!-- ===== Containers ===== -->
+                <div class="tnode indent1 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot gap"></span>
+                  <span class="tname">Containers</span>
+                  <span class="kindchip ctr">Container &middot; CIS Docker 1.6.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt">4 assets &middot; 328/384 rules</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:85%"></span></span><span class="pct">85%</span></span>
+                </div>
+
+                <!-- nginx:1.27-prod (expanded, has the gap) -->
+                <div class="tnode indent2 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot gap"></span>
+                  <span class="tname">nginx:1.27-prod</span>
+                  <span class="abench">CIS Docker 1.6.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#f0a09c;">74/96</b> pass &middot; 22 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:77%;background:#f0a09c;"></span></span><span class="pct">77%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>22 requirements</b> &mdash; the failing CIS rules surface as control gaps on this asset:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot gap"></span><span class="tname" style="font-size:13px;color:#cfd3da;">CM.L2-3.4.2 &mdash; Establish and enforce security configuration settings</span><span class="ptype thread">Practice</span><span class="abench" style="color:#f0a09c;">18 failing CIS rules</span><span class="grow"></span><span class="stbadge gap">Gap</span></div>
+                <div class="gaptask"><span class="tk">Task</span>Apply CIS hardening profile to nginx container image<span style="margin-left:auto;color:#9aa0aa;">To&nbsp;Do</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 20 more requirements evidenced by nginx:1.27-prod</div>
+
+                <!-- redis:7.2 (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">redis:7.2</span>
+                  <span class="abench">CIS Docker 1.6.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">88/96</b> pass &middot; 19 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:92%"></span></span><span class="pct">92%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>19 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">CM.L2-3.4.1 &mdash; Establish and maintain baseline configurations</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 17 more requirements evidenced by redis:7.2</div>
+
+                <!-- app-api:2.4 (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot partial"></span>
+                  <span class="tname">app-api:2.4</span>
+                  <span class="abench">CIS Docker 1.6.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">81/96</b> pass &middot; 21 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:84%"></span></span><span class="pct">84%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>21 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot partial"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.8 &mdash; Implement cryptographic mechanisms in transit</span><span class="ptype thread">Practice</span><span class="abench" style="color:#e6b15e;">3 CIS rules open</span><span class="grow"></span><span class="stbadge partial">Partial</span></div>
+                <div class="moreprac">+ 19 more requirements evidenced by app-api:2.4</div>
+
+                <!-- worker:1.9 (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">worker:1.9</span>
+                  <span class="abench">CIS Docker 1.6.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">85/96</b> pass &middot; 18 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:89%"></span></span><span class="pct">89%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>18 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AC.L2-3.1.1 &mdash; Limit system access to authorized users</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AU.L2-3.3.1 &mdash; Create and retain system audit records</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 16 more requirements evidenced by worker:1.9</div>
+
+                <!-- ===== Cloud Resources ===== -->
+                <div class="tnode indent1 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot gap"></span>
+                  <span class="tname">Cloud Resources</span>
+                  <span class="kindchip cloud">AWS &middot; FSBP / CIS AWS 3.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt">4 assets &middot; 74/79 rules</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:94%"></span></span><span class="pct">94%</span></span>
+                </div>
+
+                <!-- iam-role-ci (expanded, MFA finding) -->
+                <div class="tnode indent2 collapser">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot gap"></span>
+                  <span class="tname">iam-role-ci</span>
+                  <span class="abench">AWS FSBP</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#f0a09c;">22/26</b> pass &middot; 9 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:85%;background:#f0a09c;"></span></span><span class="pct">85%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>9 requirements</b> &mdash; a failed check raised a finding:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot gap"></span><span class="tname" style="font-size:13px;color:#cfd3da;">IA.L2-3.5.3 &mdash; Use multifactor authentication</span><span class="ptype thread">Practice</span><span class="abench" style="color:#f0a09c;">MFA absent &rarr; finding F-2241</span><span class="grow"></span><span class="stbadge gap">Gap</span></div>
+                <div class="gaptask"><span class="tk">Task</span>Enforce MFA on CI IAM role<span style="margin-left:auto;color:#9aa0aa;">To&nbsp;Do</span></div>
+                <div class="moreprac">+ 8 more requirements evidenced by iam-role-ci</div>
+
+                <!-- vpc-flow (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">vpc-flow</span>
+                  <span class="abench">CIS AWS 3.0</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">18/18</b> pass &middot; 6 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:100%"></span></span><span class="pct">100%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>6 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">AU.L2-3.3.1 &mdash; Create and retain system audit records</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.1 &mdash; Monitor and control communications at boundaries</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 4 more requirements evidenced by vpc-flow</div>
+
+                <!-- kms-key-app (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">kms-key-app</span>
+                  <span class="abench">AWS FSBP</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">14/15</b> pass &middot; 5 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:93%"></span></span><span class="pct">93%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>5 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.16 &mdash; Protect confidentiality of CUI at rest</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">CM.L2-3.4.1 &mdash; Establish and maintain baseline configurations</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 3 more requirements evidenced by kms-key-app</div>
+
+                <!-- rds-app (collapsed) -->
+                <div class="tnode indent2 collapser collapsed">
+                  <span class="tchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span class="dot sat"></span>
+                  <span class="tname">rds-app</span>
+                  <span class="abench">AWS FSBP</span>
+                  <span class="grow"></span>
+                  <span class="cnt"><b style="color:#8fd06a;">20/20</b> pass &middot; 7 reqs</span>
+                  <span class="miniprog"><span class="bar"><span class="fill" style="width:100%"></span></span><span class="pct">100%</span></span>
+                </div>
+                <div class="assetnote">Evidence for <b>7 requirements</b> &mdash; a few shown:</div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">SC.L2-3.13.16 &mdash; Protect confidentiality of CUI at rest</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="tnode indent3"><span class="tguide">&#9492;&#9472;</span><span class="dot sat"></span><span class="tname" style="font-size:13px;color:#cfd3da;">MP.L2-3.8.9 &mdash; Protect backups of CUI at storage locations</span><span class="ptype thread">Practice</span><span class="grow"></span><span class="stbadge sat">Satisfied</span></div>
+                <div class="moreprac">+ 5 more requirements evidenced by rds-app</div>
+
+              </div>
+              </div>
+              </div><!-- /#viewAssets -->
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT: measurement layers + referenced boundary (the subject) + readiness target + milestones -->
+        <div class="col-r">
+          <section class="panel">
+            <div class="head"><h2>Measurement layers</h2><span class="hint">this project measures the runtime boundary</span></div>
+            <div class="pbody">
+              <div class="mlayer primary">
+                <span class="mlicon" style="background:#20313d;color:#6fc3f0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Framework compliance <span class="mldom" style="color:#8fc7f0;background:#233247;">CMMC L2</span></div>
+                  <div class="mlbar"><span class="a" style="width:70%"></span></div>
+                  <div class="mlsub">110 practices anchored to boundary controls &middot; 24 gaps &rarr; tasks</div>
+                </div>
+                <div class="mlright"><div class="mlpct a">70%</div><div class="mllbl">readiness</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Inventory completeness <span class="mldom">supply chain</span></div>
+                  <div class="mlbar"><span class="g" style="width:99%"></span></div>
+                  <div class="mlsub">1,236 / 1,247 components tracked &middot; <a href="projects-board-kanban.html?b=findings">11 missing &rarr; findings</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct g">99%</div><div class="mllbl">tracked</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4l-5 5A2 2 0 0 0 7 20l5-5a4 4 0 0 0 5.4-5.4l-2 2-2.1-2.1z"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Tool coverage <span class="mldom">enforcement</span></div>
+                  <div class="mlbar"><span class="a" style="width:90%"></span></div>
+                  <div class="mlsub">38 / 42 assets enforce + verify &middot; <a href="projects-board-kanban.html?b=findings">4 missing-tool &rarr; findings</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct a">90%</div><div class="mllbl">covered</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Control effectiveness <span class="mldom">enforcement</span></div>
+                  <div class="mlbar"><span class="g" style="width:96%"></span></div>
+                  <div class="mlsub">tools actively checking &middot; <a href="projects-board-kanban.html?b=findings">1 stale &rarr; ineffective-control</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct g">96%</div><div class="mllbl">effective</div></div>
+              </div>
+              <div style="padding:11px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <span style="font-size:12px;color:#8a8f9a;line-height:1.4;">Each layer measures the boundary <b style="color:#a8c9dd;">runtime</b> via requirement products, rolled up by domain. The evidence behind every measurement is produced by the boundary's <b style="color:#a8c9dd;">Components</b> (the responsibility units — requirement &rarr; control &rarr; component evidence). Failed measurements become findings.</span>
+                <a class="mlink" href="projects-board-kanban.html?b=findings" style="flex:none;">Findings board
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Referenced boundary</h2><span class="hint">the subject this lens observes</span></div>
+            <div class="pbody">
+              <div class="ms" style="border-top:none;">
+                <span class="mic" style="background:#1f3d17;color:#8fd06a;width:34px;height:34px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+                <div class="mtxt"><div class="mtitle">Platform</div><div class="msub">Internal controls: <b style="color:#c3c8d2;">NIST 800-171 R3</b> &middot; 2 assets assessed</div></div>
+                <div class="mtarget"><span class="hp ontrack" style="height:22px;"><span class="hpd"></span>Live</span></div>
+              </div>
+              <div style="padding:9px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <span style="font-size:12px;color:#8a8f9a;line-height:1.4;">Readiness is estimated by anchoring CMMC requirements to this boundary's controls.</span>
+                <a class="mlink" href="bm-component-detail.html?c=vm" style="flex:none;">Open in Boundary Manager
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Readiness target</h2><span class="hint">one framework pinned per project</span></div>
+            <div class="pbody">
+              <!-- the single pinned requirement product (= Framework) -->
+              <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span class="ptype workspace">Framework</span>
+                  <span style="font-size:15px;font-weight:600;color:#fff;">CMMC v2.0 Level 2</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap;">
+                  <span class="xwbadge" style="background:#3a3320;color:#e6c15e;">Compliance</span>
+                  <span class="xwbadge">Publisher: DoD</span>
+                  <span class="xwbadge">110 practices</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;margin-top:11px;">
+                  <span class="obar" style="width:160px;"><span class="of" style="width:70%"></span></span>
+                  <span style="font-size:13px;color:#cfcfcf;"><b style="color:#fff;">70%</b> ready</span>
+                </div>
+              </div>
+
+              <!-- program rollup: siblings each pin ONE framework -->
+              <div class="seclabel" style="display:flex;align-items:center;justify-content:space-between;">Program rollup &mdash; ZeroBias Compliance Readiness <a class="mlink" href="program-readiness.html" style="text-transform:none;letter-spacing:normal;font-weight:600;">Program readiness <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+              <div class="ms" style="background:rgba(3,175,240,.06);">
+                <span class="mic" style="background:#233247;color:#8fc7f0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+                <div class="mtxt"><div class="mtitlerow"><span class="mtitle">CMMC v2.0 Level 2</span><span class="evchip met" style="background:#23384d;color:#74b8e6;">viewing</span></div><div class="msub"><span class="evtype">Framework</span> &middot; this project</div></div>
+                <div class="mtarget"><b>70%</b><br><span class="du">ready</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+                <div class="mtxt"><div class="mtitle">FedRAMP Moderate</div><div class="msub"><span class="evtype">Framework</span> &middot; sibling child project</div></div>
+                <div class="mtarget"><b style="color:#e6b15e;">41%</b><br><span class="du">ready</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+                <div class="mtxt"><div class="mtitle">SOC 2 2022</div><div class="msub"><span class="evtype">Framework</span> &middot; sibling child project</div></div>
+                <div class="mtarget"><b style="color:#8fd06a;">88%</b><br><span class="du">ready</span></div>
+              </div>
+              <div class="ms" style="border-top:1px solid rgba(255,255,255,.12);">
+                <span class="mic" style="background:transparent;"></span>
+                <div class="mtxt"><div class="mtitle" style="color:#c3c8d2;">Program readiness (rolled up)</div></div>
+                <div class="mtarget"><b>66%</b><br><span class="du">3 targets</span></div>
+              </div>
+
+              <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,.06);font-size:12px;color:#8a8f9a;line-height:1.5;">
+                Crosswalks don't drive this %; they only <b style="color:#c3c8d2;">suggest</b> the requirement&rarr;control
+                mappings. Explore what other frameworks you'd already cover in
+                <a class="mlink" href="projects-coverage-forecast.html">Coverage forecast
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>.
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Milestones</h2><span class="mlink">View in Schedule <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span></div>
+            <div class="pbody">
+              <div style="padding:7px 16px 2px;font-size:11px;color:#7d828d;">Milestone events on this project's Schedule calendar, filtered to CMMC readiness.</div>
+              <div class="ms">
+                <span class="mic" style="background:#1f3d17;color:#8fd06a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mtxt">
+                  <div class="mtitlerow"><span class="mtitle">Control mapping sign-off</span><span class="evchip met">Met</span></div>
+                  <div class="msub"><span class="evtype">Milestone</span> &middot; completed Jun 12</div>
+                </div>
+                <div class="mtarget"><b>Jun 12</b><br><span class="du">done</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16"/><path d="M4 4h13l-2 4 2 4H4"/></svg></span>
+                <div class="mtxt">
+                  <div class="mtitlerow"><span class="mtitle">Reach 80% readiness</span><span class="evchip upcoming">Upcoming</span></div>
+                  <div class="msub"><span class="evtype">Milestone</span> &middot; target: readiness &ge; 80% (now 70%)</div>
+                </div>
+                <div class="mtarget"><b>Aug 15</b><br><span class="du">in 46d</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mtxt">
+                  <div class="mtitlerow"><span class="mtitle">CMMC L2 assessment-ready</span><span class="evchip upcoming">Upcoming</span></div>
+                  <div class="msub"><span class="evtype">Milestone</span> &middot; target: all gaps closed (1 open)</div>
+                </div>
+                <div class="mtarget"><b>Oct 01</b><br><span class="du">in 93d</span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Readiness % is driven by the anchored requirement->control mappings (static in this mock).
+       Crosswalks are advisory only (moved to Requirements + Coverage forecast) — no recompute toggles. -->
+
+
+<script>
+/* Readiness domain tree — real expand/collapse.
+   Every CMMC L2 domain row gets a caret; authored domains (AC/AU/CM) start expanded,
+   the rest generate realistic practice children (correct 800-171 family numbering) and start collapsed. */
+(function(){
+  var FAM = {AC:'3.1',AT:'3.2',AU:'3.3',CM:'3.4',IA:'3.5',IR:'3.6',MA:'3.7',MP:'3.8',PS:'3.9',PE:'3.10',RA:'3.11',CA:'3.12',SC:'3.13',SI:'3.14'};
+  var tree = document.querySelector('#viewControls .tree');
+  if(!tree) return;
+  var domains = [], cur = null;
+  Array.prototype.forEach.call(tree.children, function(el){
+    if(el.classList.contains('indent1') && el.hasAttribute('data-dom')){ cur = {row:el, children:[]}; domains.push(cur); }
+    else if(el.classList.contains('self')){ cur = null; }
+    else if(cur){ cur.children.push(el); }
+  });
+  domains.forEach(function(d){
+    var row = d.row, nameEl = row.querySelector('.tname');
+    var code = (nameEl ? nameEl.textContent : '').trim().split(/\s|—/)[0];
+    // swap the leading guide/chev for a real caret
+    var lead = row.querySelector('.tchev, .tguide, .chev');
+    var chev = document.createElement('span');
+    chev.className = 'tchev';
+    chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
+    if(lead){ lead.replaceWith(chev); } else { row.insertBefore(chev, row.firstChild); }
+    // generate practice children when none were authored
+    if(d.children.length === 0 && FAM[code]){
+      var tot = +row.getAttribute('data-tot')||0, sat = +row.getAttribute('data-sat')||0, par = +row.getAttribute('data-par')||0;
+      var frag = document.createDocumentFragment();
+      for(var i=1;i<=tot;i++){
+        var st = i<=sat ? 'sat' : (i<=sat+par ? 'partial' : 'gap');
+        var lbl = st==='sat' ? 'Satisfied' : (st==='partial' ? 'Partial' : 'Gap');
+        var pr = document.createElement('div');
+        pr.className = 'tnode indent2 gen';
+        pr.innerHTML = '<span class="tguide">&#9492;&#9472;</span><span class="dot '+st+'"></span>'
+          + '<span class="tname">'+code+'.L2-'+FAM[code]+'.'+i+'</span><span class="ptype thread">Practice</span>'
+          + '<span class="grow"></span><span class="stbadge '+st+'">'+lbl+'</span>';
+        frag.appendChild(pr); d.children.push(pr);
+      }
+      if(row.nextSibling){ row.parentNode.insertBefore(frag, row.nextSibling); } else { row.parentNode.appendChild(frag); }
+    }
+    var hasAuthored = d.children.some(function(c){ return !c.classList.contains('gen'); });
+    set(d, !hasAuthored);
+    row.addEventListener('click', function(){ set(d, !d.collapsed); });
+  });
+  function set(d, collapsed){
+    d.collapsed = collapsed;
+    d.row.classList.toggle('collapsed', collapsed);
+    d.children.forEach(function(c){ c.style.display = collapsed ? 'none' : ''; });
+  }
+})();
+</script>
+
+<script>
+/* Lens toggle (Controls <-> Assets) + assets-tree indent-depth collapse.
+   The Assets lens re-groups the SAME leaf assessments by asset: asset -> benchmark pass-rate -> the
+   CMMC requirements it evidences. CIS/STIG failures on an asset surface as control gaps on that asset. */
+(function(){
+  // ---- lens toggle ----
+  var lenses = document.querySelectorAll('.lensrow .lens');
+  var views = { 'Controls': document.getElementById('viewControls'), 'Assets': document.getElementById('viewAssets') };
+  Array.prototype.forEach.call(lenses, function(l){
+    l.addEventListener('click', function(){
+      Array.prototype.forEach.call(lenses, function(x){ x.classList.remove('sel'); });
+      l.classList.add('sel');
+      var name = l.textContent.trim();
+      for(var k in views){ if(views[k]) views[k].style.display = (k===name ? '' : 'none'); }
+    });
+  });
+
+  // ---- assets tree collapse (depth-based, handles group -> asset -> practice nesting) ----
+  var scope = document.getElementById('viewAssets'); if(!scope) return;
+  var tree = scope.querySelector('.tree'); if(!tree) return;
+  var rows = Array.prototype.slice.call(tree.children);
+  function lvl(el){
+    if(el.classList.contains('indent1')) return 1;
+    if(el.classList.contains('indent2')) return 2;
+    if(el.classList.contains('indent3') || el.classList.contains('aleaf') || el.classList.contains('gaptask')
+       || el.classList.contains('moreprac') || el.classList.contains('assetnote')) return 3;
+    return 0; // self / root
+  }
+  rows.forEach(function(el){ el._lvl = lvl(el); el._collapsed = el.classList.contains('collapsed'); });
+  function childrenOf(i){ var base = rows[i]._lvl, out = []; for(var j=i+1;j<rows.length;j++){ if(rows[j]._lvl <= base) break; out.push(rows[j]); } return out; }
+  function recompute(){
+    rows.forEach(function(el){ el.style.display = ''; });
+    rows.forEach(function(el,i){ if(el._collapsed && el.classList.contains('collapser')){ childrenOf(i).forEach(function(c){ c.style.display = 'none'; }); } });
+  }
+  rows.forEach(function(el,i){
+    if(!el.classList.contains('collapser')) return;
+    el.addEventListener('click', function(e){
+      if(e.target.closest('a')) return;
+      el._collapsed = !el._collapsed;
+      el.classList.toggle('collapsed', el._collapsed);
+      recompute();
+    });
+  });
+  recompute();
+})();
+</script>
+</body>
+</html>

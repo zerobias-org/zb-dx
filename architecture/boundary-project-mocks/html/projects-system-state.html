@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — System State & Aperture (ZeroBias Compliance Readiness) — continuous stateful assessment, apertured into reports — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; }
+
+  /* header (shared pattern) */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; font-weight:500; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.program{ background:#C5E1A5; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .obsv{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; background:#1f3d17; color:#8fd06a; font-size:13px; font-weight:600; text-decoration:none; }
+  .obsv svg{ width:14px; height:14px; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; } .rsub b{ color:#c3c8d2; }
+
+  /* tabs */
+  .ptabs{ display:flex; align-items:stretch; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* layout */
+  .wrap{ margin:14px 16px 24px; display:flex; gap:16px; align-items:flex-start; }
+  .col-l{ flex:1.35; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .col-r{ flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .panel > .head{ display:flex; align-items:center; justify-content:space-between; padding:8px 4px; gap:12px; }
+  .panel > .head h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .panel > .head .hint{ font-size:12px; color:#8a8f9a; font-weight:400; }
+  .pbody{ background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); padding:18px 20px; }
+
+  /* aperture control */
+  .apblock{ display:flex; flex-direction:column; gap:16px; }
+  .aprow{ display:flex; align-items:center; gap:14px; }
+  .aplbl{ width:120px; flex:none; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#7d828d; }
+  .seg{ display:inline-flex; background:#2a2a2a; border-radius:7px; padding:3px; gap:2px; flex-wrap:wrap; }
+  .seg span{ display:inline-flex; align-items:center; height:30px; padding:0 14px; border-radius:5px; font-size:13px; font-weight:500; color:#9aa0aa; cursor:pointer; }
+  .seg span.on{ background:#23384d; color:#cfe6f7; box-shadow:inset 0 0 0 1px #03aff0; font-weight:600; }
+  .apnote{ font-size:12px; color:#8a8f9a; margin-left:134px; }
+
+  .reduce{ margin-top:4px; background:#1b1b1b; border-radius:8px; padding:16px 18px; display:flex; align-items:center; gap:20px; }
+  .reduce .from{ text-align:center; } .reduce .to{ text-align:center; }
+  .reduce .num{ font-size:26px; font-weight:700; color:#fff; line-height:1; }
+  .reduce .k{ font-size:11px; color:#8a8f9a; text-transform:uppercase; letter-spacing:.05em; margin-top:6px; }
+  .reduce .arrow{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#7d828d; font-size:11px; }
+  .reduce .arrow .line{ width:100%; height:2px; background:linear-gradient(90deg,#5a2020,#4a3320,#1f3d17); border-radius:2px; }
+  .reduce .to .num{ color:#8fd06a; }
+
+  .genbtn{ display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 18px; background:#23384d; border:1px solid #03aff0; border-radius:6px; color:#cfe6f7; font-size:14px; font-weight:600; cursor:pointer; }
+  .genbtn svg{ width:16px; height:16px; }
+
+  /* state-over-time */
+  .stateline{ display:flex; align-items:flex-end; gap:3px; height:120px; padding:8px 0 0; }
+  .stateline .b{ flex:1; border-radius:2px 2px 0 0; background:#8fd06a; opacity:.85; }
+  .axis{ display:flex; justify-content:space-between; font-size:11px; color:#7d828d; margin-top:6px; }
+  .stateleg{ display:flex; gap:18px; font-size:12px; color:#9aa0aa; margin-top:12px; flex-wrap:wrap; }
+  .stateleg .it{ display:flex; align-items:center; gap:6px; } .stateleg .sw{ width:10px; height:10px; border-radius:2px; }
+
+  /* firehose */
+  .fh{ display:flex; flex-direction:column; }
+  .fhrow{ display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .fhrow:last-child{ border-bottom:none; }
+  .fht{ width:66px; flex:none; color:#7d828d; font-size:11px; font-variant-numeric:tabular-nums; }
+  .fhd{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .fhd.ok{ background:#8fd06a; } .fhd.warn{ background:#e6b15e; } .fhd.bad{ background:#f0a09c; }
+  .fhtxt{ color:#dfe3ea; flex:1; } .fhtxt b{ color:#fff; }
+  .fhc{ font-size:11px; color:#8a8f9a; font-family:ui-monospace,Menlo,monospace; }
+
+  /* report card / ledger */
+  .kv{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; }
+  .kv:last-child{ border-bottom:none; }
+  .kv .k{ color:#8a8f9a; } .kv .v{ color:#eaeaea; font-weight:500; }
+  .tag{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:12px; font-weight:500; }
+  .tag.tur{ background:#17342a; color:#7fd6a8; } .tag.blue{ background:#233247; color:#8fc7f0; }
+  .ledger{ font-size:12px; color:#9aa0aa; line-height:1.55; margin-top:12px; background:#1b1b1b; border-radius:8px; padding:12px 14px; border-left:3px solid #03aff0; }
+  .ledger b{ color:#cfe6f7; }
+  .callout{ font-size:12.5px; color:#c3c8d2; line-height:1.5; background:#2a2418; border-left:3px solid #d9ad6b; border-radius:6px; padding:12px 14px; }
+  .callout b{ color:#e6b15e; }
+</style>
+</head>
+<body>
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Program" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb"><a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a><span class="sep">/</span></div>
+          <div class="rtitle-row">
+            <h1>System State</h1>
+            <span class="ptype program">Program</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+            <span class="chip active">Active</span>
+            <a class="obsv" href="bm-components-list.html" title="Open the System in Boundary Manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a>
+          </div>
+          <span class="rsub">Continuous <b>stateful assessment</b> of the Platform <b>System</b> &mdash; every component assessed near-real-time into an append-only <b>System-state Timeline</b> (read-only event ledger; a <b>Calendar</b> extends Timeline and is the mutable write surface &mdash; CAL-001). An <b>Aperture</b> (scope &times; window &times; frequency) reduces that stream into any report; a point-in-time report is <b>residual exhaust</b>, not a separate pipeline.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="program-overview.html">Overview</a>
+      <a href="program-readiness.html">Readiness</a>
+      <a href="projects-system-state.html" class="active">System State</a>
+      <a href="transparency-center.html">Transparency Center</a>
+      <a href="#">Requirements</a>
+      <a href="#">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <div class="wrap">
+      <div class="col-l">
+
+        <!-- Aperture control -->
+        <section class="panel">
+          <div class="head"><h2>Aperture</h2><span class="hint">the lens over system state &mdash; scope &times; window &times; frequency</span></div>
+          <div class="pbody">
+            <div class="apblock">
+              <div class="aprow"><span class="aplbl">Scope</span>
+                <div class="seg"><span>Whole System</span><span class="on">Framework&nbsp;lens</span><span>Domain</span><span>Component group</span><span>Single component</span></div>
+              </div>
+              <div class="apnote">Framework lens = CMMC Level 2 &middot; 14 domains &middot; 512 components in scope</div>
+
+              <div class="aprow"><span class="aplbl">Window</span>
+                <div class="seg"><span>Live</span><span>24h</span><span class="on">30 days</span><span>Quarter</span><span>Year</span><span>Custom</span></div>
+              </div>
+              <div class="apnote">Narrow window &rarr; a stateful snapshot (a point). Wide window &rarr; a dataset over time.</div>
+
+              <div class="aprow"><span class="aplbl">Frequency</span>
+                <div class="seg"><span class="on">Real-time</span><span>Hourly</span><span>Daily</span><span>Weekly</span></div>
+              </div>
+              <div class="apnote">How often the underlying assessment samples each component.</div>
+
+              <div class="reduce">
+                <div class="from"><div class="num">88.4M</div><div class="k">state events in window</div></div>
+                <div class="arrow"><span>Aperture reduces the view</span><div class="line"></div><span>512 components &times; ~4/min &times; 30d</span></div>
+                <div class="to"><div class="num">1</div><div class="k">readiness snapshot</div></div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:14px;margin-top:2px;">
+                <button class="genbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Generate report from this aperture</button>
+                <span style="font-size:12px;color:#8a8f9a;">renders the current lens &mdash; no data is moved or deleted</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- State over time -->
+        <section class="panel">
+          <div class="head"><h2>System state over time</h2><span class="hint">readiness of the System across the window &mdash; the "state movie"</span></div>
+          <div class="pbody">
+            <div class="stateline">
+              <div class="b" style="height:52%"></div><div class="b" style="height:55%"></div><div class="b" style="height:54%"></div>
+              <div class="b" style="height:58%;background:#e6b15e"></div><div class="b" style="height:57%;background:#e6b15e"></div><div class="b" style="height:60%"></div>
+              <div class="b" style="height:61%"></div><div class="b" style="height:59%"></div><div class="b" style="height:63%"></div>
+              <div class="b" style="height:62%"></div><div class="b" style="height:64%"></div><div class="b" style="height:63%"></div>
+              <div class="b" style="height:66%"></div><div class="b" style="height:65%"></div><div class="b" style="height:68%"></div>
+              <div class="b" style="height:64%;background:#f0a09c"></div><div class="b" style="height:67%"></div><div class="b" style="height:69%"></div>
+              <div class="b" style="height:70%"></div><div class="b" style="height:68%"></div><div class="b" style="height:71%"></div>
+              <div class="b" style="height:70%"></div><div class="b" style="height:72%"></div><div class="b" style="height:71%"></div>
+              <div class="b" style="height:73%"></div><div class="b" style="height:72%"></div><div class="b" style="height:74%"></div>
+              <div class="b" style="height:73%"></div><div class="b" style="height:75%"></div><div class="b" style="height:76%"></div>
+            </div>
+            <div class="axis"><span>Jun 4</span><span>Jun 11</span><span>Jun 18</span><span>Jun 25</span><span>Jul 3 &middot; 66%</span></div>
+            <div class="stateleg">
+              <span class="it"><span class="sw" style="background:#8fd06a;"></span>Component satisfied</span>
+              <span class="it"><span class="sw" style="background:#e6b15e;"></span>Drift / partial</span>
+              <span class="it"><span class="sw" style="background:#f0a09c;"></span>Failed measurement (finding raised)</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+      <div class="col-r">
+
+        <!-- Firehose -->
+        <section class="panel">
+          <div class="head"><h2>Component state Timeline</h2><span class="hint">append-only event ledger &middot; read-only projection</span></div>
+          <div class="pbody">
+            <div class="fh">
+              <div class="fhrow"><span class="fht">14:43:58</span><span class="fhd ok"></span><span class="fhtxt"><b>prod-app-01</b> audit-log retention re-measured &mdash; conforms</span><span class="fhc">S-8f21a</span></div>
+              <div class="fhrow"><span class="fht">14:43:41</span><span class="fhd warn"></span><span class="fhtxt"><b>log-01</b> audit-log volume 82% &mdash; drift threshold</span><span class="fhc">S-8f218</span></div>
+              <div class="fhrow"><span class="fht">14:43:12</span><span class="fhd ok"></span><span class="fhtxt"><b>vpc-flow</b> flow-log delivery verified</span><span class="fhc">S-8f210</span></div>
+              <div class="fhrow"><span class="fht">14:42:55</span><span class="fhd bad"></span><span class="fhtxt"><b>iam-role-ci</b> MFA absent &mdash; <b style="color:#f0a09c;">finding F-2241</b></span><span class="fhc">S-8f207</span></div>
+              <div class="fhrow"><span class="fht">14:42:33</span><span class="fhd ok"></span><span class="fhtxt"><b>kms-key-app</b> rotation window checked</span><span class="fhc">S-8f201</span></div>
+              <div class="fhrow"><span class="fht">14:42:09</span><span class="fhd ok"></span><span class="fhtxt"><b>enclave-host-2</b> STIG baseline re-scanned &mdash; conforms</span><span class="fhc">S-8f1f8</span></div>
+              <div class="fhrow"><span class="fht">14:41:47</span><span class="fhd ok"></span><span class="fhtxt"><b>rds-app</b> encryption-at-rest verified</span><span class="fhc">S-8f1f0</span></div>
+            </div>
+            <div class="ledger"><b>This is a Timeline</b> &mdash; the read-only, time-indexed event ledger (the "history / event log" mechanism; a <b>Calendar</b> extends Timeline and is the mutable write surface, CAL-001). Every event is an immutable, hash-chained Record (PROV-O attribution). The Aperture reduces the <b>view</b> &mdash; it never prunes the Timeline. "Reduce the data set" = narrow the lens, not delete history.</div>
+          </div>
+        </section>
+
+        <!-- Generated report / residual exhaust -->
+        <section class="panel">
+          <div class="head"><h2>Generated report</h2><span class="hint">this aperture &middot; residual exhaust</span></div>
+          <div class="pbody">
+            <div class="kv"><span class="k">Aperture</span><span class="v">CMMC L2 lens &middot; 30d &middot; real-time</span></div>
+            <div class="kv"><span class="k">System state</span><span class="v">66% &middot; 318/512 components satisfied</span></div>
+            <div class="kv"><span class="k">Requirement-set version</span><span class="v"><span class="tag blue">CMMC-L2 @ v4.2</span></span></div>
+            <div class="kv"><span class="k">Window</span><span class="v">2026-06-04 &rarr; 2026-07-03</span></div>
+            <div class="kv"><span class="k">Container</span><span class="v"><span class="tag tur">RDF / JSON-LD / Turtle</span></span></div>
+            <div class="callout" style="margin-top:14px;"><b>This is not an audit.</b> A traditional "audit report" is just this aperture, rendered at a point &mdash; a residual byproduct of continuous assessment. Old-school buyers / regulators / IGs still get one; it's a versioned RDF container for a window, not a separate manual process.</div>
+            <div style="display:flex;gap:10px;margin-top:14px;">
+              <button class="genbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export container</button>
+              <button class="genbtn" style="background:#2a2a2a;border-color:#4a4a4a;color:#c3c8d2;">Hand off for period x&rarr;y</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</body>
+</html>
