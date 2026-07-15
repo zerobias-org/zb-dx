@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Program Readiness (ZeroBias Compliance Readiness) rollup + Lenses dialog — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* header */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.program{ background:#C5E1A5; } .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .obsv{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; background:#1f3d17; color:#8fd06a; font-size:13px; font-weight:600; text-decoration:none; }
+  .obsv svg{ width:14px; height:14px; }
+  .govchip{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; background:#33304d; color:#bcaef0; font-size:13px; font-weight:600; text-decoration:none; }
+  .govchip svg{ width:14px; height:14px; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; }
+
+  /* page tabs */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+  .ptabs a.disabled{ color:#5c616b; }
+
+  /* health pills (shared with cmmc-readiness) */
+  .hp{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 11px; border-radius:999px; font-size:12px; font-weight:600; flex:none; white-space:nowrap; }
+  .hp .hpd{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .hp.ontrack{ background:#1f3d17; color:#8fd06a; }   .hp.ontrack .hpd{ background:#8fd06a; }
+  .hp.atrisk{ background:#4a3320; color:#e6b15e; }     .hp.atrisk .hpd{ background:#e6b15e; }
+  .hp.blocked{ background:#5a2020; color:#f0a09c; }    .hp.blocked .hpd{ background:#f0a09c; }
+
+  /* readiness summary hero (shared pattern with cmmc-readiness) */
+  .summary{ background:transparent; margin:14px 16px 0; }
+  .summary > .shead{ display:flex; align-items:center; gap:12px; padding:6px 4px 8px; }
+  .summary > .shead h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .summary > .shead .updated{ margin-left:auto; font-size:12px; color:#8a8f9a; }
+  .sbody{ display:flex; align-items:stretch; background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .szone{ padding:18px 22px; display:flex; flex-direction:column; gap:12px; }
+  .szone + .szone{ border-left:1px solid rgba(255,255,255,.08); }
+  .zlabel{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#7d828d; }
+  .zprog{ flex:none; width:360px; }
+  .progrow{ display:flex; align-items:center; gap:14px; }
+  .progrow .big{ font-size:38px; font-weight:600; color:#fff; line-height:1; }
+  .obar{ width:230px; height:10px; border-radius:5px; background:#2a2a2a; overflow:hidden; margin-top:8px; }
+  .obar .of{ display:block; height:100%; background:#03aff0; border-radius:5px; }
+  .pl{ font-size:12px; color:#9aa0aa; margin-top:6px; }
+  .statusbar{ display:flex; height:12px; border-radius:4px; overflow:hidden; width:100%; }
+  .statusbar span{ display:block; height:100%; }
+  .st-sat{ background:#8fd06a; } .st-partial{ background:#e6b15e; } .st-gap{ background:#f0a09c; }
+  .statuslegend{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; font-size:12px; color:#9aa0aa; }
+  .statuslegend .it{ display:flex; align-items:center; gap:6px; }
+  .statuslegend .sw{ width:10px; height:10px; border-radius:2px; }
+  .zfrom{ flex:1; }
+  .fromnote{ font-size:13px; color:#c3c8d2; line-height:1.5; } .fromnote b{ color:#fff; font-weight:600; }
+
+  /* ===== 2-col simple-panel grid — SHARED layout with cmmc-readiness =====
+     Both readiness pages use: .gridwrap > .grid(flex) > .col-l(1.55) + .col-r(1),
+     each panel = <section class="panel"><div class="head">..</div><div class="pbody">..</div>.
+     Program LEFT  = rollup table + cross-framework heatmap (analog of CMMC's control tree).
+     Program RIGHT = biggest levers + measurement layers + findings/POA&M + milestones + boundary. */
+  .gridwrap{ margin:14px 16px 24px; }
+  .grid{ display:flex; gap:16px; align-items:flex-start; }
+  .col-l{ flex:1.55; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .col-r{ flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .panel{ background:transparent; }
+  .panel > .head{ display:flex; align-items:center; justify-content:space-between; padding:8px 4px; gap:12px; }
+  .panel > .head h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .panel > .head .hint{ font-size:12px; color:#8a8f9a; font-weight:400; }
+  .panel > .head + .pbody{ background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+
+  /* Manage-lenses trigger (in a panel head) */
+  .lensbtn{ display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 14px; background:#23384d; border:1px solid #03aff0; border-radius:6px; color:#cfe6f7; font-size:13px; font-weight:600; cursor:pointer; flex:none; }
+  .lensbtn:hover{ background:#284659; }
+  .lensbtn svg{ width:16px; height:16px; }
+
+  /* framework-lens rollup table (now inside a .pbody) */
+  table.roll{ width:100%; border-collapse:collapse; font-size:14px; }
+  table.roll th{ text-align:left; font-weight:600; color:#8a8f9a; font-size:11px; letter-spacing:.05em; text-transform:uppercase; padding:11px 20px; border-bottom:1px solid rgba(255,255,255,.10); white-space:nowrap; }
+  table.roll td{ padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.05); color:#eaeaea; vertical-align:middle; }
+  table.roll tr:last-child td{ border-bottom:none; }
+  table.roll tbody tr:hover{ background:rgba(255,255,255,.03); }
+  .fwname{ display:flex; align-items:center; gap:11px; }
+  .fwname .sq{ width:11px; height:11px; border-radius:3px; flex:none; }
+  .fwname a{ color:#fff; text-decoration:none; font-weight:600; font-size:15px; }
+  .fwname .fwt{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .subrow td{ background:rgba(0,0,0,.14); }
+  .subrow .fwname{ padding-left:26px; }
+  .subrow .fwname a{ font-size:13px; font-weight:500; color:#dfe3ea; }
+  .rdcell{ display:flex; align-items:center; gap:12px; min-width:200px; }
+  .rdcell .bar{ width:130px; height:8px; border-radius:4px; background:#2a2a2a; overflow:hidden; }
+  .rdcell .bar span{ display:block; height:100%; border-radius:4px; }
+  .rdcell .pct{ font-size:15px; font-weight:600; width:44px; }
+  .g-ok{ background:#8fd06a; } .g-mid{ background:#e6b15e; } .g-low{ background:#f0a09c; }
+  .p-ok{ color:#8fd06a; } .p-mid{ color:#e6b15e; } .p-low{ color:#f0a09c; }
+  .spread{ display:flex; align-items:center; gap:5px; height:9px; width:130px; border-radius:4px; overflow:hidden; }
+  .spread span{ display:block; height:100%; }
+  .hpill{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .hpill.ontrack{ background:#1f3d17; color:#8fd06a; } .hpill.atrisk{ background:#4a3320; color:#e6b15e; } .hpill.blocked{ background:#5a2020; color:#f0a09c; }
+  .hpill .d{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .pinchip{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; background:#233247; color:#8fc7f0; font-size:11px; font-weight:600; }
+  .bndchip{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:5px; background:#1f3d17; color:#8fd06a; font-size:12px; font-weight:600; text-decoration:none; }
+  .bndchip svg{ width:12px; height:12px; }
+  .tnum{ font-size:14px; color:#eaeaea; } .tnum b{ color:#fff; }
+
+  /* ===== cross-framework heatmap (domains x lenses) — program-ONLY ===== */
+  .hmscroll{ overflow-x:auto; }
+  table.hm{ width:100%; border-collapse:separate; border-spacing:6px; }
+  table.hm th{ font-size:11px; font-weight:600; color:#8a8f9a; padding:6px; vertical-align:bottom; }
+  table.hm th.dom{ text-align:left; width:230px; }
+  table.hm th.fw{ text-align:center; }
+  table.hm th.fw .fwh{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  table.hm th.fw .hmsq{ width:11px; height:11px; border-radius:3px; }
+  table.hm td.dom{ font-size:13px; color:#dfe3ea; white-space:nowrap; padding:0 6px; }
+  .hmcell{ height:30px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; }
+  .hmcell.g{ background:#274a24; color:#a7e08a; }
+  .hmcell.a{ background:#4a3a1e; color:#e6c078; }
+  .hmcell.r{ background:#4a2020; color:#f0a09c; }
+  .hmcell.na{ background:#242424; color:#5c616b; font-weight:500; }
+  .hmnote{ padding:10px 16px 14px; font-size:12px; color:#8a8f9a; line-height:1.5; } .hmnote b{ color:#c3c8d2; }
+  .hmleg{ display:flex; align-items:center; gap:14px; padding:2px 16px 12px; font-size:11px; color:#9aa0aa; flex-wrap:wrap; }
+  .hmleg .it{ display:flex; align-items:center; gap:6px; }
+  .hmleg .sw{ width:11px; height:11px; border-radius:3px; }
+
+  /* ===== biggest levers — program-ONLY (cross-lens gap prioritization) ===== */
+  .lev{ display:flex; align-items:center; gap:12px; padding:13px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .lev:first-child{ border-top:none; }
+  .levrank{ width:26px; height:26px; border-radius:7px; background:#5a2020; color:#f0a09c; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .levmain{ flex:1; min-width:0; }
+  .levname{ font-size:13px; color:#eaeaea; font-weight:600; }
+  .levsub{ font-size:11px; color:#8a8f9a; margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+  .levchip{ height:18px; padding:0 7px; border-radius:3px; background:#233247; color:#8fc7f0; font-size:10px; font-weight:600; display:inline-flex; align-items:center; }
+  .levimpact{ text-align:right; flex:none; width:74px; }
+  .levimpact b{ font-size:19px; color:#f0a09c; font-weight:700; }
+  .levimpact .u{ font-size:10px; color:#8a8f9a; display:block; margin-top:1px; }
+
+  /* ===== measurement layers — SHARED with cmmc-readiness (program aggregates) ===== */
+  .mlayer{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .mlayer:first-child{ border-top:none; }
+  .mlayer.primary{ background:rgba(3,175,240,.05); }
+  .mlicon{ width:32px; height:32px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .mlicon svg{ width:17px; height:17px; }
+  .mlmain{ flex:1; min-width:0; }
+  .mlname{ font-size:13px; color:#eaeaea; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .mldom{ font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#b39ae6; background:#2e2747; padding:1px 6px; border-radius:3px; }
+  .mlbar{ width:100%; height:8px; border-radius:4px; background:#2a2a2a; overflow:hidden; margin-top:7px; }
+  .mlbar span{ display:block; height:100%; border-radius:4px; }
+  .mlbar span.g{ background:#8fd06a; } .mlbar span.a{ background:#e6b15e; } .mlbar span.r{ background:#f0a09c; }
+  .mlsub{ font-size:11px; color:#8a8f9a; margin-top:6px; }
+  .mlsub a{ color:#f0a09c; text-decoration:none; font-weight:600; }
+  .mlright{ flex:none; text-align:right; width:66px; }
+  .mlpct{ font-size:20px; font-weight:600; line-height:1; }
+  .mlpct.g{ color:#8fd06a; } .mlpct.a{ color:#e6b15e; } .mlpct.r{ color:#f0a09c; }
+  .mllbl{ font-size:10px; color:#8a8f9a; margin-top:3px; }
+  .mlink{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:12px; font-weight:500; cursor:pointer; text-decoration:none; }
+  .mlink svg{ width:14px; height:14px; }
+  .pnote{ padding:11px 16px; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .pnote span{ font-size:12px; color:#8a8f9a; line-height:1.4; } .pnote b{ color:#a8c9dd; }
+
+  /* ===== findings & POA&M rollup — program aggregation ===== */
+  .sevrow{ display:flex; gap:10px; padding:14px 16px; }
+  .sevcard{ flex:1; background:#333; border-radius:8px; padding:11px 12px; text-align:center; }
+  .sevcard .n{ font-size:24px; font-weight:700; line-height:1; }
+  .sevcard .l{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a; margin-top:5px; }
+  .sevcard.crit .n{ color:#f0736c; } .sevcard.high .n{ color:#f0a09c; } .sevcard.med .n{ color:#e6b15e; } .sevcard.low .n{ color:#8fd06a; }
+  .poam{ display:flex; align-items:center; gap:11px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .poam .pk{ font-size:12px; color:#8a8f9a; flex:1; }
+  .poam .pk b{ color:#eaeaea; }
+
+  /* ===== milestones / boundary rows — SHARED .ms pattern with cmmc-readiness ===== */
+  .ms{ display:flex; align-items:center; gap:11px; padding:11px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .ms:first-child{ border-top:none; }
+  .ms .mic{ width:26px; height:26px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#74b8e6; }
+  .ms .mic svg{ width:15px; height:15px; }
+  .ms .mtxt{ flex:1; min-width:0; }
+  .ms .mtitle{ font-size:13px; color:#eaeaea; }
+  .ms .msub{ font-size:11px; color:#8a8f9a; margin-top:1px; }
+  .ms .mtarget{ font-size:12px; color:#cfcfcf; text-align:right; white-space:nowrap; }
+  .ms .mtarget b{ color:#fff; }
+  .ms .mtarget .du{ font-size:11px; color:#8a8f9a; }
+  .mtitlerow{ display:flex; align-items:center; gap:8px; }
+  .evchip{ display:inline-flex; align-items:center; height:18px; padding:0 7px; border-radius:4px; font-size:10px; font-weight:600; flex:none; }
+  .evchip.upcoming{ background:#2a2f38; color:#9fb6cc; }
+  .evchip.duesoon{ background:#4a3320; color:#e6b15e; }
+  .evchip.met{ background:#1f3d17; color:#8fd06a; }
+  .evtype{ font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; }
+  .lenschip{ display:inline-flex; align-items:center; height:16px; padding:0 6px; border-radius:3px; font-size:10px; font-weight:600; background:#233247; color:#8fc7f0; }
+
+  /* ===== near-full-screen Lenses dialog ===== */
+  .ovl{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:60; }
+  .ovl.open{ display:flex; }
+  .dlg{ width:1760px; max-width:94vw; height:88vh; background:#2b2b2b; border-radius:12px; box-shadow:0 16px 60px rgba(0,0,0,.55); overflow:hidden; display:flex; flex-direction:column; }
+  .dlghd{ display:flex; align-items:center; gap:14px; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,.10); flex:none; }
+  .dlghd .di{ width:40px; height:40px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; background:#33304d; color:#bcaef0; }
+  .dlghd .di svg{ width:22px; height:22px; }
+  .dlghd h2{ font-size:19px; font-weight:600; color:#fff; }
+  .dlghd .dsub{ font-size:13px; color:#8a8f9a; margin-top:2px; }
+  .dlgx{ margin-left:auto; width:34px; height:34px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#9aa0aa; cursor:pointer; flex:none; }
+  .dlgx:hover{ background:rgba(255,255,255,.06); color:#eaeaea; }
+  .dlgx svg{ width:20px; height:20px; }
+  .dlgbd{ padding:22px 24px 28px; overflow-y:auto; flex:1; scrollbar-width:thin; scrollbar-color:#555 #2a2a2a; }
+  .dlgbd::-webkit-scrollbar{ width:11px; } .dlgbd::-webkit-scrollbar-thumb{ background:#555; border-radius:6px; } .dlgbd::-webkit-scrollbar-track{ background:#2a2a2a; }
+  .dsec{ margin-bottom:28px; } .dsec:last-child{ margin-bottom:0; }
+  .dsechd{ display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+  .dseclbl{ font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#cfd3da; }
+  .dseccount{ font-size:12px; color:#8a8f9a; }
+  .dsecnote{ font-size:12px; color:#8a8f9a; margin-bottom:14px; line-height:1.5; max-width:1100px; } .dsecnote b{ color:#c3c8d2; }
+  .lgrid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .lcard{ background:#333; border:1px solid #454545; border-radius:10px; padding:15px 16px; display:flex; flex-direction:column; gap:11px; }
+  .lctop{ display:flex; align-items:center; gap:10px; }
+  .lcsq{ width:12px; height:12px; border-radius:3px; flex:none; }
+  .lcname{ font-size:15px; font-weight:600; color:#fff; flex:1; min-width:0; }
+  .lcbar{ width:100%; height:8px; border-radius:4px; background:#2a2a2a; overflow:hidden; }
+  .lcbar span{ display:block; height:100%; border-radius:4px; }
+  .lcmeta{ display:flex; align-items:center; justify-content:space-between; }
+  .lcpct{ font-size:14px; font-weight:600; }
+  .lcfoot{ display:flex; align-items:center; justify-content:space-between; border-top:1px solid rgba(255,255,255,.07); padding-top:10px; }
+  .lcsub{ font-size:12px; color:#8a8f9a; }
+  .lcopen{ display:inline-flex; align-items:center; gap:5px; color:#03aff0; font-size:12px; font-weight:600; text-decoration:none; }
+  .lcopen svg{ width:13px; height:13px; }
+  .agrid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .addcard{ background:#2f2f2f; border:1px solid #454545; border-radius:10px; padding:15px 16px; display:flex; flex-direction:column; gap:10px; position:relative; }
+  .addcard.qp{ border-color:#3a5a3f; background:#293029; }
+  .actop{ display:flex; align-items:flex-start; gap:11px; }
+  .acsq{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .acsq svg{ width:18px; height:18px; }
+  .acnm{ font-size:15px; font-weight:600; color:#fff; line-height:1.25; }
+  .acpub{ font-size:11px; color:#8a8f9a; margin-top:3px; }
+  .acbadges{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .badge{ display:inline-flex; align-items:center; gap:5px; height:20px; padding:0 8px; border-radius:4px; font-size:11px; font-weight:600; }
+  .badge.adopted{ background:#1f3d17; color:#8fd06a; }
+  .badge.reqs{ background:#3a3f47; color:#c3c8d2; }
+  .badge.dom{ background:#3a3320; color:#e6c15e; }
+  .badge svg{ width:11px; height:11px; }
+  .fcast{ display:flex; align-items:center; gap:10px; }
+  .fcast .fl{ font-size:11px; color:#8a8f9a; white-space:nowrap; }
+  .fcast .fb{ flex:1; height:8px; border-radius:4px; background:#2a2a2a; overflow:hidden; }
+  .fcast .fb span{ display:block; height:100%; border-radius:4px; }
+  .fcast .fp{ font-size:14px; font-weight:600; width:42px; text-align:right; }
+  .acmsg{ font-size:11px; color:#8a8f9a; line-height:1.45; } .acmsg b{ color:#c3c8d2; }
+  .acbtn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; height:36px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; border:none; width:100%; }
+  .acbtn.qp{ background:#1f5a30; color:#d6f5df; } .acbtn.qp:hover{ background:#246b39; }
+  .acbtn.cat{ background:#23384d; color:#cfe6f7; border:1px solid #2f5570; } .acbtn.cat:hover{ background:#284659; }
+  .acbtn svg{ width:15px; height:15px; }
+  .acconfirm{ display:none; flex-direction:column; gap:9px; border-top:1px dashed #5a5a5a; padding-top:11px; margin-top:1px; }
+  .addcard.confirming .acconfirm{ display:flex; }
+  .addcard.confirming .acbtn{ display:none; }
+  .acconfirm .ct{ font-size:12px; color:#dfe3ea; line-height:1.5; } .acconfirm .ct b{ color:#fff; }
+  .acconfirm .cbtns{ display:flex; gap:9px; }
+  .cbtn{ flex:1; height:34px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:none; }
+  .cbtn.go{ background:#03aff0; color:#04222e; } .cbtn.go:hover{ background:#28bdf5; }
+  .cbtn.no{ background:#3a3f47; color:#c3c8d2; } .cbtn.no:hover{ background:#454b54; }
+  .addcard.added{ opacity:.72; border-color:#3a5a3f; }
+  .addcard.added .acbtn, .addcard.added .acconfirm, .addcard.added .fcast{ display:none; }
+  .acdone{ display:none; align-items:center; gap:8px; height:36px; border-radius:7px; background:#1f3d17; color:#8fd06a; font-size:13px; font-weight:600; justify-content:center; }
+  .acdone svg{ width:16px; height:16px; }
+  .addcard.added .acdone{ display:flex; }
+  .csearch{ display:flex; align-items:center; gap:9px; height:40px; padding:0 14px; margin-bottom:14px; background:#242424; border:1px solid #454545; border-radius:8px; max-width:520px; }
+  .csearch svg{ width:17px; height:17px; color:#8a8f9a; flex:none; }
+  .csearch input{ flex:1; background:transparent; border:none; outline:none; color:#eaeaea; font-size:14px; font-family:inherit; }
+  .csearch input::placeholder{ color:#6f747f; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Program" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>ZeroBias Compliance Readiness</h1>
+            <span class="ptype program">Program</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+            <span class="chip active">Active</span>
+            <span style="color:#8a8f9a;font-size:13px;margin-left:2px;">observing</span>
+            <a class="obsv" href="bm-component-detail.html?c=vm" title="Open in Boundary Manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a>
+            <a class="govchip" href="program-overview.html" title="Program governs its child project tree"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v4M12 11H5v6M12 11h7v6"/></svg>governs 5 lenses</a>
+          </div>
+          <span class="rsub">Program readiness rolls up its <b style="color:#c3c8d2;">framework-lens</b> child projects &mdash; each lens measures the Platform boundary runtime against one pinned framework. Add or manage lenses from <b style="color:#c3c8d2;">Manage lenses</b>.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="program-overview.html">Overview</a>
+      <a href="program-readiness.html" class="active">Readiness</a>
+      <a href="projects-system-state.html">System State</a>
+      <a href="transparency-center.html">Transparency Center</a>
+      <a href="#">Requirements</a>
+      <a href="#">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#" class="disabled">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <!-- HERO: program readiness rollup (SHARED pattern with cmmc-readiness) -->
+    <section class="summary">
+      <div class="shead"><h2>Program readiness</h2><span class="updated">rolled up from 5 framework lenses &middot; updated 2h ago</span></div>
+      <div class="sbody">
+        <div class="szone zprog">
+          <span class="zlabel">Combined readiness</span>
+          <div class="progrow"><span class="big">66%</span><span class="hp atrisk"><span class="hpd"></span>At risk</span></div>
+          <div class="obar"><span class="of" style="width:66%"></span></div>
+          <span class="pl">weighted across 5 lenses &middot; 512 requirements</span>
+        </div>
+        <div class="szone" style="flex:1;">
+          <span class="zlabel">Requirement status spread</span>
+          <div class="statusbar"><span class="st-sat" style="width:62%"></span><span class="st-partial" style="width:17%"></span><span class="st-gap" style="width:21%"></span></div>
+          <div class="statuslegend">
+            <span class="it"><span class="sw st-sat"></span>318 satisfied</span>
+            <span class="it"><span class="sw st-partial"></span>87 partial</span>
+            <span class="it"><span class="sw st-gap"></span>107 gap</span>
+          </div>
+          <div class="fromnote" style="margin-top:6px;">Each lens computes its own readiness from <b>anchored requirement &rarr; internal-control mappings</b> on the Platform boundary. The program rolls those up; crosswalks between frameworks stay advisory.</div>
+        </div>
+        <div class="szone" style="width:300px;flex:none;">
+          <span class="zlabel">Open remediation</span>
+          <div class="fromnote"><b>96</b> open tasks across child boards<br><span style="color:#e6b15e;">31 due within 30 days</span> &middot; <span style="color:#f0a09c;">7 overdue</span></div>
+          <div class="fromnote" style="margin-top:8px;color:#9aa0aa;">POA&amp;M milestones from every lens project onto the program <b style="color:#fff;">Schedule</b>.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="gridwrap">
+      <div class="grid">
+
+        <!-- ============ LEFT COLUMN ============ -->
+        <div class="col-l">
+
+          <!-- Framework-lens rollup (analog of CMMC's control tree) -->
+          <section class="panel">
+            <div class="head">
+              <h2>Framework lenses <span class="hint">&mdash; one pinned framework per lens; FedRAMP expands to baselines</span></h2>
+              <button class="lensbtn" id="openLens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Manage lenses</button>
+            </div>
+            <div class="pbody">
+              <table class="roll">
+                <thead>
+                  <tr><th>Framework lens</th><th>Readiness</th><th>Status spread</th><th>Health</th><th>Open</th><th>Pinned</th><th>Boundary</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><div class="fwname"><span class="sq" style="background:#90CAF9;"></span><div><a href="projects-overview.html">DOD CMMC v2.0 (L2)</a><div class="fwt">Framework lens &middot; 110 practices</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-mid" style="width:70%"></span></div><span class="pct p-mid">70%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:62%"></span><span class="st-partial" style="width:16%"></span><span class="st-gap" style="width:22%"></span></div></td>
+                    <td><span class="hpill atrisk"><span class="d"></span>At risk</span></td>
+                    <td><span class="tnum"><b>24</b></span></td>
+                    <td><span class="pinchip">CMMC v2.0 L2</span></td>
+                    <td><a class="bndchip" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a></td>
+                  </tr>
+                  <tr>
+                    <td><div class="fwname"><span class="sq" style="background:#90CAF9;"></span><div><a href="#">FedRAMP Rev. 4</a><div class="fwt">Framework lens &middot; 3 baselines</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-low" style="width:52%"></span></div><span class="pct p-low">52%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:48%"></span><span class="st-partial" style="width:19%"></span><span class="st-gap" style="width:33%"></span></div></td>
+                    <td><span class="hpill blocked"><span class="d"></span>Behind</span></td>
+                    <td><span class="tnum"><b>41</b></span></td>
+                    <td><span class="pinchip">rollup of 3</span></td>
+                    <td><a class="bndchip" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a></td>
+                  </tr>
+                  <tr class="subrow">
+                    <td><div class="fwname"><span class="sq" style="background:#a9cdf0;"></span><div><a href="#">FedRAMP Rev. 4 (Low)</a><div class="fwt">Baseline</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-mid" style="width:68%"></span></div><span class="pct p-mid">68%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:64%"></span><span class="st-partial" style="width:14%"></span><span class="st-gap" style="width:22%"></span></div></td>
+                    <td><span class="hpill atrisk"><span class="d"></span>At risk</span></td>
+                    <td><span class="tnum">9</span></td>
+                    <td><span class="pinchip">FedRAMP Low</span></td>
+                    <td><span style="color:#8a8f9a;font-size:12px;">Platform</span></td>
+                  </tr>
+                  <tr class="subrow">
+                    <td><div class="fwname"><span class="sq" style="background:#a9cdf0;"></span><div><a href="#">FedRAMP Rev. 4 (Moderate)</a><div class="fwt">Baseline</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-low" style="width:51%"></span></div><span class="pct p-low">51%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:47%"></span><span class="st-partial" style="width:20%"></span><span class="st-gap" style="width:33%"></span></div></td>
+                    <td><span class="hpill blocked"><span class="d"></span>Behind</span></td>
+                    <td><span class="tnum">17</span></td>
+                    <td><span class="pinchip">FedRAMP Moderate</span></td>
+                    <td><span style="color:#8a8f9a;font-size:12px;">Platform</span></td>
+                  </tr>
+                  <tr class="subrow">
+                    <td><div class="fwname"><span class="sq" style="background:#a9cdf0;"></span><div><a href="#">FedRAMP Rev. 4 (High)</a><div class="fwt">Baseline</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-low" style="width:38%"></span></div><span class="pct p-low">38%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:34%"></span><span class="st-partial" style="width:22%"></span><span class="st-gap" style="width:44%"></span></div></td>
+                    <td><span class="hpill blocked"><span class="d"></span>Behind</span></td>
+                    <td><span class="tnum">15</span></td>
+                    <td><span class="pinchip">FedRAMP High</span></td>
+                    <td><span style="color:#8a8f9a;font-size:12px;">Platform</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="fwname"><span class="sq" style="background:#90CAF9;"></span><div><a href="#">NIST SP 800-218 (SSDF)</a><div class="fwt">Framework lens &middot; 42 practices</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-ok" style="width:74%"></span></div><span class="pct p-ok">74%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:71%"></span><span class="st-partial" style="width:15%"></span><span class="st-gap" style="width:14%"></span></div></td>
+                    <td><span class="hpill ontrack"><span class="d"></span>On track</span></td>
+                    <td><span class="tnum"><b>11</b></span></td>
+                    <td><span class="pinchip">SSDF v1.1</span></td>
+                    <td><a class="bndchip" href="bm-component-detail.html?c=ctr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a></td>
+                  </tr>
+                  <tr>
+                    <td><div class="fwname"><span class="sq" style="background:#90CAF9;"></span><div><a href="#">AICPA SOC 2 2017</a><div class="fwt">Framework lens &middot; TSC 2017</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-ok" style="width:81%"></span></div><span class="pct p-ok">81%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:79%"></span><span class="st-partial" style="width:12%"></span><span class="st-gap" style="width:9%"></span></div></td>
+                    <td><span class="hpill ontrack"><span class="d"></span>On track</span></td>
+                    <td><span class="tnum"><b>6</b></span></td>
+                    <td><span class="pinchip">SOC 2 2017</span></td>
+                    <td><a class="bndchip" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a></td>
+                  </tr>
+                  <tr>
+                    <td><div class="fwname"><span class="sq" style="background:#90CAF9;"></span><div><a href="#">AICPA SOC 2 2022</a><div class="fwt">Framework lens &middot; TSC 2022</div></div></div></td>
+                    <td><div class="rdcell"><div class="bar"><span class="g-mid" style="width:66%"></span></div><span class="pct p-mid">66%</span></div></td>
+                    <td><div class="spread"><span class="st-sat" style="width:63%"></span><span class="st-partial" style="width:18%"></span><span class="st-gap" style="width:19%"></span></div></td>
+                    <td><span class="hpill atrisk"><span class="d"></span>At risk</span></td>
+                    <td><span class="tnum"><b>14</b></span></td>
+                    <td><span class="pinchip">SOC 2 2022</span></td>
+                    <td><a class="bndchip" href="bm-component-detail.html?c=vm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Cross-framework heatmap (program-ONLY) -->
+          <section class="panel">
+            <div class="head"><h2>Cross-framework coverage <span class="hint">&mdash; readiness by domain x lens (shared boundary)</span></h2></div>
+            <div class="pbody">
+              <div class="hmscroll">
+                <table class="hm">
+                  <thead>
+                    <tr>
+                      <th class="dom">SCF domain</th>
+                      <th class="fw"><div class="fwh"><span class="hmsq" data-fw="DOD CMMC v2.0 (L2)"></span>CMMC L2</div></th>
+                      <th class="fw"><div class="fwh"><span class="hmsq" data-fw="FedRAMP Rev. 4"></span>FedRAMP</div></th>
+                      <th class="fw"><div class="fwh"><span class="hmsq" data-fw="NIST SP 800-218 (SSDF)"></span>SSDF</div></th>
+                      <th class="fw"><div class="fwh"><span class="hmsq" data-fw="AICPA SOC 2 2017"></span>SOC2-17</div></th>
+                      <th class="fw"><div class="fwh"><span class="hmsq" data-fw="AICPA SOC 2 2022"></span>SOC2-22</div></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="dom">Access Control</td><td><div class="hmcell a">78</div></td><td><div class="hmcell a">60</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell g">88</div></td><td><div class="hmcell a">70</div></td></tr>
+                    <tr><td class="dom">Audit &amp; Accountability</td><td><div class="hmcell g">90</div></td><td><div class="hmcell a">72</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell g">84</div></td><td><div class="hmcell a">66</div></td></tr>
+                    <tr><td class="dom">Configuration Management</td><td><div class="hmcell r">55</div></td><td><div class="hmcell r">40</div></td><td><div class="hmcell a">68</div></td><td><div class="hmcell a">72</div></td><td><div class="hmcell r">50</div></td></tr>
+                    <tr><td class="dom">Identification &amp; Auth</td><td><div class="hmcell a">62</div></td><td><div class="hmcell r">45</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell g">80</div></td><td><div class="hmcell r">58</div></td></tr>
+                    <tr><td class="dom">Incident Response</td><td><div class="hmcell g">82</div></td><td><div class="hmcell a">70</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell g">90</div></td><td><div class="hmcell a">74</div></td></tr>
+                    <tr><td class="dom">Risk Assessment</td><td><div class="hmcell a">68</div></td><td><div class="hmcell r">52</div></td><td><div class="hmcell a">60</div></td><td><div class="hmcell a">78</div></td><td><div class="hmcell a">64</div></td></tr>
+                    <tr><td class="dom">System &amp; Comms Protection</td><td><div class="hmcell r">58</div></td><td><div class="hmcell r">44</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell a">76</div></td><td><div class="hmcell r">55</div></td></tr>
+                    <tr><td class="dom">System &amp; Info Integrity</td><td><div class="hmcell a">71</div></td><td><div class="hmcell r">58</div></td><td><div class="hmcell a">74</div></td><td><div class="hmcell g">82</div></td><td><div class="hmcell a">68</div></td></tr>
+                    <tr><td class="dom">Media Protection</td><td><div class="hmcell a">76</div></td><td><div class="hmcell a">66</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell na">&mdash;</div></td><td><div class="hmcell na">&mdash;</div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="hmleg">
+                <span class="it"><span class="sw" style="background:#274a24;"></span>Ready (&ge;80%)</span>
+                <span class="it"><span class="sw" style="background:#4a3a1e;"></span>At risk (60-79%)</span>
+                <span class="it"><span class="sw" style="background:#4a2020;"></span>Gap (&lt;60%)</span>
+                <span class="it"><span class="sw" style="background:#242424;"></span>Not addressed by framework</span>
+              </div>
+              <div class="hmnote">A <b>red row</b> is weak program-wide &mdash; because every lens anchors to the <b>same Platform controls</b>, one fix moves multiple frameworks. <b>Configuration Management</b> and <b>System &amp; Comms Protection</b> are the program's shared weak spots.</div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ============ RIGHT COLUMN ============ -->
+        <div class="col-r">
+
+          <!-- Biggest levers (program-ONLY) -->
+          <section class="panel">
+            <div class="head"><h2>Biggest levers <span class="hint">&mdash; fix once, satisfy many</span></h2></div>
+            <div class="pbody">
+              <div class="lev">
+                <span class="levrank">1</span>
+                <div class="levmain">
+                  <div class="levname">Enforce security configuration settings</div>
+                  <div class="levsub">control CM.L2-3.4.2 &middot; unblocks <span class="levchip">CMMC</span><span class="levchip">FedRAMP Mod</span><span class="levchip">FedRAMP High</span><span class="levchip">SOC2-22</span></div>
+                </div>
+                <div class="levimpact"><b>4</b><span class="u">lenses</span></div>
+              </div>
+              <div class="lev">
+                <span class="levrank">2</span>
+                <div class="levmain">
+                  <div class="levname">MFA on all privileged access</div>
+                  <div class="levsub">control IA.L2-3.5.3 &middot; unblocks <span class="levchip">CMMC</span><span class="levchip">FedRAMP High</span><span class="levchip">SOC2-17</span><span class="levchip">SOC2-22</span></div>
+                </div>
+                <div class="levimpact"><b>4</b><span class="u">lenses</span></div>
+              </div>
+              <div class="lev">
+                <span class="levrank" style="background:#4a3320;color:#e6b15e;">3</span>
+                <div class="levmain">
+                  <div class="levname">Encrypt CUI at rest and in transit</div>
+                  <div class="levsub">control SC.L2-3.13.11 &middot; unblocks <span class="levchip">CMMC</span><span class="levchip">FedRAMP Mod</span><span class="levchip">FedRAMP High</span></div>
+                </div>
+                <div class="levimpact" style="color:#e6b15e;"><b style="color:#e6b15e;">3</b><span class="u">lenses</span></div>
+              </div>
+              <div class="lev">
+                <span class="levrank" style="background:#4a3320;color:#e6b15e;">4</span>
+                <div class="levmain">
+                  <div class="levname">Centralized audit-log retention</div>
+                  <div class="levsub">control AU.L2-3.3.8 &middot; unblocks <span class="levchip">FedRAMP High</span><span class="levchip">SOC2-22</span></div>
+                </div>
+                <div class="levimpact" style="color:#e6b15e;"><b style="color:#e6b15e;">2</b><span class="u">lenses</span></div>
+              </div>
+              <div class="pnote">
+                <span>Ranked by how many lenses a single control gap blocks (advisory, via crosswalks). Fixing the top lever is the program's highest-leverage remediation.</span>
+                <a class="mlink" href="projects-board-kanban.html?b=remediation">Remediation <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Measurement layers (SHARED with cmmc-readiness; program scope = shared boundary) -->
+          <section class="panel">
+            <div class="head"><h2>Measurement layers <span class="hint">&mdash; shared Platform boundary</span></h2></div>
+            <div class="pbody">
+              <div class="mlayer primary">
+                <span class="mlicon" style="background:#20313d;color:#6fc3f0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Framework compliance <span class="mldom" style="color:#8fc7f0;background:#233247;">rollup</span></div>
+                  <div class="mlbar"><span class="a" style="width:66%"></span></div>
+                  <div class="mlsub">512 requirements across 5 lenses &middot; 107 gaps &rarr; tasks</div>
+                </div>
+                <div class="mlright"><div class="mlpct a">66%</div><div class="mllbl">readiness</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Inventory completeness <span class="mldom">supply chain</span></div>
+                  <div class="mlbar"><span class="g" style="width:99%"></span></div>
+                  <div class="mlsub">1,236 / 1,247 components tracked &middot; <a href="projects-board-kanban.html?b=findings">11 missing &rarr; findings</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct g">99%</div><div class="mllbl">tracked</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4l-5 5A2 2 0 0 0 7 20l5-5a4 4 0 0 0 5.4-5.4l-2 2-2.1-2.1z"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Tool coverage <span class="mldom">enforcement</span></div>
+                  <div class="mlbar"><span class="a" style="width:90%"></span></div>
+                  <div class="mlsub">38 / 42 assets enforce + verify &middot; <a href="projects-board-kanban.html?b=findings">4 missing-tool &rarr; findings</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct a">90%</div><div class="mllbl">covered</div></div>
+              </div>
+              <div class="mlayer">
+                <span class="mlicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+                <div class="mlmain">
+                  <div class="mlname">Control effectiveness <span class="mldom">enforcement</span></div>
+                  <div class="mlbar"><span class="g" style="width:96%"></span></div>
+                  <div class="mlsub">tools actively checking &middot; <a href="projects-board-kanban.html?b=findings">1 stale &rarr; ineffective-control</a></div>
+                </div>
+                <div class="mlright"><div class="mlpct g">96%</div><div class="mllbl">effective</div></div>
+              </div>
+              <div class="pnote">
+                <span>Inventory / tool / effectiveness are <b>shared</b> &mdash; there is one Platform runtime, so every lens reads the same layers. Only framework compliance differs per lens (rolled up above).</span>
+                <a class="mlink" href="bm-component-detail.html?c=vm">Boundary <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Findings & POA&M rollup (program aggregation) -->
+          <section class="panel">
+            <div class="head"><h2>Findings &amp; POA&amp;M <span class="hint">&mdash; across all lens boards</span></h2></div>
+            <div class="pbody">
+              <div class="sevrow">
+                <div class="sevcard crit"><div class="n">3</div><div class="l">Critical</div></div>
+                <div class="sevcard high"><div class="n">18</div><div class="l">High</div></div>
+                <div class="sevcard med"><div class="n">41</div><div class="l">Medium</div></div>
+                <div class="sevcard low"><div class="n">44</div><div class="l">Low</div></div>
+              </div>
+              <div class="poam">
+                <span class="pk"><b>96</b> POA&amp;M items open &middot; <span style="color:#e6b15e;">31 due &lt; 30 days</span> &middot; <span style="color:#f0a09c;">7 overdue</span></span>
+                <a class="mlink" href="projects-board-kanban.html?b=poam">POA&amp;M board <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Milestones rollup (SHARED .ms pattern with cmmc-readiness) -->
+          <section class="panel">
+            <div class="head"><h2>Program milestones <span class="hint">&mdash; rolled up from every lens</span></h2></div>
+            <div class="pbody">
+              <div class="ms">
+                <span class="mic" style="background:#1f3d17;color:#8fd06a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mtxt"><div class="mtitlerow"><span class="mtitle">Control mapping sign-off</span><span class="evchip met">Met</span></div><div class="msub"><span class="lenschip">CMMC L2</span> &middot; completed Jun 12</div></div>
+                <div class="mtarget"><b>Jun 12</b><br><span class="du">done</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+                <div class="mtxt"><div class="mtitlerow"><span class="mtitle">SOC 2 2022 audit window</span><span class="evchip duesoon">Due soon</span></div><div class="msub"><span class="lenschip">SOC2-22</span> &middot; target: type II observation</div></div>
+                <div class="mtarget"><b>Sep 30</b><br><span class="du">in 90d</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="mtxt"><div class="mtitlerow"><span class="mtitle">CMMC L2 assessment-ready</span><span class="evchip upcoming">Upcoming</span></div><div class="msub"><span class="lenschip">CMMC L2</span> &middot; target: all gaps closed (1 open)</div></div>
+                <div class="mtarget"><b>Oct 01</b><br><span class="du">in 91d</span></div>
+              </div>
+              <div class="ms">
+                <span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16"/><path d="M4 4h13l-2 4 2 4H4"/></svg></span>
+                <div class="mtxt"><div class="mtitlerow"><span class="mtitle">FedRAMP Moderate 3PAO kickoff</span><span class="evchip upcoming">Upcoming</span></div><div class="msub"><span class="lenschip">FedRAMP Mod</span> &middot; target: readiness &ge; 75% (now 51%)</div></div>
+                <div class="mtarget"><b>Nov 15</b><br><span class="du">in 136d</span></div>
+              </div>
+              <div class="pnote">
+                <span>Milestone events from each lens's Schedule calendar, merged onto the program timeline.</span>
+                <a class="mlink" href="#">Program Schedule <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Referenced boundary (SHARED .ms pattern with cmmc-readiness) -->
+          <section class="panel">
+            <div class="head"><h2>Referenced boundary <span class="hint">&mdash; the shared runtime</span></h2></div>
+            <div class="pbody">
+              <div class="ms" style="border-top:none;">
+                <span class="mic" style="background:#1f3d17;color:#8fd06a;width:34px;height:34px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+                <div class="mtxt"><div class="mtitle">Platform</div><div class="msub">Internal controls: <b style="color:#c3c8d2;">NIST 800-171 R3</b> &middot; observed by all 5 lenses</div></div>
+                <div class="mtarget"><span class="hp ontrack" style="height:22px;"><span class="hpd"></span>Live</span></div>
+              </div>
+              <div class="pnote">
+                <span>Every lens measures this one runtime control plane. Shared inventory / tool / effectiveness layers come from here.</span>
+                <a class="mlink" href="bm-component-detail.html?c=vm">Open in Boundary Manager <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Lenses dialog (near full-screen) ===== -->
+  <div class="ovl" id="lensOvl">
+    <div class="dlg">
+      <div class="dlghd">
+        <span class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <div>
+          <h2>Lenses &mdash; ZeroBias Compliance Readiness</h2>
+          <div class="dsub">Framework lenses projecting the Platform boundary. Adding a lens creates a framework-lens sub-project.</div>
+        </div>
+        <span class="dlgx" id="closeLens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></span>
+      </div>
+      <div class="dlgbd">
+
+        <div class="dsec">
+          <div class="dsechd"><span class="dseclbl">Active lenses</span><span class="dseccount" id="activeCount">5 framework-lens sub-projects</span></div>
+          <div class="dsecnote">Each lens is a sub-project pinning one framework, measuring the Platform boundary. New lenses added below land here.</div>
+          <div class="lgrid" id="activeGrid">
+            <div class="lcard">
+              <div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">DOD CMMC v2.0 (L2)</span><span class="ptype workspace">Framework</span></div>
+              <div class="lcbar"><span class="g-mid" style="width:70%"></span></div>
+              <div class="lcmeta"><span class="lcpct p-mid">70%</span><span class="hpill atrisk"><span class="d"></span>At risk</span></div>
+              <div class="lcfoot"><span class="lcsub">24 open tasks</span><a class="lcopen" href="projects-overview.html">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+            </div>
+            <div class="lcard">
+              <div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">FedRAMP Rev. 4</span><span class="ptype workspace">Framework</span></div>
+              <div class="lcbar"><span class="g-low" style="width:52%"></span></div>
+              <div class="lcmeta"><span class="lcpct p-low">52%</span><span class="hpill blocked"><span class="d"></span>Behind</span></div>
+              <div class="lcfoot"><span class="lcsub">3 baselines &middot; 41 open</span><a class="lcopen" href="#">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+            </div>
+            <div class="lcard">
+              <div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">NIST SP 800-218 (SSDF)</span><span class="ptype workspace">Framework</span></div>
+              <div class="lcbar"><span class="g-ok" style="width:74%"></span></div>
+              <div class="lcmeta"><span class="lcpct p-ok">74%</span><span class="hpill ontrack"><span class="d"></span>On track</span></div>
+              <div class="lcfoot"><span class="lcsub">11 open tasks</span><a class="lcopen" href="#">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+            </div>
+            <div class="lcard">
+              <div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">AICPA SOC 2 2017</span><span class="ptype workspace">Framework</span></div>
+              <div class="lcbar"><span class="g-ok" style="width:81%"></span></div>
+              <div class="lcmeta"><span class="lcpct p-ok">81%</span><span class="hpill ontrack"><span class="d"></span>On track</span></div>
+              <div class="lcfoot"><span class="lcsub">6 open tasks</span><a class="lcopen" href="#">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+            </div>
+            <div class="lcard">
+              <div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">AICPA SOC 2 2022</span><span class="ptype workspace">Framework</span></div>
+              <div class="lcbar"><span class="g-mid" style="width:66%"></span></div>
+              <div class="lcmeta"><span class="lcpct p-mid">66%</span><span class="hpill atrisk"><span class="d"></span>At risk</span></div>
+              <div class="lcfoot"><span class="lcsub">14 open tasks</span><a class="lcopen" href="#">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dsechd"><span class="dseclbl">Add a lens &mdash; supported by Platform boundary</span><span class="dseccount">2 adopted, no lens yet</span></div>
+          <div class="dsecnote">Frameworks already <b>adopted on the Platform boundary</b> &mdash; the requirement &rarr; internal-control anchors already exist, so a lens projects immediately.</div>
+          <div class="agrid">
+            <div class="addcard qp">
+              <div class="actop">
+                <span class="acsq" style="background:#20313d;color:#6fc3f0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4zM4 14h16v6H4z"/></svg></span>
+                <div><div class="acnm">NIST SP 800-53 Rev. 5</div><div class="acpub">Publisher: NIST &middot; Moderate baseline</div></div>
+              </div>
+              <div class="acbadges"><span class="badge adopted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted on Platform</span><span class="badge reqs">287 controls</span><span class="badge dom">Compliance</span></div>
+              <div class="acmsg">Anchors ready. <b>Create a framework-lens sub-project</b> projecting NIST 800-53 R5 (Moderate).</div>
+              <button class="acbtn qp" data-add="NIST SP 800-53 Rev. 5" data-pct="79" data-health="ontrack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create lens</button>
+              <div class="acconfirm"><div class="ct">Create a framework-lens sub-project projecting <b>NIST SP 800-53 Rev. 5</b> on the Platform boundary?</div><div class="cbtns"><button class="cbtn go">Create lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Lens created</div>
+            </div>
+            <div class="addcard qp">
+              <div class="actop">
+                <span class="acsq" style="background:#20313d;color:#6fc3f0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4zM4 14h16v6H4z"/></svg></span>
+                <div><div class="acnm">CIS Controls v8</div><div class="acpub">Publisher: CIS &middot; Implementation Group 2</div></div>
+              </div>
+              <div class="acbadges"><span class="badge adopted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted on Platform</span><span class="badge reqs">153 safeguards</span><span class="badge dom">Security</span></div>
+              <div class="acmsg">Anchors ready. <b>Create a framework-lens sub-project</b> projecting CIS Controls v8 (IG2).</div>
+              <button class="acbtn qp" data-add="CIS Controls v8" data-pct="83" data-health="ontrack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create lens</button>
+              <div class="acconfirm"><div class="ct">Create a framework-lens sub-project projecting <b>CIS Controls v8</b> on the Platform boundary?</div><div class="cbtns"><button class="cbtn go">Create lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Lens created</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dsechd"><span class="dseclbl">Add a lens &mdash; browse catalog</span><span class="dseccount">sorted by advisory coverage</span></div>
+          <div class="dsecnote">Frameworks <b>not yet on the boundary</b>. The coverage % is an <b>advisory crosswalk forecast</b> (a what-if, not live readiness). Adding one <b>first adopts it on the Platform boundary</b>, then creates the lens.</div>
+          <div class="csearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Search the framework catalog (ISO, PCI, HIPAA, NIST, CMMC...)"></div>
+          <div class="agrid">
+            <div class="addcard">
+              <div class="actop">
+                <span class="acsq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.2-5.5-3-5.5 3 1-6.2L3 8.9 9 8z"/></svg></span>
+                <div><div class="acnm">HIPAA Security Rule</div><div class="acpub">Publisher: HHS &middot; 45 CFR Part 164</div></div>
+              </div>
+              <div class="acbadges"><span class="badge reqs">54 standards</span><span class="badge dom" style="background:#3a2036;color:#e69ac9;">Clinical</span></div>
+              <div class="fcast"><span class="fl">Advisory coverage</span><span class="fb"><span class="g-ok" style="width:83%"></span></span><span class="fp p-ok">83%</span></div>
+              <div class="acmsg">Not on the boundary. <b>Adopts HIPAA Security Rule on Platform</b>, then creates the lens sub-project.</div>
+              <button class="acbtn cat" data-add="HIPAA Security Rule" data-pct="61" data-health="atrisk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Adopt + add lens</button>
+              <div class="acconfirm"><div class="ct">Adopt <b>HIPAA Security Rule</b> on the Platform boundary and create a framework-lens sub-project? This scaffolds its requirements and requirement &rarr; control anchors.</div><div class="cbtns"><button class="cbtn go">Adopt + add lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted &amp; lens created</div>
+            </div>
+            <div class="addcard">
+              <div class="actop">
+                <span class="acsq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.2-5.5-3-5.5 3 1-6.2L3 8.9 9 8z"/></svg></span>
+                <div><div class="acnm">ISO/IEC 27001:2022</div><div class="acpub">Publisher: ISO/IEC &middot; Annex A</div></div>
+              </div>
+              <div class="acbadges"><span class="badge reqs">93 controls</span><span class="badge dom">Security</span></div>
+              <div class="fcast"><span class="fl">Advisory coverage</span><span class="fb"><span class="g-ok" style="width:78%"></span></span><span class="fp p-ok">78%</span></div>
+              <div class="acmsg">Not on the boundary. <b>Adopts ISO/IEC 27001:2022 on Platform</b>, then creates the lens sub-project.</div>
+              <button class="acbtn cat" data-add="ISO/IEC 27001:2022" data-pct="58" data-health="atrisk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Adopt + add lens</button>
+              <div class="acconfirm"><div class="ct">Adopt <b>ISO/IEC 27001:2022</b> on the Platform boundary and create a framework-lens sub-project? This scaffolds its requirements and requirement &rarr; control anchors.</div><div class="cbtns"><button class="cbtn go">Adopt + add lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted &amp; lens created</div>
+            </div>
+            <div class="addcard">
+              <div class="actop">
+                <span class="acsq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.2-5.5-3-5.5 3 1-6.2L3 8.9 9 8z"/></svg></span>
+                <div><div class="acnm">PCI DSS v4.0</div><div class="acpub">Publisher: PCI SSC &middot; 12 requirements</div></div>
+              </div>
+              <div class="acbadges"><span class="badge reqs">277 controls</span><span class="badge dom" style="background:#20313a;color:#7fc7d9;">Financial</span></div>
+              <div class="fcast"><span class="fl">Advisory coverage</span><span class="fb"><span class="g-mid" style="width:61%"></span></span><span class="fp p-mid">61%</span></div>
+              <div class="acmsg">Not on the boundary. <b>Adopts PCI DSS v4.0 on Platform</b>, then creates the lens sub-project.</div>
+              <button class="acbtn cat" data-add="PCI DSS v4.0" data-pct="47" data-health="blocked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Adopt + add lens</button>
+              <div class="acconfirm"><div class="ct">Adopt <b>PCI DSS v4.0</b> on the Platform boundary and create a framework-lens sub-project? This scaffolds its requirements and requirement &rarr; control anchors.</div><div class="cbtns"><button class="cbtn go">Adopt + add lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted &amp; lens created</div>
+            </div>
+            <div class="addcard">
+              <div class="actop">
+                <span class="acsq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.2-5.5-3-5.5 3 1-6.2L3 8.9 9 8z"/></svg></span>
+                <div><div class="acnm">DOD CMMC Level 3</div><div class="acpub">Publisher: DoD &middot; 134 practices</div></div>
+              </div>
+              <div class="acbadges"><span class="badge reqs">134 practices</span><span class="badge dom">Compliance</span></div>
+              <div class="fcast"><span class="fl">Advisory coverage</span><span class="fb"><span class="g-low" style="width:44%"></span></span><span class="fp p-low">44%</span></div>
+              <div class="acmsg">Not on the boundary. <b>Adopts CMMC Level 3 on Platform</b>, then creates the lens sub-project.</div>
+              <button class="acbtn cat" data-add="DOD CMMC Level 3" data-pct="38" data-health="blocked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Adopt + add lens</button>
+              <div class="acconfirm"><div class="ct">Adopt <b>DOD CMMC Level 3</b> on the Platform boundary and create a framework-lens sub-project? This scaffolds its requirements and requirement &rarr; control anchors.</div><div class="cbtns"><button class="cbtn go">Adopt + add lens</button><button class="cbtn no">Cancel</button></div></div>
+              <div class="acdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Adopted &amp; lens created</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+/* Project swatch colours — Tom's colorFor (project-structure-panel.component.ts):
+   hsl(hash % 360, 45%, 55%) seeded by the real project id, so rollup + heatmap + dialog
+   swatches match the overview Structure panel exactly. */
+(function(){
+  var IDS = {
+    'ZeroBias Compliance Readiness':'e0000000-0000-4000-8000-000000000055',
+    'DOD CMMC v2.0 (L2)':'e0000000-0000-4000-8000-00000000002c',
+    'FedRAMP Rev. 4':'e0000000-0000-4000-8000-00000000003c',
+    'FedRAMP Rev. 4 (Low)':'e0000000-0000-4000-8000-00000000004f',
+    'FedRAMP Rev. 4 (Moderate)':'e0000000-0000-4000-8000-000000000064',
+    'FedRAMP Rev. 4 (High)':'e0000000-0000-4000-8000-00000000001d',
+    'NIST SP 800-218 (SSDF)':'e0000000-0000-4000-8000-000000000061',
+    'AICPA SOC 2 2017':'e0000000-0000-4000-8000-00000000001e',
+    'AICPA SOC 2 2022':'e0000000-0000-4000-8000-000000000018'
+  };
+  function colorFor(seed){ var h=0; for(var i=0;i<seed.length;i++){ h=(h*31+seed.charCodeAt(i))>>>0; } return 'hsl('+(h%360)+' 45% 55%)'; }
+  // rollup .fwname .sq (name in <a>), dialog .lcsq (name in .lcname), heatmap .hmsq (name in data-fw)
+  Array.prototype.forEach.call(document.querySelectorAll('.fwname .sq, .lcsq, .hmsq'), function(sw){
+    var name;
+    if(sw.classList.contains('sq')){ name = sw.closest('.fwname') && sw.closest('.fwname').querySelector('a'); name = name && name.textContent.trim(); }
+    else if(sw.classList.contains('lcsq')){ name = sw.closest('.lctop') && sw.closest('.lctop').querySelector('.lcname'); name = name && name.textContent.trim(); }
+    else { name = sw.getAttribute('data-fw'); }
+    if(name && IDS[name]) sw.style.background = colorFor(IDS[name]);
+  });
+
+  // Lenses dialog open/close
+  var ovl = document.getElementById('lensOvl');
+  function close(){ ovl.classList.remove('open'); }
+  document.getElementById('openLens').addEventListener('click', function(){ ovl.classList.add('open'); });
+  document.getElementById('closeLens').addEventListener('click', close);
+  ovl.addEventListener('click', function(e){ if(e.target === ovl) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+
+  // add-lens flow: button -> confirm footer -> confirm -> added + prepend to Active lenses
+  var activeGrid = document.getElementById('activeGrid');
+  var activeCount = document.getElementById('activeCount');
+  var count = 5;
+  var HB = {ontrack:['On track','g-ok','p-ok'], atrisk:['At risk','g-mid','p-mid'], blocked:['Behind','g-low','p-low']};
+  Array.prototype.forEach.call(document.querySelectorAll('.addcard'), function(card){
+    var addBtn = card.querySelector('.acbtn');
+    var go = card.querySelector('.cbtn.go');
+    var no = card.querySelector('.cbtn.no');
+    if(addBtn) addBtn.addEventListener('click', function(){ card.classList.add('confirming'); });
+    if(no) no.addEventListener('click', function(){ card.classList.remove('confirming'); });
+    if(go) go.addEventListener('click', function(){
+      card.classList.remove('confirming');
+      card.classList.add('added');
+      var name = addBtn.getAttribute('data-add');
+      var pct = +addBtn.getAttribute('data-pct');
+      var hb = HB[addBtn.getAttribute('data-health')] || HB.atrisk;
+      var el = document.createElement('div');
+      el.className = 'lcard';
+      el.style.outline = '1px solid #03aff0';
+      el.innerHTML =
+        '<div class="lctop"><span class="lcsq" style="background:#90CAF9;"></span><span class="lcname">'+name+'</span><span class="ptype workspace">Framework</span></div>'
+        + '<div class="lcbar"><span class="'+hb[1]+'" style="width:'+pct+'%"></span></div>'
+        + '<div class="lcmeta"><span class="lcpct '+hb[2]+'">'+pct+'%</span><span class="hpill '+addBtn.getAttribute('data-health')+'"><span class="d"></span>'+hb[0]+'</span></div>'
+        + '<div class="lcfoot"><span class="lcsub" style="color:#8fd06a;">just added</span><a class="lcopen" href="#">Open lens <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>';
+      activeGrid.insertBefore(el, activeGrid.firstChild);
+      count++;
+      activeCount.textContent = count + ' framework-lens sub-projects';
+    });
+  });
+})();
+</script>
+</body>
+</html>

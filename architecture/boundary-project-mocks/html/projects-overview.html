@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Overview (CMMC Level 2), Readiness panel filled — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* header */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .cchip.eng{ background:#2a2418; color:#d9ad6b; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .obsv{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; background:#1f3d17; color:#8fd06a; font-size:13px; font-weight:600; text-decoration:none; }
+  .obsv svg{ width:14px; height:14px; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; }
+
+  /* page tabs */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* overview grid — real 6-col x 240px fixed-cell grid (project-overview-page.component.scss):
+     6 cols of 240px, grid-auto-rows 240px, row-gap 0 / col-gap 16px, row dense,
+     centered + max-width 85vw. Every tile 2 rows tall (480px). Col spans 2 2 2 / 4 2 / 2 2 2 / 4 2. */
+  .owrap{ max-width:85vw; margin:0 auto; padding:0 16px 16px; }
+  .ogrid{
+    display:grid;
+    grid-template-columns:repeat(6, 240px);
+    grid-auto-rows:240px;
+    grid-auto-flow:row dense;
+    gap:0 16px;
+    justify-content:center;
+    align-items:stretch;
+    margin:16px 0 0;
+  }
+  .ogrid > .panel{ grid-column:span 2; grid-row:span 2; display:flex; flex-direction:column; min-width:0; }
+  .ogrid > .panel.wide{ grid-column:span 4; }
+  .panel .phd{ display:flex; align-items:center; justify-content:space-between; padding:6px 4px 8px; flex:none; }
+  .panel .phd h2{ font-size:15px; font-weight:600; color:#e6e9f2; }
+  .panel .phd .addx{ color:#03aff0; cursor:pointer; display:inline-flex; }
+  .panel .phd .addx svg{ width:18px; height:18px; }
+  .pbd{ background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); flex:1; overflow:hidden; }
+
+  /* empty state */
+  .empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; height:100%; min-height:290px; color:#6f747f; }
+  .empty svg{ width:46px; height:46px; opacity:.5; }
+  .empty .et{ font-size:13px; }
+  /* sub-project row */
+  .sprow{ display:flex; align-items:center; gap:10px; padding:12px 14px; }
+  .sprow .spd{ width:11px; height:11px; border-radius:3px; background:#90CAF9; flex:none; }
+  .sprow .spn{ font-size:14px; color:#eaeaea; font-weight:500; }
+
+  /* readiness fill */
+  .rd{ padding:16px; display:flex; flex-direction:column; gap:13px; }
+  .rtop{ display:flex; align-items:center; gap:12px; }
+  .rtop .pct{ font-size:40px; font-weight:600; color:#fff; line-height:1; }
+  .hp{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 11px; border-radius:999px; font-size:12px; font-weight:600; }
+  .hp .hpd{ width:7px; height:7px; border-radius:50%; }
+  .hp.atrisk{ background:#4a3320; color:#e6b15e; } .hp.atrisk .hpd{ background:#e6b15e; }
+  .obar{ width:100%; height:9px; border-radius:5px; background:#2a2a2a; overflow:hidden; }
+  .obar span{ display:block; height:100%; background:#03aff0; border-radius:5px; }
+  .sbar{ display:flex; height:12px; border-radius:4px; overflow:hidden; }
+  .sbar span{ display:block; height:100%; }
+  .sbar .s{ background:#8fd06a; } .sbar .p{ background:#e6b15e; } .sbar .g{ background:#f0a09c; }
+  .leg{ display:flex; align-items:center; gap:16px; font-size:12px; color:#c3c8d2; }
+  .leg i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  .leg .cs{ background:#8fd06a; } .leg .cp{ background:#e6b15e; } .leg .cg{ background:#f0a09c; }
+  .rkv{ display:flex; align-items:center; gap:10px; padding-top:11px; border-top:1px solid rgba(255,255,255,.08); }
+  .rkv .k{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; width:74px; flex:none; }
+  .chipfw{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:3px; background:#90CAF9; color:#12242f; font-size:11px; font-weight:700; }
+  .bnd{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:5px; background:#1f3d17; color:#8fd06a; font-size:12px; font-weight:600; text-decoration:none; }
+  .bnd svg{ width:12px; height:12px; }
+  .rmore{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:13px; font-weight:500; text-decoration:none; margin-top:2px; }
+  .rmore svg{ width:14px; height:14px; }
+
+  /* details key-values */
+  .dt{ }
+  .dtrow{ display:flex; align-items:center; gap:12px; padding:11px 14px; border-top:1px solid rgba(255,255,255,.06); font-size:13px; }
+  .dtrow:first-child{ border-top:none; }
+  .dtrow .dk{ color:#8a8f9a; width:96px; flex:none; }
+  .dtrow .dv{ color:#eaeaea; }
+  .tag{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:12px; font-weight:500; }
+  .tag.blue{ background:#233247; color:#8fc7f0; } .tag.grey{ background:#3a3f47; color:#c3c8d2; }
+
+  /* boards */
+  .bsel{ display:flex; align-items:center; justify-content:space-between; height:38px; margin:12px 14px 0; padding:0 12px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; font-size:13px; color:#c3c8d2; }
+  .bsel svg{ width:16px; height:16px; color:#8a8f9a; }
+  .donuts{ display:flex; gap:40px; padding:20px 30px 8px; }
+  .dz{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .dz .lbl{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:#7d828d; }
+  .ring{ width:120px; height:120px; border-radius:50%; background:conic-gradient(#3a3f47 0 360deg); position:relative; }
+  .ring::after{ content:""; position:absolute; inset:20px; border-radius:50%; background:#424242; }
+  .ring .rc{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; color:#8a8f9a; z-index:1; }
+  .tags{ padding:10px 14px 14px; border-top:1px solid rgba(255,255,255,.06); margin-top:8px; }
+  .tags .tl{ font-size:12px; color:#8a8f9a; margin-bottom:7px; }
+
+  /* boundaries */
+  .bndrow{ display:flex; align-items:center; gap:11px; padding:12px 14px; border-top:1px solid rgba(255,255,255,.06); text-decoration:none; }
+  .bndrow:first-of-type{ border-top:none; }
+  .bndrow:hover{ background:rgba(255,255,255,.03); }
+  .bndrow .bi{ width:30px; height:30px; border-radius:7px; flex:none; display:flex; align-items:center; justify-content:center; background:#1f3d17; color:#8fd06a; }
+  .bndrow .bi svg{ width:17px; height:17px; }
+  .bndrow .bn{ font-size:13px; color:#eaeaea; flex:1; }
+  .bpill{ display:inline-flex; align-items:center; height:19px; padding:0 9px; border-radius:4px; font-size:10px; font-weight:600; }
+  .bpill.ref{ background:#23384d; color:#74b8e6; } .bpill.par{ background:#3a3f47; color:#c3c8d2; }
+
+  /* activity feed */
+  .actrow{ display:flex; align-items:flex-start; gap:11px; padding:11px 14px; border-top:1px solid rgba(255,255,255,.06); }
+  .actrow:first-child{ border-top:none; }
+  .actrow .ai{ width:26px; height:26px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:#2a3a4a; color:#74b8e6; }
+  .actrow .ai svg{ width:14px; height:14px; }
+  .actrow .ac{ min-width:0; flex:1; }
+  .actrow .at{ font-size:13px; color:#d7dbe2; line-height:1.35; }
+  .actrow .at b{ color:#fff; font-weight:600; }
+  .actrow .am{ font-size:11px; color:#7d828d; margin-top:2px; }
+
+  /* members / roles */
+  .mrow{ display:flex; align-items:center; gap:11px; padding:11px 14px; border-top:1px solid rgba(255,255,255,.06); }
+  .mrow:first-child{ border-top:none; }
+  .mrow .av{ width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#12242f; }
+  .mrow .mn{ flex:1; min-width:0; }
+  .mrow .mnn{ font-size:13px; color:#eaeaea; font-weight:500; }
+  .mrow .mnr{ font-size:11px; color:#8a8f9a; margin-top:1px; }
+  .rolepill{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; }
+  .rolepill.own{ background:#233247; color:#8fc7f0; } .rolepill.edit{ background:#1f3d17; color:#8fd06a; } .rolepill.view{ background:#3a3f47; color:#c3c8d2; }
+  .racik{ width:96px; flex:none; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#7d828d; }
+
+  /* linked resources (wide) */
+  .lnkrow{ display:flex; align-items:center; gap:13px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .lnkrow:first-child{ border-top:none; }
+  .lnkrow .li{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f37; }
+  .lnkrow .li img{ width:22px; height:22px; }
+  .lnkrow .li svg{ width:19px; height:19px; color:#9aa0aa; }
+  .lnkrow .ln{ min-width:0; flex:1; }
+  .lnkrow .lnn{ font-size:14px; color:#eaeaea; font-weight:500; }
+  .lnkrow .lnd{ font-size:12px; color:#8a8f9a; margin-top:2px; }
+  .lnktype{ display:inline-flex; align-items:center; height:20px; padding:0 10px; border-radius:4px; font-size:11px; font-weight:600; background:#3a3f47; color:#c3c8d2; flex:none; }
+
+  /* tags panel */
+  .tagwrap{ display:flex; flex-wrap:wrap; gap:8px; padding:14px; }
+  .tagwrap .tag{ height:24px; padding:0 11px; }
+
+  /* generic data table (customizable-table look) */
+  .ptbl{ width:100%; border-collapse:collapse; font-size:13px; }
+  .ptbl th{ text-align:left; font-weight:600; color:#8a8f9a; font-size:12px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.10); white-space:nowrap; }
+  .ptbl th .sort{ display:inline-block; margin-left:5px; color:#5c616b; font-size:12px; vertical-align:middle; }
+  .ptbl td{ padding:11px 14px; border-bottom:1px solid rgba(255,255,255,.05); color:#eaeaea; vertical-align:top; }
+  .ptbl tr:last-child td{ border-bottom:none; }
+  .ptbl .sub{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .ptbl .when{ color:#9aa0aa; white-space:nowrap; }
+  .relpill{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; background:#2a2f37; color:#c3c8d2; }
+  .typepill{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; }
+  .typepill.project{ background:#233247; color:#8fc7f0; } .typepill.boundary{ background:#1f3d17; color:#8fd06a; } .typepill.board{ background:#3a2f47; color:#c8a5f0; } .typepill.framework{ background:#233247; color:#8fc7f0; }
+  .resc{ display:flex; align-items:center; gap:8px; }
+  .resc .ri{ width:22px; height:22px; border-radius:5px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f37; color:#9aa0aa; }
+  .resc .ri svg{ width:14px; height:14px; }
+  .resc .rn{ font-weight:500; }
+  .mavatar{ width:26px; height:26px; border-radius:50%; flex:none; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#12242f; vertical-align:middle; margin-right:9px; }
+  .namecell{ display:flex; align-items:center; }
+  .rolechip{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; background:#233247; color:#8fc7f0; }
+  .actic{ width:24px; height:24px; border-radius:50%; flex:none; display:inline-flex; align-items:center; justify-content:center; background:#2a3a4a; color:#74b8e6; margin-right:9px; vertical-align:top; }
+  .actic svg{ width:13px; height:13px; }
+  .acttext{ display:flex; }
+  .acttext .acbody{ min-width:0; }
+  .tblempty{ display:flex; align-items:center; justify-content:center; height:120px; color:#6f747f; font-size:13px; }
+
+  /* structure tree */
+  .tree{ padding:8px 6px; }
+  .trow{ display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; }
+  .trow:hover{ background:rgba(255,255,255,.03); }
+  .trow.child{ margin-left:24px; }
+  .trow.child2{ margin-left:48px; }
+  .trow.current{ background:rgba(3,175,240,.10); box-shadow:inset 3px 0 0 #03aff0; }
+  .trow.current .tnm{ color:#fff; font-weight:600; }
+  .youhere{ display:inline-flex; align-items:center; height:18px; padding:0 9px; border-radius:9px; background:#03aff0; color:#08222c; font-size:10px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+  .tlink{ text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+  .ttog{ width:20px; height:20px; flex:none; display:flex; align-items:center; justify-content:center; color:#8a8f9a; }
+  .ttog svg{ width:12px; height:12px; }
+  .tsq{ width:16px; height:16px; border-radius:4px; flex:none; }
+  .tnm{ font-size:16px; color:#eaeaea; font-weight:500; flex:1; }
+  .tree .trow:first-child .tnm{ font-weight:700; }
+  .ttype{ font-size:10px; color:#8a8f9a; background:#2a2f37; border-radius:3px; padding:1px 7px; font-weight:600; }
+  .tadd{ width:18px; height:18px; flex:none; display:flex; align-items:center; justify-content:center; color:#03aff0; opacity:0; transition:opacity .12s; margin-left:4px; }
+  .trow:hover .tadd{ opacity:1; }
+  .tadd svg{ width:14px; height:14px; }
+
+  /* donut with data */
+  .ring.d100{ background:conic-gradient(#8fd06a 0 360deg); }
+  .ring.dnorm{ background:conic-gradient(#5b9bd5 0 360deg); }
+  .ring .rc.big{ font-size:15px; color:#e6e9f2; font-weight:600; flex-direction:column; gap:1px; }
+  .ring .rc .rcs{ font-size:10px; color:#8a8f9a; font-weight:500; }
+  .bchip{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:4px; font-size:11px; font-weight:600; }
+  .bchip .bd{ width:7px; height:7px; border-radius:2px; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>DOD CMMC v2.0 (L2)</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+            <span style="color:#8a8f9a;font-size:13px;margin-left:2px;">observing</span>
+            <a class="obsv" href="bm-component-detail.html?c=vm" title="Open in Boundary Manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a>
+          </div>
+          <span class="rsub">A CMMC v2.0 Level 2 lens observing the Platform boundary (internal controls: NIST 800-171 R3), estimating readiness.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html" class="active">Overview</a>
+      <a href="projects-cmmc-readiness.html">Readiness</a>
+      <a href="projects-requirements.html">Requirements</a>
+      <a href="projects-boards.html">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <div class="owrap">
+    <div class="ogrid">
+
+      <!-- 1. Structure — full family tree (ancestors + descendants), current node highlighted (span 2) -->
+      <section class="panel">
+        <div class="phd"><h2>Structure</h2><span style="font-size:11px;color:#7d828d;">full hierarchy &middot; getTree(ancestors)</span></div>
+        <div class="pbd">
+          <div class="tree">
+            <!-- Program (root ancestor) -->
+            <div class="trow">
+              <span class="ttog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+              <a class="tlink" href="program-overview.html"><span class="tsq" style="background:#C5E1A5;"></span><span class="tnm">ZeroBias Compliance Readiness</span></a>
+              <span class="ttype">Program</span>
+              <span class="tadd" title="Add sub-project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+            </div>
+            <!-- current project -->
+            <div class="trow child current">
+              <span class="ttog"></span>
+              <span class="tlink"><span class="tsq" style="background:#90CAF9;"></span><span class="tnm">DOD CMMC v2.0 (L2)</span></span>
+              <span class="ttype">Framework</span>
+            </div>
+            <!-- FedRAMP with its 3 baseline children -->
+            <div class="trow child">
+              <span class="ttog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#90CAF9;"></span><span class="tnm">FedRAMP Rev. 4</span></a>
+              <span class="ttype">Framework</span>
+              <span class="tadd" title="Add sub-project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+            </div>
+            <div class="trow child2">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#a9cdf0;"></span><span class="tnm">FedRAMP Rev. 4 (Low)</span></a>
+              <span class="ttype">Baseline</span>
+            </div>
+            <div class="trow child2">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#a9cdf0;"></span><span class="tnm">FedRAMP Rev. 4 (Moderate)</span></a>
+              <span class="ttype">Baseline</span>
+            </div>
+            <div class="trow child2">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#a9cdf0;"></span><span class="tnm">FedRAMP Rev. 4 (High)</span></a>
+              <span class="ttype">Baseline</span>
+            </div>
+            <!-- remaining sibling frameworks -->
+            <div class="trow child">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#90CAF9;"></span><span class="tnm">NIST SP 800-218 (SSDF)</span></a>
+              <span class="ttype">Framework</span>
+            </div>
+            <div class="trow child">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#90CAF9;"></span><span class="tnm">AICPA SOC 2 2017</span></a>
+              <span class="ttype">Framework</span>
+            </div>
+            <div class="trow child">
+              <span class="ttog"></span>
+              <a class="tlink" href="#"><span class="tsq" style="background:#90CAF9;"></span><span class="tnm">AICPA SOC 2 2022</span></a>
+              <span class="ttype">Framework</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Readiness (span 2) -->
+      <section class="panel">
+        <div class="phd"><h2>Readiness</h2><a class="rmore" href="projects-cmmc-readiness.html">Open tab <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></a></div>
+        <div class="pbd">
+          <div class="rd">
+            <div class="rtop"><span class="pct">70%</span><span class="hp atrisk"><span class="hpd"></span>At risk</span></div>
+            <div class="obar"><span style="width:70%"></span></div>
+            <div class="sbar"><span class="s" style="width:61.8%"></span><span class="p" style="width:16.4%"></span><span class="g" style="width:21.8%"></span></div>
+            <div class="leg"><span><i class="cs"></i>68 satisfied</span><span><i class="cp"></i>18 partial</span><span><i class="cg"></i>24 gap</span></div>
+            <div class="rkv"><span class="k">Target</span><span class="chipfw">CMMC v2.0 L2</span><span style="font-size:12px;color:#8a8f9a;">110 practices</span></div>
+            <div class="rkv" style="border-top:none;padding-top:0;"><span class="k">Computed</span><span style="font-size:12px;color:#9aa0aa;">from anchored requirement &rarr; control mappings</span></div>
+            <a class="rmore" href="projects-cmmc-readiness.html">View full readiness <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Details (span 2) -->
+      <section class="panel">
+        <div class="phd"><h2>Details</h2></div>
+        <div class="pbd dt">
+          <div class="dtrow"><span class="dk">Owner</span><span class="dv">UI Development</span></div>
+          <div class="dtrow"><span class="dk">Status</span><span class="dv"><span class="tag grey">Active</span></span></div>
+          <div class="dtrow"><span class="dk">Lifecycle</span><span class="dv"><span class="tag" style="background:#17342a;color:#7fd6a8;">Evergreen</span></span></div>
+          <div class="dtrow"><span class="dk">Type</span><span class="dv"><span class="tag blue">Framework</span></span></div>
+          <div class="dtrow"><span class="dk">Visibility</span><span class="dv"><span class="tag grey">Internal</span></span></div>
+          <div class="dtrow"><span class="dk">Boards</span><span class="dv">4</span></div>
+          <div class="dtrow"><span class="dk">Members</span><span class="dv">3</span></div>
+          <div class="dtrow"><span class="dk">Requirements</span><span class="dv">110 &middot; <span style="color:#8fd06a;">86 anchored</span></span></div>
+        </div>
+      </section>
+
+      <!-- 4. Boards (span 4) -->
+      <section class="panel wide">
+        <div class="phd"><h2>Boards</h2></div>
+        <div class="pbd">
+          <div class="bsel">CMMC L2 &mdash; Remediation Board <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="donuts">
+            <div class="dz">
+              <span class="lbl">Status</span>
+              <div class="ring d100"><div class="rc big">100%<span class="rcs">To Do</span></div></div>
+              <span class="bchip" style="background:#233247;color:#8fc7f0;"><span class="bd" style="background:#5b9bd5;"></span>To Do 1</span>
+            </div>
+            <div class="dz">
+              <span class="lbl">Priority</span>
+              <div class="ring dnorm"><div class="rc big">1<span class="rcs">Normal</span></div></div>
+              <span class="bchip" style="background:#2a2f37;color:#c3c8d2;"><span class="bd" style="background:#8a8f9a;"></span>Normal 1</span>
+            </div>
+          </div>
+          <div class="tags"><div class="tl">Tags</div><span class="tag blue">cmmc</span> <span class="tag grey">l2</span> <span class="tag grey">remediation</span></div>
+        </div>
+      </section>
+
+      <!-- 5. Boundaries (span 2) -->
+      <section class="panel">
+        <div class="phd"><h2>Boundaries</h2><span class="addx" title="Link Boundary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+        <div class="pbd">
+          <a class="bndrow" href="bm-component-detail.html?c=vm">
+            <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+            <span class="bn">Platform</span><span class="bpill ref">Referenced</span>
+          </a>
+          <div class="bndrow">
+            <span class="bi" style="background:#3a3f47;color:#c3c8d2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+            <span class="bn">Platform</span><span class="bpill par">Parent</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Recent activity (span 2) — Activity | When table -->
+      <section class="panel">
+        <div class="phd"><h2>Recent activity</h2></div>
+        <div class="pbd">
+          <table class="ptbl">
+            <thead><tr><th>Activity</th><th>When</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="acttext"><span class="actic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><div class="acbody">Chris Vale anchored AC.L2-3.1.1 to internal control CTRL-1042<div class="sub">Chris Vale</div></div></div></td>
+                <td class="when">2 hours ago</td>
+              </tr>
+              <tr>
+                <td><div class="acttext"><span class="actic" style="background:#2a3a2a;color:#8fd06a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span><div class="acbody">Readiness recomputed to 70% (was 66%)<div class="sub">System</div></div></div></td>
+                <td class="when">5 hours ago</td>
+              </tr>
+              <tr>
+                <td><div class="acttext"><span class="actic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><div class="acbody">STIG scan completed on vm-web-01 &mdash; 3 findings<div class="sub">Collector</div></div></div></td>
+                <td class="when">1 day ago</td>
+              </tr>
+              <tr>
+                <td><div class="acttext"><span class="actic" style="background:#3a3320;color:#e6b15e;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><div class="acbody">Milestone "CMMC Assessment" scheduled for Q3<div class="sub">Kevin Ross</div></div></div></td>
+                <td class="when">2 days ago</td>
+              </tr>
+              <tr>
+                <td><div class="acttext"><span class="actic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span><div class="acbody">Kevin Ross pinned CMMC v2.0 L2 as the readiness target<div class="sub">Kevin Ross</div></div></div></td>
+                <td class="when">3 days ago</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 7. Members (span 2) — Name | Roles table -->
+      <section class="panel">
+        <div class="phd"><h2>Members</h2><span class="addx" title="Add Member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+        <div class="pbd">
+          <table class="ptbl">
+            <thead><tr><th>Name</th><th>Roles</th></tr></thead>
+            <tbody>
+              <tr><td><span class="namecell"><span class="mavatar" style="background:#90CAF9;">TC</span>Thomas Cavalier</span></td><td><span class="rolechip">Project Lead</span></td></tr>
+              <tr><td><span class="namecell"><span class="mavatar" style="background:#a5d6a7;">CV</span>Chris Vale</span></td><td><span class="rolechip">Control Assessor</span></td></tr>
+              <tr><td><span class="namecell"><span class="mavatar" style="background:#ffcc80;">KR</span>Kevin Ross</span></td><td><span class="rolechip">Reviewer</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 8. Roles (span 2) — Name | Type table -->
+      <section class="panel">
+        <div class="phd"><h2>Roles</h2><span class="addx" title="Add Role"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+        <div class="pbd">
+          <table class="ptbl">
+            <thead><tr><th>Name<span class="sort">&#9662;</span></th><th>Type<span class="sort">&#9662;</span></th></tr></thead>
+            <tbody>
+              <tr><td>Project Lead</td><td><span class="typepill" style="background:#2a2f37;color:#c3c8d2;">system</span></td></tr>
+              <tr><td>Control Assessor</td><td><span class="typepill" style="background:#233247;color:#8fc7f0;">custom</span></td></tr>
+              <tr><td>Reviewer</td><td><span class="typepill" style="background:#2a2f37;color:#c3c8d2;">system</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 9. Links (span 4) — Relationship | Type | Resource | Description table -->
+      <section class="panel wide">
+        <div class="phd"><h2>Links</h2><span class="addx" title="Add Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+        <div class="pbd">
+          <table class="ptbl">
+            <thead><tr><th style="width:130px;">Relationship</th><th style="width:110px;">Type</th><th style="width:280px;">Resource<span class="sort">&#9662;</span></th><th>Description</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="relpill">Observing</span></td>
+                <td><span class="typepill boundary">Boundary</span></td>
+                <td><a class="resc" href="bm-component-detail.html?c=vm" style="text-decoration:none;color:inherit;"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span><span class="rn">Platform</span></a></td>
+                <td>Observed boundary &mdash; source of the internal controls this framework is measured against.</td>
+              </tr>
+              <tr>
+                <td><span class="relpill">References</span></td>
+                <td><span class="typepill framework">Framework</span></td>
+                <td><span class="resc"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4zM4 14h16v6H4z"/></svg></span><span class="rn">NIST 800-171 R3</span></span></td>
+                <td>Internal control catalog implemented on the boundary.</td>
+              </tr>
+              <tr>
+                <td><span class="relpill">Advised By</span></td>
+                <td><span class="typepill" style="background:#3a2f47;color:#c8a5f0;">Crosswalk</span></td>
+                <td><span class="resc"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h6a4 4 0 0 1 4 4v6"/></svg></span><span class="rn">SCF 2025.2.1</span></span></td>
+                <td>Advisory crosswalk hub &mdash; suggests anchor mappings, not load-bearing.</td>
+              </tr>
+              <tr>
+                <td><span class="relpill">Child Of</span></td>
+                <td><span class="typepill project">Project</span></td>
+                <td><span class="resc"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span class="rn">ZeroBias Compliance Readiness</span></span></td>
+                <td>Parent program aggregating readiness across framework baselines.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 10. Tags (span 2) — Type | Name | Description | Scope table -->
+      <section class="panel">
+        <div class="phd"><h2>Tags</h2><span class="addx" title="Add Tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+        <div class="pbd">
+          <table class="ptbl">
+            <thead><tr><th>Type</th><th>Name<span class="sort">&#9662;</span></th><th>Description<span class="sort">&#9662;</span></th><th>Scope<span class="sort">&#9662;</span></th></tr></thead>
+            <tbody>
+              <tr><td colspan="4"><div class="tblempty">No Items Found</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+    </div>
+  </main>
+
+<script>
+/* Structure swatch colours — Tom's exact method (project-structure-panel.component.ts colorFor):
+   hsl(hash % 360, 45%, 55%) seeded by the real project id, so mock swatches match the app. */
+(function(){
+  var IDS = {
+    'ZeroBias Compliance Readiness':'e0000000-0000-4000-8000-000000000055',
+    'DOD CMMC v2.0 (L2)':'e0000000-0000-4000-8000-00000000002c',
+    'FedRAMP Rev. 4':'e0000000-0000-4000-8000-00000000003c',
+    'FedRAMP Rev. 4 (Low)':'e0000000-0000-4000-8000-00000000004f',
+    'FedRAMP Rev. 4 (Moderate)':'e0000000-0000-4000-8000-000000000064',
+    'FedRAMP Rev. 4 (High)':'e0000000-0000-4000-8000-00000000001d',
+    'NIST SP 800-218 (SSDF)':'e0000000-0000-4000-8000-000000000061',
+    'AICPA SOC 2 2017':'e0000000-0000-4000-8000-00000000001e',
+    'AICPA SOC 2 2022':'e0000000-0000-4000-8000-000000000018'
+  };
+  function colorFor(seed){ var h=0; for(var i=0;i<seed.length;i++){ h=(h*31+seed.charCodeAt(i))>>>0; } return 'hsl('+(h%360)+' 45% 55%)'; }
+  Array.prototype.forEach.call(document.querySelectorAll('.tsq, .sq'), function(sw){
+    var row = sw.closest('.trow, tr'); if(!row) return;
+    var nameEl = row.querySelector('.tnm, .fwname a'); if(!nameEl) return;
+    var id = IDS[nameEl.textContent.trim()];
+    if(id) sw.style.background = colorFor(id);
+  });
+  // Add-sub-project (+) on EVERY tree node — matches the real panel (caret = expand/collapse is separate).
+  Array.prototype.forEach.call(document.querySelectorAll('.tree .trow'), function(row){
+    if(row.querySelector('.tadd')) return;
+    var b = document.createElement('span'); b.className = 'tadd'; b.title = 'Add sub-project';
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    row.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

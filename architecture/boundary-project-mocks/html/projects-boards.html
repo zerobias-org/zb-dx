@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Boards tab (CMMC L2, work-type boards) — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* header */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; text-decoration:none; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .obsv{ display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:6px; background:#1f3d17; color:#8fd06a; font-size:13px; font-weight:600; text-decoration:none; }
+  .obsv svg{ width:14px; height:14px; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.35; }
+
+  /* page tabs */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* boards toolbar — right-aligned (Search input + magnifier + Create Board), matches app */
+  .btoolbar{ display:flex; align-items:center; justify-content:flex-end; gap:4px; margin:8px 24px 0; height:60px; }
+  .bsearch{ display:flex; align-items:center; height:40px; width:250px; padding:0 14px; background:transparent; border:1px solid #5c5c5c; border-radius:4px; color:#8a8f9a; font-size:14px; }
+  .searchicon{ width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:#03aff0; }
+  .searchicon svg{ width:20px; height:20px; }
+  .createbtn{ display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 15px; background:transparent; color:#03aff0; border:1px solid rgba(3,175,240,.55); border-radius:4px; font-size:14px; font-weight:500; }
+  .createbtn svg{ width:18px; height:18px; }
+
+  /* boards table */
+  .bwrap{ margin:0 24px 24px; }
+  table.boards{ width:100%; border-collapse:collapse; }
+  table.boards th{ text-align:left; font-weight:400; color:#9aa0aa; font-size:13px; padding:12px 20px; border-bottom:1px solid rgba(255,255,255,.10); white-space:nowrap; }
+  table.boards th .menu{ float:right; color:#7d828d; font-weight:700; letter-spacing:1px; }
+  table.boards td{ padding:15px 20px; border-bottom:1px solid rgba(255,255,255,.07); color:#eaeaea; vertical-align:middle; }
+  table.boards tbody tr:hover{ background:rgba(255,255,255,.03); }
+  .bname{ display:flex; align-items:center; gap:11px; }
+  .bico{ width:18px; height:18px; flex:none; color:#9aa0aa; }
+  .bico svg{ width:18px; height:18px; }
+  .bname a{ font-size:14px; color:#eaeaea; text-decoration:none; }
+  .bdesc{ color:#c3c8d2; font-size:13px; max-width:840px; line-height:1.45; }
+  .scopecell{ display:flex; align-items:center; gap:10px; }
+  .scopepill{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:12px; font-weight:500; background:#b0a8d6; color:#2b2540; }
+  .scopelink{ color:#74b8e6; font-size:13px; text-decoration:none; }
+  .tasknum{ font-size:14px; color:#eaeaea; }
+  .defcol{ text-align:right; white-space:nowrap; }
+  .defbadge{ display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:4px; background:#2a2f37; color:#c3c8d2; font-size:12px; font-weight:500; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>DOD CMMC v2.0 (L2)</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+            <span style="color:#8a8f9a;font-size:13px;margin-left:2px;">observing</span>
+            <a class="obsv" href="bm-component-detail.html?c=vm" title="Open in Boundary Manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Platform</a>
+          </div>
+          <span class="rsub">A CMMC v2.0 Level 2 lens observing the Platform boundary. Boards below organize the remediation work by type; the requirement hierarchy lives in Readiness.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html">Overview</a>
+      <a href="projects-cmmc-readiness.html">Readiness</a>
+      <a href="projects-requirements.html">Requirements</a>
+      <a href="projects-boards.html" class="active">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <div class="btoolbar">
+      <span class="bsearch">Search</span>
+      <span class="searchicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+      <span class="createbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create Board</span>
+    </div>
+
+    <div class="bwrap">
+      <table class="boards">
+        <thead>
+          <tr>
+            <th style="width:24%;">Board Name<span class="menu">&#8942;</span></th>
+            <th>Description</th>
+            <th style="width:230px;">Scope</th>
+            <th style="width:90px;">Tasks</th>
+            <th style="width:110px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="bname"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><a href="projects-board-kanban.html?b=evidence">Evidence Collection</a></span></td>
+            <td><div class="bdesc">Gather and attach the artifacts that prove each anchored requirement &mdash; screenshots, configs, ValidationReports &mdash; each linked to the boundary component that produced them.</div></td>
+            <td><span class="scopecell"><span class="scopepill">Project</span><a class="scopelink" href="projects-overview.html">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><span class="tasknum">5</span></td>
+            <td class="defcol"></td>
+          </tr>
+          <tr>
+            <td><span class="bname"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><a href="projects-board-kanban.html?b=findings">Findings &amp; Warnings</a></span></td>
+            <td><div class="bdesc">Incoming drift &amp; failed-control alerts raised from the boundary's collectors and benchmark scans (STIG / CIS / AWS). <b>Un-triaged &mdash; no due-dates.</b> Promote to POA&amp;M (gets a date) or accept as risk.</div></td>
+            <td><span class="scopecell"><span class="scopepill">Project</span><a class="scopelink" href="projects-overview.html">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><span class="tasknum">10</span></td>
+            <td class="defcol"></td>
+          </tr>
+          <tr>
+            <td><span class="bname"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><a href="projects-board-kanban.html?b=poam">POA&amp;M</a></span></td>
+            <td><div class="bdesc">Plan of Action &amp; Milestones &mdash; dated deficiencies with target completion milestones. Every card is date-pinned and projects onto the project Schedule / Calendar.</div></td>
+            <td><span class="scopecell"><span class="scopepill">Project</span><a class="scopelink" href="projects-overview.html">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><span class="tasknum">12</span></td>
+            <td class="defcol"></td>
+          </tr>
+          <tr>
+            <td><span class="bname"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><a href="projects-board-kanban.html?b=remediation">Remediation</a></span></td>
+            <td><div class="bdesc">Gap remediation &mdash; a control the boundary does not yet satisfy becomes a fix task mapped back to the requirement it closes. Delivery-lifecycle board (no scan feed).</div></td>
+            <td><span class="scopecell"><span class="scopepill">Project</span><a class="scopelink" href="projects-overview.html">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><span class="tasknum">6</span></td>
+            <td class="defcol"></td>
+          </tr>
+          <tr>
+            <td><span class="bname"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><a href="projects-board-kanban.html?b=default">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><div class="bdesc">Default board for DOD CMMC v2.0 (L2)</div></td>
+            <td><span class="scopecell"><span class="scopepill">Project</span><a class="scopelink" href="projects-overview.html">DOD CMMC v2.0 (L2)</a></span></td>
+            <td><span class="tasknum">0</span></td>
+            <td class="defcol"><span class="defbadge">Default</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "_comment": "Canonical project-type TagViews. These are the resolved types referenced everywhere a node carries a projectType. Colors come from the ProjectTypeTreeView example. type = 'project-type'.",
+  "_source": "ZeroBias platform team — Part 1 (Project.projectTypeId) + Part 2 (project-type tree).",
+  "types": {
+    "program":   { "id": "a0000000-0000-0000-0000-000000000001", "name": "program",   "type": "project-type", "color": "#C5E1A5" },
+    "project":   { "id": "a0000000-0000-0000-0000-000000000002", "name": "project",   "type": "project-type", "color": "#B0BEC5" },
+    "workspace": { "id": "a0000000-0000-0000-0000-000000000003", "name": "workspace", "type": "project-type", "color": "#90CAF9" },
+    "aperture":  { "id": "a0000000-0000-0000-0000-000000000004", "name": "aperture",  "type": "project-type", "color": "#F48FB1" },
+    "thread":    { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread",    "type": "project-type", "color": "#CE93D8" }
+  }
+}

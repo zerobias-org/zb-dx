@@ -1,0 +1,47 @@
+{
+  "_comment": "The ALLOWED-TYPES GRAMMAR for the compliance-readiness context, in the exact ProjectTypeTreeView shape (Part 2). This is what getProjectTypeTree(orgId | projectId) returns; listAllowedProjectTypes(id) is derived from a node's children. The tree is PATH-DEPENDENT (a type's allowed children depend on its parent). isDefault marks the position default the server picks when projectTypeId is omitted on create. Used to drive the mock's '+ Add sub-project' affordance and the governance/allowed-types view.",
+  "_grammar": "program -> workspace(framework) -> aperture(control family) -> thread(practice/control effort). 'project' is an alternate root for free-form efforts (open-world fallback).",
+  "_note": "ASSUMPTION (flagged in BRIEF §7): compliance levels (framework / control-family / practice) are carried by the generic shipped tiers via naming + the projectType chip, NOT minted as new project types. Alternative = register compliance-domain project types; deferred design question.",
+  "roots": [
+    {
+      "projectType": { "id": "a0000000-0000-0000-0000-000000000001", "name": "program", "type": "project-type", "color": "#C5E1A5" },
+      "isDefault": true,
+      "children": [
+        {
+          "projectType": { "id": "a0000000-0000-0000-0000-000000000003", "name": "workspace", "type": "project-type", "color": "#90CAF9" },
+          "isDefault": true,
+          "children": [
+            {
+              "projectType": { "id": "a0000000-0000-0000-0000-000000000004", "name": "aperture", "type": "project-type", "color": "#F48FB1" },
+              "isDefault": true,
+              "children": [
+                {
+                  "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                  "isDefault": true,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "projectType": { "id": "a0000000-0000-0000-0000-000000000002", "name": "project", "type": "project-type", "color": "#B0BEC5" },
+      "isDefault": false,
+      "children": [
+        {
+          "projectType": { "id": "a0000000-0000-0000-0000-000000000003", "name": "workspace", "type": "project-type", "color": "#90CAF9" },
+          "isDefault": true,
+          "children": [
+            {
+              "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+              "isDefault": true,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

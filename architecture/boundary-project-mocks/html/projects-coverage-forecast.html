@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Coverage forecast (advisory crosswalk what-if) — composited on real Portal shell</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:#424242; padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .cchip.eng{ background:#2a2418; color:#d9ad6b; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .rsub{ font-size:13px; color:#9aa0aa; }
+
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* advisory title band */
+  .band{ margin:16px 16px 0; background:#33304d; border:1px solid #4a4270; border-radius:8px; padding:14px 18px; display:flex; align-items:center; gap:16px; }
+  .band .bi{ width:40px; height:40px; border-radius:9px; flex:none; display:flex; align-items:center; justify-content:center; background:#2e2747; color:#b39ae6; }
+  .band .bi svg{ width:22px; height:22px; }
+  .band .bt{ flex:1; }
+  .band .bt h2{ font-size:17px; font-weight:600; color:#fff; display:flex; align-items:center; gap:10px; }
+  .band .advtag{ display:inline-flex; align-items:center; height:19px; padding:0 9px; border-radius:4px; background:#2e2747; color:#b39ae6; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+  .band .bt p{ font-size:13px; color:#c9c4e0; line-height:1.5; margin-top:4px; }
+  .band .bt p b{ color:#fff; }
+  .basis{ display:flex; flex-direction:column; gap:6px; flex:none; text-align:right; }
+  .basis .bl{ font-size:11px; color:#9a93b8; text-transform:uppercase; letter-spacing:.05em; }
+  .basis .bv{ font-size:13px; color:#e6e3f2; }
+  .basis .bv b{ color:#fff; }
+
+  /* forecast list */
+  .flist{ margin:16px 16px 24px; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); overflow:hidden; }
+  .fhead{ display:flex; align-items:center; padding:11px 18px; border-bottom:1px solid rgba(255,255,255,.12); font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a; }
+  .fhead .c1{ flex:1; } .fhead .c2{ width:300px; } .fhead .c3{ width:210px; } .fhead .c4{ width:150px; text-align:right; }
+  .frow{ display:flex; align-items:center; padding:15px 18px; border-bottom:1px solid rgba(255,255,255,.06); gap:12px; }
+  .frow:hover{ background:rgba(255,255,255,.03); }
+  .fw{ flex:1; min-width:0; display:flex; align-items:center; gap:12px; }
+  .fw .fico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .fw .fico svg{ width:18px; height:18px; }
+  .fw .fn{ font-size:14px; color:#fff; font-weight:500; }
+  .fw .fm{ font-size:12px; color:#8a8f9a; margin-top:2px; display:flex; align-items:center; gap:7px; }
+  .catchip{ display:inline-flex; align-items:center; height:17px; padding:0 7px; border-radius:3px; background:#3a3320; color:#e6c15e; font-size:10px; font-weight:600; }
+  /* forecast bar */
+  .fbar-wrap{ width:300px; flex:none; display:flex; align-items:center; gap:11px; }
+  .fbar{ flex:1; height:9px; border-radius:5px; background:#2a2a2a; overflow:hidden; }
+  .fbar span{ display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,#6a5fb0,#b39ae6); }
+  .fpct{ width:44px; text-align:right; font-size:15px; font-weight:600; color:#cbb8f0; }
+  /* via crosswalks */
+  .fvia{ width:210px; flex:none; font-size:12px; color:#9aa0aa; }
+  .fvia .real{ color:#8fd06a; } .fvia .pending{ color:#e6b15e; }
+  /* action */
+  .fact{ width:150px; flex:none; text-align:right; }
+  .pinbtn{ display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 13px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid #4a4270; background:#2e2747; color:#cbb8f0; }
+  .pinbtn svg{ width:14px; height:14px; }
+
+  .foot{ margin:0 16px 26px; padding:14px 18px; background:#383838; border-radius:8px; font-size:13px; color:#c3c8d2; line-height:1.6; }
+  .foot b{ color:#fff; }
+  .foot .gp{ color:#b39ae6; font-weight:600; }
+  .backlink{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:13px; font-weight:500; text-decoration:none; padding:4px 16px 0; }
+  .backlink svg{ width:15px; height:15px; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>CMMC Level 2</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+          </div>
+          <span class="rsub">Coverage forecast &mdash; a crosswalk what-if. It changes nothing until you pin a framework and anchor mappings.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html">Overview</a>
+      <a href="projects-cmmc-readiness.html" class="active">Readiness</a>
+      <a href="projects-requirements.html">Requirements</a>
+      <a href="projects-boards.html">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="#">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <a class="backlink" href="projects-cmmc-readiness.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg> Back to Readiness</a>
+
+    <section class="band">
+      <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+      <div class="bt">
+        <h2>Coverage forecast <span class="advtag">advisory</span></h2>
+        <p>If you also pinned these frameworks, here's what your <b>existing anchored work</b> would already cover &mdash;
+          estimated by <b>crosswalks</b> from your controls through the SCF hub. Crosswalks are <b>guard posts, not the
+          answer</b>: to actually claim coverage you pin the framework in a child project and anchor each requirement.</p>
+      </div>
+      <div class="basis">
+        <span class="bl">Forecasting from</span>
+        <span class="bv"><b>CMMC v2.0 Level 2</b></span>
+        <span class="bv">86 anchored mappings &middot; via SCF 2025.2.1</span>
+      </div>
+    </section>
+
+    <div class="flist">
+      <div class="fhead"><span class="c1">Framework (requirement product)</span><span class="c2">Forecast coverage from current work</span><span class="c3">Estimated via</span><span class="c4"></span></div>
+
+      <div class="frow">
+        <div class="fw"><span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+          <div><div class="fn">NIST CSF 2.0</div><div class="fm"><span class="catchip">Compliance</span> NIST &middot; free</div></div></div>
+        <div class="fbar-wrap"><span class="fbar"><span style="width:82%"></span></span><span class="fpct">82%</span></div>
+        <div class="fvia"><span class="real">loaded</span> &middot; CSF &rarr; SCF crosswalk</div>
+        <div class="fact"><button class="pinbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Pin as child</button></div>
+      </div>
+
+      <div class="frow">
+        <div class="fw"><span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+          <div><div class="fn">SOC 2 2022</div><div class="fm"><span class="catchip">Compliance</span> AICPA &middot; paywalled</div></div></div>
+        <div class="fbar-wrap"><span class="fbar"><span style="width:71%"></span></span><span class="fpct">71%</span></div>
+        <div class="fvia"><span class="real">loaded</span> &middot; SOC2 &rarr; SCF crosswalk</div>
+        <div class="fact"><button class="pinbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Pin as child</button></div>
+      </div>
+
+      <div class="frow">
+        <div class="fw"><span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+          <div><div class="fn">ISO/IEC 27001:2022</div><div class="fm"><span class="catchip">Compliance</span> ISO &middot; paywalled</div></div></div>
+        <div class="fbar-wrap"><span class="fbar"><span style="width:64%"></span></span><span class="fpct">64%</span></div>
+        <div class="fvia"><span class="real">loaded</span> &middot; ISO 27001 &rarr; SCF</div>
+        <div class="fact"><button class="pinbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Pin as child</button></div>
+      </div>
+
+      <div class="frow">
+        <div class="fw"><span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+          <div><div class="fn">FedRAMP Moderate</div><div class="fm"><span class="catchip">Compliance</span> GSA (Rev.4) &middot; free</div></div></div>
+        <div class="fbar-wrap"><span class="fbar"><span style="width:58%;opacity:.55"></span></span><span class="fpct">~58%</span></div>
+        <div class="fvia"><span class="pending">crosswalk pending</span> &middot; estimate</div>
+        <div class="fact"><button class="pinbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Pin as child</button></div>
+      </div>
+
+      <div class="frow">
+        <div class="fw"><span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></span>
+          <div><div class="fn">SSDF (NIST SP 800-218)</div><div class="fm"><span class="catchip">Compliance</span> NIST &middot; free</div></div></div>
+        <div class="fbar-wrap"><span class="fbar"><span style="width:40%"></span></span><span class="fpct">40%</span></div>
+        <div class="fvia"><span class="real">loaded</span> &middot; SSDF &rarr; SCF crosswalk</div>
+        <div class="fact"><button class="pinbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Pin as child</button></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      These are <span class="gp">guard posts</span> &mdash; a recommendation engine that says "these look the same." They accelerate
+      the next framework (the 86 mappings you already anchored advise the mapping of the Nth), but <b>you still make the
+      choice</b>: pinning a framework creates a <b>child project</b>, and each requirement must be <b>anchored</b> to a
+      control before it counts. Nothing on this page changes your CMMC readiness.
+    </div>
+  </main>
+
+</body>
+</html>

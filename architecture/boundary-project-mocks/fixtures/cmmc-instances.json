@@ -1,0 +1,119 @@
+{
+  "_comment": "ACTUAL project instances for CMMC Level 2, populating the grammar in project-type-tree.json. Each node is a Project resource carrying projectTypeId + the resolved projectType TagView (ProjectExtended.projectType) exactly as the rebuilt clients return. The thread leaves reference the BOUNDARY where the guts live (satisfiedBy) and hang the assessed asset leaves (VM + container) with benchmark rollups. CMMC first per the agreed sequencing.",
+  "_spine": "Boundary = noun (controls/evidence/assessment live there). Project = verb (references the boundary; requirements satisfied-by it; only gaps become tasks). This is the Projects-side projection of the boundary's CMMC readiness.",
+  "_lensNote": "This is the CONTROLS-CENTRIC instance tree (program > framework workspace > control-family aperture > practice thread). The ASSETS-CENTRIC lens re-groups the same leaf assessments by asset (see asset[] ids) without changing the underlying resources.",
+
+  "boundary": {
+    "id": "b0000000-0000-0000-0000-0000000000aa",
+    "name": "Acme Corp Production Boundary",
+    "_role": "noun — holds the real controls, evidence, assessment state the project references"
+  },
+
+  "instances": {
+    "id": "c0000000-0000-0000-0000-000000000010",
+    "name": "Acme Compliance Readiness",
+    "projectTypeId": "a0000000-0000-0000-0000-000000000001",
+    "projectType": { "id": "a0000000-0000-0000-0000-000000000001", "name": "program", "type": "project-type", "color": "#C5E1A5" },
+    "boundaryId": "b0000000-0000-0000-0000-0000000000aa",
+    "children": [
+      {
+        "id": "c0000000-0000-0000-0000-000000000020",
+        "name": "CMMC Level 2",
+        "projectTypeId": "a0000000-0000-0000-0000-000000000003",
+        "projectType": { "id": "a0000000-0000-0000-0000-000000000003", "name": "workspace", "type": "project-type", "color": "#90CAF9" },
+        "framework": { "key": "CMMC", "level": "L2", "revision": "2.0" },
+        "rollup": { "practices": 5, "satisfied": 3, "partial": 1, "gap": 1 },
+        "children": [
+          {
+            "id": "c0000000-0000-0000-0000-000000000030",
+            "name": "AC — Access Control",
+            "projectTypeId": "a0000000-0000-0000-0000-000000000004",
+            "projectType": { "id": "a0000000-0000-0000-0000-000000000004", "name": "aperture", "type": "project-type", "color": "#F48FB1" },
+            "rollup": { "practices": 2, "satisfied": 1, "partial": 1, "gap": 0 },
+            "children": [
+              {
+                "id": "c0000000-0000-0000-0000-000000000040",
+                "name": "AC.L2-3.1.1 — Limit system access to authorized users",
+                "projectTypeId": "a0000000-0000-0000-0000-000000000005",
+                "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                "satisfiedBy": { "boundaryId": "b0000000-0000-0000-0000-0000000000aa", "status": "satisfied" },
+                "assets": ["asset-vm-rhel9", "asset-ctr-nginx"]
+              },
+              {
+                "id": "c0000000-0000-0000-0000-000000000041",
+                "name": "AC.L2-3.1.2 — Limit access to permitted transactions and functions",
+                "projectTypeId": "a0000000-0000-0000-0000-000000000005",
+                "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                "satisfiedBy": { "boundaryId": "b0000000-0000-0000-0000-0000000000aa", "status": "partial" },
+                "assets": ["asset-vm-rhel9"],
+                "gapTask": { "title": "Restrict sudoers to role-based functions on RHEL fleet", "status": "todo" }
+              }
+            ]
+          },
+          {
+            "id": "c0000000-0000-0000-0000-000000000031",
+            "name": "AU — Audit & Accountability",
+            "projectTypeId": "a0000000-0000-0000-0000-000000000004",
+            "projectType": { "id": "a0000000-0000-0000-0000-000000000004", "name": "aperture", "type": "project-type", "color": "#F48FB1" },
+            "rollup": { "practices": 1, "satisfied": 1, "partial": 0, "gap": 0 },
+            "children": [
+              {
+                "id": "c0000000-0000-0000-0000-000000000050",
+                "name": "AU.L2-3.3.1 — Create and retain system audit records",
+                "projectTypeId": "a0000000-0000-0000-0000-000000000005",
+                "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                "satisfiedBy": { "boundaryId": "b0000000-0000-0000-0000-0000000000aa", "status": "satisfied" },
+                "assets": ["asset-vm-rhel9", "asset-ctr-nginx"]
+              }
+            ]
+          },
+          {
+            "id": "c0000000-0000-0000-0000-000000000032",
+            "name": "CM — Configuration Management",
+            "projectTypeId": "a0000000-0000-0000-0000-000000000004",
+            "projectType": { "id": "a0000000-0000-0000-0000-000000000004", "name": "aperture", "type": "project-type", "color": "#F48FB1" },
+            "rollup": { "practices": 2, "satisfied": 1, "partial": 0, "gap": 1 },
+            "children": [
+              {
+                "id": "c0000000-0000-0000-0000-000000000060",
+                "name": "CM.L2-3.4.1 — Establish and maintain baseline configurations",
+                "projectTypeId": "a0000000-0000-0000-0000-000000000005",
+                "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                "satisfiedBy": { "boundaryId": "b0000000-0000-0000-0000-0000000000aa", "status": "satisfied" },
+                "assets": ["asset-vm-rhel9", "asset-ctr-nginx"]
+              },
+              {
+                "id": "c0000000-0000-0000-0000-000000000061",
+                "name": "CM.L2-3.4.2 — Establish and enforce security configuration settings",
+                "projectTypeId": "a0000000-0000-0000-0000-000000000005",
+                "projectType": { "id": "a0000000-0000-0000-0000-000000000005", "name": "thread", "type": "project-type", "color": "#CE93D8" },
+                "satisfiedBy": { "boundaryId": "b0000000-0000-0000-0000-0000000000aa", "status": "gap" },
+                "assets": ["asset-ctr-nginx"],
+                "gapTask": { "title": "Apply CIS hardening profile to nginx container image", "status": "todo" }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "assets": {
+    "asset-vm-rhel9": {
+      "id": "d0000000-0000-0000-0000-0000000000v1",
+      "name": "prod-app-01",
+      "assetType": "VirtualMachine",
+      "os": "Red Hat Enterprise Linux 9",
+      "benchmark": { "standard": "DISA STIG", "name": "Red Hat Enterprise Linux 9 STIG", "version": "V2R3" },
+      "validationReport": { "rules": 412, "pass": 381, "fail": 24, "notApplicable": 7, "satisfiesRequirements": 38, "assessedAt": "2026-06-27T18:04:00Z" }
+    },
+    "asset-ctr-nginx": {
+      "id": "d0000000-0000-0000-0000-0000000000c1",
+      "name": "nginx:1.27-prod",
+      "assetType": "Container",
+      "image": "registry.acme.io/edge/nginx:1.27",
+      "benchmark": { "standard": "CIS Benchmark", "name": "CIS Docker Benchmark", "version": "1.6.0" },
+      "validationReport": { "rules": 96, "pass": 74, "fail": 18, "notApplicable": 4, "satisfiesRequirements": 22, "assessedAt": "2026-06-28T02:11:00Z" }
+    }
+  }
+}

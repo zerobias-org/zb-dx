@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boundary Manager — Component detail / Findings (ValidationReport, composited on real BM shell)</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1232px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/bm-shell-operations-center.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* resource header card */
+  .phead{ padding:16px 20px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:16px; background:#424242; padding:14px 18px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; border-radius:10px; background:#2a2f38; color:#9fb6cc; }
+  .ricon svg{ width:38px; height:38px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; text-decoration:none; }
+  .rcrumb .cchip:hover{ background:#262b30; }
+  .rcrumb .cchip.bnd{ color:#8fd0a6; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:22px; font-weight:500; line-height:1.2; }
+  .rsub{ font-size:13px; color:#9aa0aa; line-height:1.4; }
+  .rsub .mono{ font-family:"SFMono-Regular",Menlo,Consolas,monospace; color:#c3c8d2; }
+  .rright{ display:flex; flex-direction:column; align-items:flex-end; gap:12px; flex:none; }
+  .rright-actions{ display:flex; align-items:center; gap:8px; }
+  .actions-btn{ display:flex; align-items:center; gap:6px; height:34px; padding:0 14px; border:1px solid rgba(255,255,255,.30);
+                border-radius:4px; color:#e3e3e3; font-size:13px; cursor:pointer; background:transparent; text-decoration:none; }
+  .actions-btn svg{ width:16px; height:16px; color:#cfcfcf; }
+  .actions-btn.primary{ background:#03aff0; border-color:#03aff0; color:#04222e; font-weight:600; }
+  .actions-btn.primary svg{ color:#04222e; }
+  /* prev/next component + back-to-list */
+  .navcluster{ display:flex; align-items:center; gap:6px; }
+  .backlist{ display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 11px; border-radius:6px; color:#9fb6cc; font-size:12px; text-decoration:none; }
+  .backlist:hover{ background:rgba(255,255,255,.05); }
+  .backlist svg{ width:14px; height:14px; }
+  .pn{ width:30px; height:30px; border-radius:6px; border:1px solid #4a4a4a; background:#2a2a2a; color:#9aa0aa; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .pn:hover{ color:#eaeaea; border-color:#5a5a5a; }
+  .pn svg{ width:15px; height:15px; }
+  .pnlabel{ font-size:12px; color:#8a8f9a; white-space:nowrap; }
+
+  /* chips */
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; line-height:1.5; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .atchip{ display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:4px; font-size:12px; font-weight:600; background:#2a3a4a; color:#8fc7f0; }
+
+  /* page tabs (real component-detail tabs) */
+  .ptabs{ display:flex; align-items:center; gap:26px; padding:0 26px; margin-top:14px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ color:#9aa0aa; text-decoration:none; font-size:15px; font-weight:500; padding:12px 0; position:relative; white-space:nowrap; }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+
+  /* health pills */
+  .hp{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 11px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.03em; flex:none; white-space:nowrap; }
+  .hp .hpd{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .hp.ontrack{ background:#1f3d17; color:#8fd06a; }   .hp.ontrack .hpd{ background:#8fd06a; }
+  .hp.atrisk{ background:#4a3320; color:#e6b15e; }     .hp.atrisk .hpd{ background:#e6b15e; }
+  .hp.blocked{ background:#5a2020; color:#f0a09c; }    .hp.blocked .hpd{ background:#f0a09c; }
+
+  /* hero summary */
+  .summary{ margin:16px 20px 0; }
+  .summary > .shead{ display:flex; align-items:center; gap:12px; padding:0 4px 8px; }
+  .summary > .shead h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .summary > .shead .updated{ margin-left:auto; font-size:12px; color:#8a8f9a; }
+  .sbody{ display:flex; align-items:stretch; background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .szone{ padding:20px 24px; display:flex; flex-direction:column; gap:14px; }
+  .szone + .szone{ border-left:1px solid rgba(255,255,255,.08); }
+  .zlabel{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#7d828d; }
+
+  /* donut zone */
+  .zdonut{ flex:none; }
+  .donutrow{ display:flex; align-items:center; gap:22px; }
+  .donut{ width:118px; height:118px; border-radius:50%; flex:none; position:relative; }
+  .donut::after{ content:""; position:absolute; inset:16px; border-radius:50%; background:#424242; }
+  .donut .dctr{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+  .donut .dctr .dp{ font-size:30px; font-weight:600; color:#fff; line-height:1; }
+  .donut .dctr .dl{ font-size:10px; color:#9aa0aa; margin-top:3px; letter-spacing:.04em; }
+  .dbreak{ display:flex; flex-direction:column; gap:9px; }
+  .dbrow{ display:flex; align-items:center; gap:9px; font-size:13px; color:#c3c8d2; }
+  .dbrow .sw{ width:11px; height:11px; border-radius:3px; flex:none; }
+  .dbrow b{ color:#fff; font-weight:600; width:34px; text-align:right; }
+  .dbrow .dn{ color:#9aa0aa; }
+  .sw.pass{ background:#8fd06a; } .sw.fail{ background:#f0a09c; } .sw.na{ background:#6b7280; }
+
+  /* rollup zone */
+  .zroll{ flex:1; }
+  .rollbig{ display:flex; align-items:baseline; gap:10px; }
+  .rollbig .num{ font-size:38px; font-weight:600; color:#fff; line-height:1; }
+  .rollbig .rl{ font-size:13px; color:#9aa0aa; }
+  .fromnote{ font-size:13px; color:#c3c8d2; line-height:1.5; }
+  .fromnote b{ color:#fff; font-weight:600; }
+  .xwbadge{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:4px; background:#23384d; color:#74b8e6; font-size:12px; font-weight:500; }
+  .xwbadge.read{ background:#33304d; color:#bcaef0; }
+
+  /* 2-col grid */
+  .gridwrap{ margin:16px 20px 26px; }
+  .grid{ display:flex; gap:18px; align-items:flex-start; }
+  .col-l{ flex:1.55; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .col-r{ flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .panel > .head{ display:flex; align-items:center; justify-content:space-between; padding:8px 4px; }
+  .panel > .head h2{ font-size:16px; font-weight:600; color:#e6e9f2; }
+  .panel > .head .hint{ font-size:12px; color:#8a8f9a; font-weight:400; }
+  .panel > .head + .pbody{ background:#424242; overflow:hidden; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+
+  /* benchmark binding */
+  .bindgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.06); }
+  .bindcell{ background:#424242; padding:13px 15px; }
+  .bindcell .bl{ font-size:11px; color:#7d828d; letter-spacing:.04em; text-transform:uppercase; }
+  .bindcell .bv{ font-size:14px; color:#eaeaea; margin-top:4px; font-weight:500; }
+  .bindcell .bv .std{ display:inline-flex; align-items:center; gap:6px; }
+  .bindcell .bv .stdico{ width:16px; height:16px; color:#9fb6cc; }
+
+  /* severity breakdown */
+  .sev{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .sev:first-child{ border-top:none; }
+  .sev .slab{ width:150px; flex:none; display:flex; align-items:center; gap:9px; }
+  .sev .sdot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .sdot.cat1{ background:#f0655e; } .sdot.cat2{ background:#e6b15e; } .sdot.cat3{ background:#6ea8d8; }
+  .sev .sname{ font-size:14px; color:#eaeaea; font-weight:500; }
+  .sev .sbar{ flex:1; height:14px; border-radius:4px; overflow:hidden; display:flex; background:#2a2a2a; }
+  .sev .sbar span{ display:block; height:100%; }
+  .sev .sbar .p{ background:#8fd06a; } .sev .sbar .f{ background:#f0a09c; } .sev .sbar .n{ background:#6b7280; }
+  .sev .scnt{ width:200px; flex:none; text-align:right; font-size:12px; color:#9aa0aa; white-space:nowrap; }
+  .sev .scnt .cp{ color:#8fd06a; } .sev .scnt .cf{ color:#f0a09c; font-weight:600; } .sev .scnt .cn{ color:#9aa0aa; }
+
+  /* rule list */
+  .rulefilter{ display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.08); position:sticky; top:0; background:#424242; z-index:2; }
+  .fchip{ display:inline-flex; align-items:center; gap:6px; height:27px; padding:0 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:#2a2a2a; color:#9aa0aa; border:1px solid #4a4a4a; }
+  .fchip.sel{ background:#23384d; color:#cfe6f7; border-color:#03aff0; }
+  .fchip .ct{ font-size:11px; padding:0 6px; background:rgba(255,255,255,.10); border-radius:8px; }
+  .rulescroll{ max-height:430px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#555 #2a2a2a; }
+  .rulescroll::-webkit-scrollbar{ width:10px; } .rulescroll::-webkit-scrollbar-thumb{ background:#555; border-radius:5px; } .rulescroll::-webkit-scrollbar-track{ background:#2a2a2a; }
+  .rule{ display:flex; align-items:center; gap:13px; padding:10px 16px; border-top:1px solid rgba(255,255,255,.05); }
+  .rule:first-child{ border-top:none; }
+  .rule .rid{ font-family:"SFMono-Regular",Menlo,Consolas,monospace; font-size:12px; color:#8fc7f0; width:130px; flex:none; }
+  .rule .rtitle{ flex:1; min-width:0; font-size:13px; color:#dfe3ea; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sevbadge{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; flex:none; }
+  .sevbadge.cat1{ background:#4a1f1c; color:#f0655e; } .sevbadge.cat2{ background:#4a3320; color:#e6b15e; } .sevbadge.cat3{ background:#22384a; color:#6ea8d8; }
+  .stbadge{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; flex:none; width:56px; justify-content:center; }
+  .stbadge.fail{ background:#5a2020; color:#f0a09c; } .stbadge.na{ background:#3a3f47; color:#aab0ba; } .stbadge.pass{ background:#1f3d17; color:#8fd06a; }
+  .morerule{ font-size:12px; color:#7d828d; padding:10px 16px; font-style:italic; text-align:center; }
+
+  /* satisfies-requirements list */
+  .req{ display:flex; align-items:center; gap:11px; padding:11px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .req:first-of-type{ border-top:none; }
+  .req .rdot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .rdot.sat{ background:#8fd06a; } .rdot.partial{ background:#e6b15e; } .rdot.gap{ background:#f0a09c; }
+  .req .rmainx{ flex:1; min-width:0; }
+  .req .rcode{ font-size:13px; color:#eaeaea; font-weight:500; }
+  .req .rlabel{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .req .ptype{ display:inline-flex; align-items:center; height:16px; padding:0 7px; border-radius:3px; font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; background:#CE93D8; flex:none; }
+  .req .rstat{ font-size:11px; font-weight:600; flex:none; }
+  .rstat.sat{ color:#8fd06a; } .rstat.partial{ color:#e6b15e; } .rstat.gap{ color:#f0a09c; }
+  .reqfoot{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid rgba(255,255,255,.08); }
+  .reqfoot .more{ font-size:12px; color:#7d828d; }
+  .mlink{ display:inline-flex; align-items:center; gap:6px; color:#03aff0; font-size:12px; font-weight:500; cursor:pointer; text-decoration:none; }
+  .mlink svg{ width:14px; height:14px; }
+
+  /* generic row (other components / collector) */
+  .lrow{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); text-decoration:none; }
+  .lrow:first-of-type{ border-top:none; }
+  .lrow.cur{ background:rgba(3,175,240,.06); }
+  .lrow.click{ cursor:pointer; }
+  .lrow.click:hover{ background:rgba(255,255,255,.04); }
+  .lrow .lico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .lrow .lico svg{ width:18px; height:18px; }
+  .lrow .ltxt{ flex:1; min-width:0; }
+  .lrow .ltitle{ font-size:13px; color:#eaeaea; }
+  .lrow .lsub{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .lrow .lright{ font-size:12px; color:#9aa0aa; text-align:right; white-space:nowrap; flex:none; }
+  .curbadge{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:4px; font-size:10px; font-weight:600; background:#23384d; color:#74b8e6; }
+
+  /* ===== SBOM tab ===== */
+  .fmtbadge{ display:inline-flex; align-items:center; gap:7px; height:28px; padding:0 13px; border-radius:5px; font-size:14px; font-weight:600; background:#2a3550; color:#a9c0f5; }
+  .fmtbadge.spdx{ background:#123a2e; color:#7fd6b0; }
+  .fmtbadge svg{ width:16px; height:16px; }
+  .provchain{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .pnode{ display:inline-flex; flex-direction:column; gap:2px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; padding:6px 11px; }
+  .pnode .plab{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#7d828d; }
+  .pnode b{ color:#eaeaea; font-weight:600; font-size:13px; }
+  .pnode.tool b{ color:#8fc7f0; } .pnode.sdo b{ color:#8fd0a6; }
+  .parrow{ color:#6a6f79; font-size:15px; align-self:center; }
+
+  /* component list */
+  .compfilter{ display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.08); position:sticky; top:0; background:#424242; z-index:2; }
+  .compscroll{ max-height:560px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#555 #2a2a2a; }
+  .compscroll::-webkit-scrollbar{ width:10px; } .compscroll::-webkit-scrollbar-thumb{ background:#555; border-radius:5px; } .compscroll::-webkit-scrollbar-track{ background:#2a2a2a; }
+  .comp{ display:flex; align-items:center; gap:12px; padding:11px 16px; border-top:1px solid rgba(255,255,255,.05); }
+  .comp:first-child{ border-top:none; }
+  .comp.miss{ background:rgba(214,191,138,.05); }
+  .comp .cname{ flex:1; min-width:0; }
+  .comp .cn1{ font-size:13px; color:#dfe3ea; font-family:"SFMono-Regular",Menlo,Consolas,monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .comp .cn1 .cv{ color:#9aa0aa; }
+  .comp .cn2{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .ctype{ display:inline-flex; align-items:center; height:19px; padding:0 8px; border-radius:4px; font-size:10px; font-weight:600; flex:none; width:74px; justify-content:center; background:#33384a; color:#9fb0d0; text-transform:uppercase; letter-spacing:.04em; }
+  .licbadge{ display:inline-flex; align-items:center; height:19px; padding:0 8px; border-radius:4px; font-size:11px; font-weight:500; flex:none; width:98px; justify-content:center; background:#2a2a2a; color:#b7bcc6; border:1px solid #4a4a4a; }
+  .licbadge.paid{ background:#3a2e18; color:#e6b15e; border-color:#5a4520; }
+  .invstat{ display:inline-flex; align-items:center; gap:5px; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; flex:none; width:132px; justify-content:center; }
+  .invstat.in{ background:#1f3d17; color:#8fd06a; } .invstat.miss{ background:#3a3320; color:#d6bf8a; } .invstat.hot{ background:#3a3320; color:#d6bf8a; }
+  .vulnpill{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:10px; font-size:11px; font-weight:600; flex:none; min-width:46px; justify-content:center; background:#2a2a2a; color:#7d828d; }
+  .vulnpill.has{ background:#4a1f1c; color:#f0655e; }
+  .comp-more{ font-size:12px; color:#7d828d; padding:10px 16px; font-style:italic; text-align:center; }
+
+  /* inventory reconciliation */
+  .recon{ padding:16px; display:flex; flex-direction:column; gap:14px; }
+  .critctl{ display:flex; align-items:flex-start; gap:9px; background:#2a3038; border-left:3px solid #e6b15e; padding:10px 12px; font-size:12px; color:#d7c9a8; line-height:1.45; }
+  .critctl svg{ flex:none; margin-top:1px; }
+  .reconbig{ display:flex; align-items:baseline; gap:10px; }
+  .reconbig .num{ font-size:34px; font-weight:600; color:#fff; line-height:1; }
+  .reconbig .num.warn{ color:#f0a09c; }
+  .reconbig .rl{ font-size:13px; color:#9aa0aa; line-height:1.4; }
+  .reconrow{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:#c3c8d2; padding:8px 0; border-top:1px solid rgba(255,255,255,.06); }
+  .reconrow:first-child{ border-top:none; }
+  .reconrow b{ color:#fff; font-weight:600; }
+
+  /* vulnerabilities */
+  .vrow{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .vrow:first-child{ border-top:none; }
+  .vrow .vdot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .vdot.crit{ background:#f0655e; } .vdot.high{ background:#e6844e; } .vdot.med{ background:#e6b15e; } .vdot.low{ background:#6ea8d8; }
+  .vrow .vname{ flex:none; width:78px; font-size:14px; color:#eaeaea; font-weight:500; }
+  .vrow .vbar{ flex:1; height:12px; border-radius:4px; background:#2a2a2a; overflow:hidden; }
+  .vrow .vbar span{ display:block; height:100%; }
+  .vbar span.crit{ background:#f0655e; } .vbar span.high{ background:#e6844e; } .vbar span.med{ background:#e6b15e; } .vbar span.low{ background:#6ea8d8; }
+  .vrow .vn{ width:34px; text-align:right; font-size:14px; font-weight:600; color:#fff; flex:none; }
+
+  /* ===== Component identity + RACI (the responsibility unit) ===== */
+  .fmttag{ display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:4px; font-size:12px; font-weight:600; background:#2e2747; color:#b39ae6; }
+  .coverschip{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:4px; font-size:12px; font-weight:500; background:#20313d; color:#8fc7f0; }
+  .coverschip svg{ width:13px; height:13px; }
+  .prodrow{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .prodchip{ display:inline-flex; align-items:center; gap:6px; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:500; background:#2a2a2a; color:#c3c8d2; border:1px solid #4a4a4a; }
+  .prodchip .pl{ color:#8a8f9a; }
+  .scfchip{ display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:600; background:#1f3d17; color:#8fd06a; }
+  /* RACI panel */
+  .raci{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .raci:first-child{ border-top:none; }
+  .racibadge{ width:26px; height:26px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
+  .racibadge.R{ background:#1f3d17; color:#8fd06a; } .racibadge.A{ background:#4a2320; color:#f0928c; }
+  .racibadge.C{ background:#3a3320; color:#e6b15e; } .racibadge.I{ background:#22384a; color:#6ea8d8; }
+  .racimain{ flex:1; min-width:0; }
+  .raciparty{ font-size:13px; color:#eaeaea; font-weight:500; display:flex; align-items:center; gap:8px; }
+  .ptypechip{ font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#9fb0d0; background:#33384a; padding:1px 6px; border-radius:3px; }
+  .ptypechip.vendor{ color:#e6c15e; background:#3a3320; } .ptypechip.agent{ color:#b39ae6; background:#2e2747; }
+  .racivia{ font-size:11px; color:#8a8f9a; margin-top:2px; }
+  .raciscope{ flex:none; font-size:11px; font-weight:600; color:#8a8f9a; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon" id="hIcon"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip bnd" href="#">Platform</a>
+            <span class="sep">/</span>
+            <a class="cchip" href="#">Operations Center</a>
+            <span class="sep">/</span>
+            <a class="cchip" href="bm-components-list.html">Components</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1 id="hName">prod-app-01</h1>
+            <span class="atchip" id="hType">service</span>
+            <span class="fmttag" id="hFmt">technical</span>
+            <span class="chip active">Assessed</span>
+            <span class="coverschip" id="hCovers"></span>
+          </div>
+          <span class="rsub" id="hSub"></span>
+          <div class="prodrow" id="hProd"></div>
+        </div>
+        <div class="rright">
+          <div class="navcluster">
+            <a class="backlist" href="bm-components-list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg> All components</a>
+            <span class="pn" id="pnPrev" title="Previous component"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <span class="pnlabel" id="pnLabel">1 of 42</span>
+            <span class="pn" id="pnNext" title="Next component"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>
+          </div>
+          <div class="rright-actions">
+            <button class="actions-btn">Actions <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
+            <button class="actions-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg> Re-assess</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="#">Overview</a>
+      <a href="#">Auditgraph</a>
+      <a href="#">Implementation</a>
+      <a href="#">Evidence</a>
+      <a href="#" data-tab="findings" id="tabFindings" class="active">Findings</a>
+      <a href="#" data-tab="sbom" id="tabSbom">SBOM</a>
+      <a href="#">Tasks</a>
+      <a href="#">Pipelines</a>
+      <a href="#">API</a>
+    </nav>
+
+    <div id="findingsView">
+    <!-- HERO: latest ValidationReport -->
+    <section class="summary">
+      <div class="shead"><h2 id="hHeroTitle">Latest ValidationReport</h2><span class="updated" id="hAssessed"></span></div>
+      <div class="sbody">
+        <div class="szone zdonut">
+          <span class="zlabel">Benchmark compliance</span>
+          <div class="donutrow">
+            <div class="donut" id="hDonut">
+              <div class="dctr"><span class="dp" id="hPct">94%</span><span class="dl">compliant</span></div>
+            </div>
+            <div class="dbreak">
+              <div class="dbrow"><span class="sw pass"></span><b id="hPass">381</b><span class="dn">pass</span></div>
+              <div class="dbrow"><span class="sw fail"></span><b id="hFail">24</b><span class="dn">fail</span></div>
+              <div class="dbrow"><span class="sw na"></span><b id="hNa">7</b><span class="dn">not applicable</span></div>
+              <div class="dbrow" style="border-top:1px solid rgba(255,255,255,.08);padding-top:8px;"><span class="sw" style="background:transparent;"></span><b id="hTot">412</b><span class="dn">rules total</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="szone zroll">
+          <span class="zlabel">Requirement rollup</span>
+          <div class="rollbig"><span class="num" id="hReqNum">38</span><span class="rl">framework requirements satisfied by this report</span></div>
+          <div class="fromnote">
+            This ValidationReport is the boundary's <b>internal reality</b> &mdash; one benchmark assessment satisfies
+            <b id="hReqNum2">38</b> requirements at once, not per-rule tasks. Readiness lives in the <b>project</b>:
+            its crosswalks <b>read</b> this report to compute framework completion. Only unmet requirements surface as gap tasks.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;align-items:center;">
+            <span class="xwbadge read">read by 1 project</span>
+            <span class="xwbadge">via SCF 2025.2.1 crosswalks</span>
+            <a class="mlink" href="projects-cmmc-readiness.html">Open project readiness
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="gridwrap">
+      <div class="grid">
+
+        <!-- LEFT: benchmark binding + severity + rules -->
+        <div class="col-l">
+          <section class="panel">
+            <div class="head"><h2>Benchmark binding</h2><span class="hint" id="bBindHint"></span></div>
+            <div class="pbody">
+              <div class="bindgrid">
+                <div class="bindcell"><div class="bl">Standard</div><div class="bv"><span class="std"><svg class="stdico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg><span id="bStd">DISA STIG</span></span></div></div>
+                <div class="bindcell"><div class="bl">Benchmark</div><div class="bv" id="bName">Red Hat Enterprise Linux 9 STIG</div></div>
+                <div class="bindcell"><div class="bl">Version</div><div class="bv" id="bVer">V2R3</div></div>
+                <div class="bindcell"><div class="bl">Profile</div><div class="bv" id="bProfile">MAC-1 Classified</div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Results by severity</h2><span class="hint">pass / fail / not-applicable per rule severity</span></div>
+            <div class="pbody" id="sevBody"><!-- rendered --></div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Findings <span class="hint">&mdash; failed checks against configuration-requirement rules, latest scan</span></h2></div>
+            <div class="pbody">
+              <div class="rulefilter">
+                <span class="fchip sel" data-rf="fail">Failing <span class="ct" id="rfFail">24</span></span>
+                <span class="fchip" data-rf="na">Not applicable <span class="ct" id="rfNa">7</span></span>
+                <span class="fchip" data-rf="pass">Passing <span class="ct" id="rfPass">381</span></span>
+                <span style="margin-left:auto;font-size:11px;color:#8a8f9a;" id="rfMeta"></span>
+              </div>
+              <div class="rulescroll" id="ruleBody"><!-- rendered --></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT: responsibility set (RACI) + satisfies requirements + other components + collector -->
+        <div class="col-r">
+          <section class="panel">
+            <div class="head"><h2>Responsibility set (RACI)</h2><span class="hint">this is what makes it a component</span></div>
+            <div class="pbody" id="raciBody"><!-- rendered --></div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Satisfies requirements</h2><span class="hint" id="reqHint">what the crosswalks read</span></div>
+            <div class="pbody" id="reqBody"><!-- rendered --></div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Other components</h2><a class="mlink" href="bm-components-list.html">View all (42) <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></a></div>
+            <div class="pbody" id="siblingBody"><!-- rendered --></div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h2>Evidence collector</h2></div>
+            <div class="pbody">
+              <div class="lrow" style="border-top:none;">
+                <span class="lico" style="background:#1f3d17;color:#8fd06a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                <div class="ltxt"><div class="ltitle" id="colName">OpenSCAP SCAP scanner</div><div class="lsub" id="colSub">agent on prod-app-01 &middot; automated</div></div>
+                <div class="lright"><span class="hp ontrack" style="height:22px;"><span class="hpd"></span>Healthy</span></div>
+              </div>
+              <div class="lrow">
+                <span class="lico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                <div class="ltxt"><div class="ltitle">Assessment cadence</div><div class="lsub" id="colCadence">Last run Jun 27 &middot; next Jul 04</div></div>
+                <div class="lright"><a class="mlink" href="#">View evidence <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+    </div><!-- /findingsView -->
+
+    <!-- ===== SBOM VIEW ===== -->
+    <div id="sbomView" hidden>
+      <section class="summary">
+        <div class="shead">
+          <h2>Software Bill of Materials <span style="font-weight:400;color:#8a8f9a;font-size:13px;">&mdash; instance-scoped provenance</span></h2>
+          <span class="updated" id="sGen"></span>
+        </div>
+        <div class="sbody">
+          <div class="szone" style="flex:none;max-width:320px;">
+            <span class="zlabel">Format / standard</span>
+            <div style="display:flex;flex-direction:column;gap:11px;">
+              <span class="fmtbadge" id="sFmt"></span>
+              <div class="rsub" style="line-height:1.5;">Manifest captured <span id="sManifest" class="mono"></span>. <b style="color:#c3c8d2;">1:1 instance provenance</b> &mdash; a fresh SBOM is emitted on every spin-up, bound to this exact instance and its hardening config.</div>
+            </div>
+          </div>
+          <div class="szone" style="flex:none;">
+            <span class="zlabel">Instance match</span>
+            <div class="provchain" id="sMatch"></div>
+          </div>
+          <div class="szone zroll">
+            <span class="zlabel">Provenance chain</span>
+            <div class="provchain" id="sChain"></div>
+            <div class="fromnote">The <b>SDO</b> authors the standard; the <b>tool</b> emits this instance &mdash; producer and tool are distinct roles. This manifest is the boundary's <b>internal reality</b>; the inventory-completeness <b>control</b> and missing-component <b>findings</b> are computed in the <b>project</b> readiness lens that reads it.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;align-items:center;">
+              <span class="xwbadge read">manifest reality</span>
+              <span class="xwbadge">read by project readiness</span>
+              <a class="mlink" href="projects-cmmc-readiness.html">Inventory control &amp; findings
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="gridwrap">
+        <div class="grid">
+
+          <div class="col-l">
+            <section class="panel">
+              <div class="head"><h2>BOM binding</h2><span class="hint" id="sBindHint"></span></div>
+              <div class="pbody">
+                <div class="bindgrid">
+                  <div class="bindcell"><div class="bl">BOM type</div><div class="bv" id="sType"></div></div>
+                  <div class="bindcell"><div class="bl">Standard</div><div class="bv" id="sStd"></div></div>
+                  <div class="bindcell"><div class="bl">SDO / producer</div><div class="bv" id="sSdo"></div></div>
+                  <div class="bindcell"><div class="bl">License</div><div class="bv" id="sLic"></div></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="head"><h2>Software components <span class="hint">&mdash; the manifest feeds the asset inventory</span></h2></div>
+              <div class="pbody">
+                <div class="compfilter">
+                  <span class="fchip sel" data-cf="all">All <span class="ct" id="cfAll"></span></span>
+                  <span class="fchip" data-cf="miss">Not tracked <span class="ct" id="cfMiss"></span></span>
+                  <span class="fchip" data-cf="vuln">With vulnerabilities <span class="ct" id="cfVuln"></span></span>
+                  <span style="margin-left:auto;font-size:11px;color:#8a8f9a;" id="cfMeta"></span>
+                </div>
+                <div class="compscroll" id="compBody"><!-- rendered --></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="col-r">
+            <section class="panel">
+              <div class="head"><h2>Asset inventory</h2><span class="hint">manifest vs tracked &mdash; reality</span></div>
+              <div class="pbody">
+                <div class="recon">
+                  <div class="reconrow" style="border-top:none;"><span>Components in manifest</span><b id="rTotal"></b></div>
+                  <div class="reconrow"><span>Tracked in asset inventory</span><b id="rIn"></b></div>
+                  <div class="reconrow"><span>Not tracked</span><b style="color:#d6bf8a;" id="rMiss"></b></div>
+                  <div class="critctl" style="border-left-color:#03aff0;background:#20313d;color:#a8c9dd;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#03aff0" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg>
+                    <span>Inventory-completeness <b style="color:#d7e6f0;">control</b> and missing-component <b style="color:#d7e6f0;">findings</b> are computed in the project readiness lens, not here.</span>
+                  </div>
+                  <a class="mlink" href="projects-cmmc-readiness.html">Open project readiness <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="head"><h2>Vulnerabilities</h2><span class="hint" id="vulnHint">across all components</span></div>
+              <div class="pbody" id="vulnBody"><!-- rendered --></div>
+            </section>
+
+            <section class="panel">
+              <div class="head"><h2>Generating tool</h2><span class="hint">enforce + verify layer</span></div>
+              <div class="pbody" id="toolBody"><!-- rendered --></div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /sbomView -->
+  </main>
+
+  <script>
+  (function(){
+    const $ = s => document.querySelector(s);
+    const ICON = {
+      vm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+      ctr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>',
+      cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-11.6-1.5A4 4 0 0 0 6.5 19z"/></svg>'
+    };
+    const ORDER = ['vm','ctr'];       // the two fully-assessed components (of 42)
+    const POS   = { vm:1, ctr:2 };    // position label within the 42-row inventory
+    const DATA = {
+      vm: {
+        name:'prod-app-01', crumb:'prod-app-01', type:'Virtual Machine', icon:'vm',
+        sub:'Red Hat Enterprise Linux 9 &middot; 8 vCPU &middot; 32 GB &middot; region <span class="mono">us-east-1</span> &middot; <span class="mono">i-0af31c9e</span>',
+        ctype:'service', cfmt:'technical', scfDomain:'CFG &mdash; Configuration Management', vendor:'Red Hat', suite:'RHEL', product:'Enterprise Linux 9', covers:1,
+        raci:[
+          {s:'R', party:'Platform SRE Team', ptype:'team', via:'via role: Infrastructure Operator'},
+          {s:'A', party:'M. Chen &mdash; Dir. Infrastructure', ptype:'person', via:'direct assignment'},
+          {s:'C', party:'CrowdStrike', ptype:'vendor', via:'via implementation statement'},
+          {s:'I', party:'Compliance Office', ptype:'org', via:'via role: Compliance Reader'}
+        ],
+        bindHint:'bound Apr 02 &middot; SCAP content v2026.05',
+        std:'DISA STIG', bench:'Red Hat Enterprise Linux 9 STIG', ver:'V2R3', profile:'MAC-1 Classified',
+        assessed:'Assessed Jun 27, 2026 &middot; 6 min ago', heroTitle:'Latest ValidationReport &mdash; RHEL 9 STIG V2R3',
+        rules:412, pass:381, fail:24, na:7, reqCount:38, applicable:405, pct:94,
+        col:{ name:'OpenSCAP SCAP scanner', sub:'agent on prod-app-01 &middot; automated', cadence:'Last run Jun 27 &middot; next Jul 04' },
+        sev:[
+          {cls:'cat1', name:'CAT I (High)',   tot:45,  pass:43,  fail:2,  na:0},
+          {cls:'cat2', name:'CAT II (Medium)', tot:312, pass:289, fail:18, na:5},
+          {cls:'cat3', name:'CAT III (Low)',   tot:55,  pass:49,  fail:4,  na:2}
+        ],
+        fails:[
+          {id:'RHEL-09-611045', sev:'cat1', t:'Passwords must not be stored using reversible encryption'},
+          {id:'RHEL-09-212010', sev:'cat1', t:'GRUB 2 bootloader must require authentication'},
+          {id:'RHEL-09-411020', sev:'cat2', t:'Account must lock after 3 unsuccessful logon attempts'},
+          {id:'RHEL-09-651010', sev:'cat2', t:'AIDE file integrity tool must be installed'},
+          {id:'RHEL-09-231045', sev:'cat2', t:'The /home directory must be mounted with the nodev option'},
+          {id:'RHEL-09-671010', sev:'cat2', t:'Stored passwords must use a FIPS 140-3 approved hash'},
+          {id:'RHEL-09-252035', sev:'cat3', t:'System clock must synchronize to an authoritative time source'},
+          {id:'RHEL-09-215015', sev:'cat2', t:'The system must not have unnecessary packages installed'}
+        ],
+        moreFails:16,
+        nas:[
+          {id:'RHEL-09-291010', sev:'cat2', t:'Bluetooth kernel module must be disabled (no radio present)'},
+          {id:'RHEL-09-611180', sev:'cat3', t:'Graphical display manager rules (headless server)'}
+        ],
+        moreNa:5,
+        req:[
+          {code:'AC.L2-3.1.1', label:'Limit system access to authorized users', stat:'sat'},
+          {code:'AC.L2-3.1.2', label:'Limit access to permitted transactions/functions', stat:'partial'},
+          {code:'AU.L2-3.3.1', label:'Create and retain system audit records', stat:'sat'},
+          {code:'CM.L2-3.4.1', label:'Establish and maintain baseline configurations', stat:'sat'},
+          {code:'IA.L2-3.5.3', label:'Multifactor authentication for privileged accounts', stat:'sat'}
+        ],
+        moreReq:33,
+        sbom:{
+          fmt:'CycloneDX', fmtVer:'1.6', spdx:false,
+          gen:'Emitted Jun 27, 2026 &middot; on spin-up', manifest:'Jun 27, 2026 (launch i-0af31c9e)',
+          bindHint:'emitted on instance launch &middot; 248 components',
+          bomType:'SBOM (software)', std:'CycloneDX 1.6', sdo:'OWASP Foundation', lic:'Apache-2.0', licPaid:false,
+          match:[ {lab:'Instance', v:'i-0af31c9e'}, {lab:'Image', v:'ami-0af31c9e'}, {lab:'Hardening', v:'RHEL 9 STIG V2R3'} ],
+          chain:[ {lab:'SDO', v:'OWASP', cls:'sdo'}, {lab:'Standard', v:'CycloneDX 1.6', cls:''}, {lab:'Tool', v:'Anchore Syft', cls:'tool'}, {lab:'Instance', v:'this SBOM', cls:''} ],
+          total:248, inInv:245, missing:3, hot:1, vulnComps:24,
+          vuln:[ {cls:'crit',name:'Critical',n:1},{cls:'high',name:'High',n:4},{cls:'med',name:'Medium',n:11},{cls:'low',name:'Low',n:20} ],
+          tool:{ name:'Anchore Syft', maker:'Anchore, Inc.', lic:'Apache-2.0', enforces:'Emits CycloneDX 1.6 on every spin-up &middot; publishes component list to asset inventory', cadence:'Ran Jun 27 &middot; re-emits on next launch' },
+          comps:[
+            {name:'openssl', ver:'3.0.7-18.el9', type:'os-pkg', sup:'Red Hat', lic:'Apache-2.0', inv:'in', vuln:1},
+            {name:'glibc', ver:'2.34-83.el9', type:'os-pkg', sup:'Red Hat', lic:'LGPL-2.1', inv:'in', vuln:0},
+            {name:'systemd', ver:'252-32.el9', type:'os-pkg', sup:'Red Hat', lic:'LGPL-2.1', inv:'in', vuln:2},
+            {name:'kernel', ver:'5.14.0-427.el9', type:'os-pkg', sup:'Red Hat', lic:'GPL-2.0', inv:'in', vuln:1},
+            {name:'openssh-server', ver:'8.7p1-38.el9', type:'os-pkg', sup:'Red Hat', lic:'BSD-3-Clause', inv:'in', vuln:0},
+            {name:'python3', ver:'3.9.18-1.el9', type:'os-pkg', sup:'Red Hat', lic:'PSF-2.0', inv:'in', vuln:0},
+            {name:'curl', ver:'7.76.1-29.el9', type:'os-pkg', sup:'Red Hat', lic:'MIT', inv:'in', vuln:1},
+            {name:'libwebp', ver:'1.2.0-8.el9', type:'library', sup:'Red Hat', lic:'BSD-3-Clause', inv:'miss', vuln:1},
+            {name:'nginx-mod-http', ver:'1.20.1-14.el9', type:'library', sup:'Red Hat', lic:'BSD-2-Clause', inv:'miss', vuln:0},
+            {name:'datadog-agent', ver:'7.52.1', type:'application', sup:'Datadog', lic:'proprietary', licPaid:true, inv:'in', vuln:0}
+          ]
+        }
+      },
+      ctr: {
+        name:'nginx:1.27-prod', crumb:'nginx:1.27-prod', type:'Container', icon:'ctr',
+        sub:'<span class="mono">registry.acme.io/edge/nginx:1.27</span> &middot; digest <span class="mono">sha256:9f3a1c&hellip;</span> &middot; amd64',
+        ctype:'service', cfmt:'technical', scfDomain:'CFG &mdash; Configuration Management', vendor:'nginx / F5', suite:'NGINX', product:'nginx 1.27', covers:1,
+        raci:[
+          {s:'R', party:'Edge Platform Team', ptype:'team', via:'via role: Container Operator'},
+          {s:'A', party:'M. Chen &mdash; Dir. Infrastructure', ptype:'person', via:'direct assignment'},
+          {s:'C', party:'Aqua Security', ptype:'vendor', via:'via implementation statement'},
+          {s:'I', party:'Compliance Office', ptype:'org', via:'via role: Compliance Reader'}
+        ],
+        bindHint:'bound Apr 09 &middot; scanned on image push',
+        std:'CIS Benchmark', bench:'CIS Docker Benchmark', ver:'v1.6.0', profile:'Level 1 - Docker',
+        assessed:'Assessed Jun 28, 2026 &middot; on last push', heroTitle:'Latest ValidationReport &mdash; CIS Docker 1.6.0',
+        rules:96, pass:74, fail:18, na:4, reqCount:22, applicable:92, pct:80,
+        col:{ name:'Docker Bench + Trivy collector', sub:'CI image scan &middot; on push', cadence:'Last run Jun 28 &middot; next on push' },
+        sev:[
+          {cls:'cat1', name:'High',   tot:14, pass:11, fail:3,  na:0},
+          {cls:'cat2', name:'Medium', tot:68, pass:54, fail:12, na:2},
+          {cls:'cat3', name:'Low',    tot:14, pass:9,  fail:3,  na:2}
+        ],
+        fails:[
+          {id:'CIS 5.25', sev:'cat1', t:'Restrict container from acquiring new privileges (no-new-privileges)'},
+          {id:'CIS 4.1',  sev:'cat1', t:'Ensure a non-root user for the container has been created'},
+          {id:'CIS 5.12', sev:'cat2', t:'Container root filesystem must be mounted read-only'},
+          {id:'CIS 5.10', sev:'cat2', t:'Memory usage for the container must be limited'},
+          {id:'CIS 4.6',  sev:'cat2', t:'HEALTHCHECK instructions must be added to the image'},
+          {id:'CIS 5.28', sev:'cat3', t:'PIDs cgroup limit must be used'}
+        ],
+        moreFails:12,
+        nas:[
+          {id:'CIS 5.7',  sev:'cat2', t:'Privileged ports mapping (no host-port bind in this deployment)'},
+          {id:'CIS 2.8',  sev:'cat3', t:'User namespace remapping (managed at orchestrator layer)'}
+        ],
+        moreNa:2,
+        req:[
+          {code:'AU.L2-3.3.1', label:'Create and retain system audit records', stat:'sat'},
+          {code:'CM.L2-3.4.1', label:'Establish and maintain baseline configurations', stat:'sat'},
+          {code:'CM.L2-3.4.2', label:'Enforce security configuration settings', stat:'gap'},
+          {code:'SC.L2-3.13.8', label:'Protect confidentiality of CUI in transit (TLS)', stat:'sat'},
+          {code:'SI.L2-3.14.1', label:'Identify and correct flaws in a timely manner', stat:'partial'}
+        ],
+        moreReq:17,
+        sbom:{
+          fmt:'SPDX', fmtVer:'2.3', spdx:true,
+          gen:'Emitted Jun 28, 2026 &middot; on image push', manifest:'Jun 28, 2026 (digest sha256:9f3a1c&hellip;)',
+          bindHint:'emitted on image push &middot; 64 components',
+          bomType:'SBOM (software)', std:'SPDX 2.3', sdo:'Linux Foundation', lic:'CC-BY-3.0', licPaid:false,
+          match:[ {lab:'Digest', v:'sha256:9f3a1c&hellip;'}, {lab:'Arch', v:'amd64'}, {lab:'Hardening', v:'CIS Docker 1.6.0'} ],
+          chain:[ {lab:'SDO', v:'Linux Foundation', cls:'sdo'}, {lab:'Standard', v:'SPDX 2.3', cls:''}, {lab:'Tool', v:'Aqua Trivy', cls:'tool'}, {lab:'Instance', v:'this SBOM', cls:''} ],
+          total:64, inInv:62, missing:2, hot:0, vulnComps:11,
+          vuln:[ {cls:'crit',name:'Critical',n:0},{cls:'high',name:'High',n:2},{cls:'med',name:'Medium',n:6},{cls:'low',name:'Low',n:9} ],
+          tool:{ name:'Aqua Trivy', maker:'Aqua Security', lic:'Apache-2.0', enforces:'Generates SPDX 2.3 on image push &middot; publishes component list to asset inventory', cadence:'Ran Jun 28 &middot; re-emits on next push' },
+          comps:[
+            {name:'nginx', ver:'1.27.0', type:'application', sup:'nginx / F5', lic:'BSD-2-Clause', inv:'in', vuln:1},
+            {name:'openssl', ver:'3.3.0-r2', type:'os-pkg', sup:'Alpine', lic:'Apache-2.0', inv:'in', vuln:1},
+            {name:'musl', ver:'1.2.5-r0', type:'os-pkg', sup:'Alpine', lic:'MIT', inv:'in', vuln:0},
+            {name:'zlib', ver:'1.3.1-r1', type:'library', sup:'Alpine', lic:'Zlib', inv:'in', vuln:0},
+            {name:'pcre2', ver:'10.43-r0', type:'library', sup:'Alpine', lic:'BSD-3-Clause', inv:'in', vuln:0},
+            {name:'libcrypto3', ver:'3.3.0-r2', type:'library', sup:'Alpine', lic:'Apache-2.0', inv:'in', vuln:1},
+            {name:'curl', ver:'8.7.1-r0', type:'os-pkg', sup:'Alpine', lic:'curl', inv:'in', vuln:2},
+            {name:'ngx-brotli', ver:'1.0.0rc', type:'library', sup:'Google', lic:'MIT', inv:'miss', vuln:0},
+            {name:'geoip2-module', ver:'3.4', type:'library', sup:'MaxMind', lic:'Apache-2.0', inv:'miss', vuln:0}
+          ]
+        }
+      }
+    };
+    // compact rows for the "Other components" panel
+    const SIB = {
+      vm:  { name:'nginx:1.27-prod', type:'Container', sub:'CIS Docker 1.6.0', pct:80, cls:'atrisk', href:'?c=ctr' },
+      ctr: { name:'prod-app-01',     type:'Virtual Machine', sub:'RHEL 9 STIG V2R3', pct:94, cls:'ontrack', href:'?c=vm' }
+    };
+
+    function donut(pass, fail, na){
+      const tot = pass + fail + na;
+      const p = pass/tot*360, f = fail/tot*360;
+      return `conic-gradient(#8fd06a 0 ${p}deg, #f0a09c ${p}deg ${p+f}deg, #6b7280 ${p+f}deg 360deg)`;
+    }
+
+    let curFilter = 'fail';
+    let curCompFilter = 'all';
+    const _p = new URLSearchParams(location.search);
+    let curKey = (_p.get('c')==='ctr') ? 'ctr' : 'vm';
+    let curTab = (_p.get('tab')==='sbom') ? 'sbom' : 'findings';
+
+    function syncUrl(){
+      const url = new URL(location.href);
+      url.searchParams.set('c', curKey);
+      url.searchParams.set('tab', curTab);
+      history.replaceState(null,'',url);
+    }
+
+    function sevShort(d, cls){ const m = d.sev.find(s => s.cls===cls); return m ? m.name.replace(/ \(.*\)/,'') : cls; }
+    function renderRules(d){
+      const list = curFilter==='fail' ? d.fails : curFilter==='na' ? d.nas : [];
+      const more = curFilter==='fail' ? d.moreFails : curFilter==='na' ? d.moreNa : d.pass;
+      const badge = { fail:'Fail', na:'N/A', pass:'Pass' }, bcls = { fail:'fail', na:'na', pass:'pass' };
+      let html = '';
+      if (curFilter==='pass'){
+        html = `<div class="morerule">${d.pass} passing rules &mdash; not shown individually (only findings are actionable)</div>`;
+      } else {
+        list.forEach(r => {
+          html += `<div class="rule"><span class="rid">${r.id}</span><span class="rtitle">${r.t}</span>`
+                + `<span class="sevbadge ${r.sev}">${sevShort(d,r.sev)}</span>`
+                + `<span class="stbadge ${bcls[curFilter]}">${badge[curFilter]}</span></div>`;
+        });
+        html += `<div class="morerule">+ ${more} more ${curFilter==='fail'?'failing':'not-applicable'} rules</div>`;
+      }
+      $('#ruleBody').innerHTML = html;
+    }
+
+    function render(key){
+      curKey = key;
+      const d = DATA[key];
+      $('#hIcon').innerHTML = ICON[d.icon];
+      $('#hName').textContent = d.name;
+      $('#hType').textContent = d.ctype;
+      $('#hFmt').textContent = d.cfmt;
+      $('#hCovers').innerHTML = (d.covers > 1)
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>grouped &middot; covers ${d.covers.toLocaleString()} assets &middot; 1 RACI`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>single asset`;
+      $('#hProd').innerHTML =
+        `<span class="scfchip">${d.scfDomain}</span>`
+        + `<span class="prodchip"><span class="pl">vendor</span> ${d.vendor}</span>`
+        + `<span class="prodchip"><span class="pl">suite</span> ${d.suite}</span>`
+        + `<span class="prodchip"><span class="pl">product</span> ${d.product}</span>`;
+      // RACI — the responsibility set that defines this component
+      $('#raciBody').innerHTML = d.raci.map(r => {
+        const lbl = { R:'Responsible', A:'Accountable', C:'Consulted', I:'Informed' }[r.s];
+        const pt = ['vendor','agent'].includes(r.ptype) ? r.ptype : '';
+        return `<div class="raci"><span class="racibadge ${r.s}">${r.s}</span>`
+          + `<div class="racimain"><div class="raciparty">${r.party}<span class="ptypechip ${pt}">${r.ptype}</span></div>`
+          + `<div class="racivia">${r.via}</div></div>`
+          + `<span class="raciscope">${lbl}</span></div>`;
+      }).join('');
+      $('#hSub').innerHTML = d.sub;
+      $('#hHeroTitle').innerHTML = d.heroTitle;
+      $('#hAssessed').innerHTML = d.assessed;
+      $('#hPct').textContent = d.pct + '%';
+      $('#hDonut').style.background = donut(d.pass, d.fail, d.na);
+      $('#hPass').textContent = d.pass; $('#hFail').textContent = d.fail; $('#hNa').textContent = d.na; $('#hTot').textContent = d.rules;
+      $('#hReqNum').textContent = d.reqCount; $('#hReqNum2').textContent = d.reqCount;
+      $('#bBindHint').innerHTML = d.bindHint;
+      $('#bStd').textContent = d.std; $('#bName').textContent = d.bench; $('#bVer').textContent = d.ver; $('#bProfile').textContent = d.profile;
+      $('#colName').textContent = d.col.name; $('#colSub').innerHTML = d.col.sub; $('#colCadence').innerHTML = d.col.cadence;
+      // severity
+      let sh = '';
+      d.sev.forEach(s => {
+        const pp = s.pass/s.tot*100, fp = s.fail/s.tot*100, np = s.na/s.tot*100;
+        sh += `<div class="sev"><div class="slab"><span class="sdot ${s.cls}"></span><span class="sname">${s.name}</span></div>`
+            + `<div class="sbar"><span class="p" style="width:${pp}%"></span><span class="f" style="width:${fp}%"></span><span class="n" style="width:${np}%"></span></div>`
+            + `<div class="scnt"><span class="cp">${s.pass} pass</span> &middot; <span class="cf">${s.fail} fail</span>`
+            + (s.na?` &middot; <span class="cn">${s.na} n/a</span>`:'') + ` &middot; ${s.tot} total</div></div>`;
+      });
+      $('#sevBody').innerHTML = sh;
+      $('#rfFail').textContent = d.fail; $('#rfNa').textContent = d.na; $('#rfPass').textContent = d.pass;
+      $('#rfMeta').textContent = `${d.rules} rules · ${d.applicable} applicable`;
+      renderRules(d);
+      // requirements
+      let rq = '';
+      d.req.forEach(r => {
+        const lbl = { sat:'Satisfied', partial:'Partial', gap:'Gap' }[r.stat];
+        rq += `<div class="req"><span class="rdot ${r.stat}"></span><div class="rmainx"><div class="rcode">${r.code}</div>`
+            + `<div class="rlabel">${r.label}</div></div><span class="ptype">Practice</span>`
+            + `<span class="rstat ${r.stat}">${lbl}</span></div>`;
+      });
+      rq += `<div class="reqfoot"><span class="more">+ ${d.moreReq} more requirements satisfied by this report</span>`
+          + `<a class="mlink" href="projects-cmmc-readiness.html">View in project readiness `
+          + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a></div>`;
+      $('#reqBody').innerHTML = rq;
+      // sibling ("other components")
+      const s = SIB[key];
+      const ico = s.type==='Container' ? ICON.ctr : ICON.vm;
+      const barcol = s.cls==='ontrack' ? '#8fd06a' : s.cls==='atrisk' ? '#e6b15e' : '#f0a09c';
+      $('#siblingBody').innerHTML =
+        `<a class="lrow click" href="${s.href}"><span class="lico">${ico}</span>`
+        + `<div class="ltxt"><div class="ltitle">${s.name}</div><div class="lsub">${s.type} &middot; ${s.sub}</div></div>`
+        + `<div class="lright"><b style="color:${barcol};">${s.pct}%</b><br><span style="font-size:11px;color:#8a8f9a;">compliant</span></div></a>`
+        // grouped component — one RACI over many like-treated assets (Brian's "AWS Cloud" case)
+        + `<div class="lrow"><span class="lico" style="background:#3a3320;color:#e6c15e;">${ICON.cloud}</span>`
+        + `<div class="ltxt"><div class="ltitle">AWS Cloud</div><div class="lsub">service &middot; grouped &middot; covers 4,200 assets under 1 RACI</div></div>`
+        + `<div class="lright"><b style="color:#8fd06a;">96%</b><br><span style="font-size:11px;color:#8a8f9a;">compliant</span></div></div>`;
+      // SBOM tab content
+      renderSbom(d);
+      // prev/next label + history (no reload)
+      $('#pnLabel').textContent = POS[key] + ' of 42';
+      syncUrl();
+    }
+
+    function renderSbom(d){
+      const s = d.sbom;
+      $('#sGen').innerHTML = s.gen;
+      $('#sManifest').innerHTML = s.manifest;
+      $('#sFmt').className = 'fmtbadge' + (s.spdx ? ' spdx' : '');
+      $('#sFmt').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>${s.fmt} ${s.fmtVer}`;
+      $('#sBindHint').innerHTML = s.bindHint;
+      $('#sType').textContent = s.bomType;
+      $('#sStd').textContent = s.std;
+      $('#sSdo').textContent = s.sdo;
+      $('#sLic').innerHTML = `<span class="licbadge${s.licPaid?' paid':''}" style="width:auto;">${s.lic}</span>`;
+      // instance match nodes
+      $('#sMatch').innerHTML = s.match.map(m =>
+        `<span class="pnode"><span class="plab">${m.lab}</span><b class="mono" style="font-family:'SFMono-Regular',Menlo,Consolas,monospace;">${m.v}</b></span>`).join('');
+      // provenance chain SDO -> standard -> tool -> instance
+      $('#sChain').innerHTML = s.chain.map((n,i) =>
+        `${i?'<span class="parrow">&rarr;</span>':''}<span class="pnode ${n.cls}"><span class="plab">${n.lab}</span><b>${n.v}</b></span>`).join('');
+      // asset-inventory reality (raw counts only; the completeness control + findings live in the project)
+      $('#rTotal').textContent = s.total;
+      $('#rIn').textContent = s.inInv;
+      $('#rMiss').textContent = s.missing;
+      // vulnerabilities
+      const vmax = Math.max(...s.vuln.map(v => v.n), 1);
+      const vtot = s.vuln.reduce((a,v)=>a+v.n,0);
+      $('#vulnHint').textContent = `${vtot} across ${s.vulnComps} components`;
+      $('#vulnBody').innerHTML = s.vuln.map(v =>
+        `<div class="vrow"><span class="vdot ${v.cls}"></span><span class="vname">${v.name}</span>`
+        + `<div class="vbar"><span class="${v.cls}" style="width:${v.n/vmax*100}%"></span></div>`
+        + `<span class="vn">${v.n}</span></div>`).join('');
+      // generating tool
+      const t = s.tool;
+      $('#toolBody').innerHTML =
+        `<div class="lrow" style="border-top:none;">`
+        + `<span class="lico" style="background:#1f3d17;color:#8fd06a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>`
+        + `<div class="ltxt"><div class="ltitle">${t.name}</div><div class="lsub">${t.maker} &middot; ${t.lic}</div></div>`
+        + `<div class="lright"><span class="hp ontrack" style="height:22px;"><span class="hpd"></span>Inventoried</span></div></div>`
+        + `<div class="lrow"><span class="lico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg></span>`
+        + `<div class="ltxt"><div class="ltitle">Enforce + verify</div><div class="lsub">${t.enforces}</div></div></div>`
+        + `<div class="lrow"><span class="lico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>`
+        + `<div class="ltxt"><div class="ltitle">Cadence</div><div class="lsub">${t.cadence}</div></div></div>`;
+      renderComps(d);
+    }
+
+    function renderComps(d){
+      const s = d.sbom;
+      const shownVuln = s.comps.filter(c => c.vuln>0).length;
+      const shownMiss = s.comps.filter(c => c.inv==='miss').length;
+      $('#cfAll').textContent = s.total;
+      $('#cfMiss').textContent = s.missing;
+      $('#cfVuln').textContent = s.vulnComps;
+      let list = s.comps, more = 0, moreLbl = '';
+      if (curCompFilter==='miss'){ list = s.comps.filter(c => c.inv==='miss'); more = s.missing - shownMiss; moreLbl = 'missing'; }
+      else if (curCompFilter==='vuln'){ list = s.comps.filter(c => c.vuln>0); more = s.vulnComps - shownVuln; moreLbl = 'vulnerable'; }
+      else { more = s.total - s.comps.length; moreLbl = ''; }
+      const invLbl = { in:'In inventory', miss:'Not tracked', hot:'In inventory' };
+      let html = list.map(c =>
+        `<div class="comp${c.inv==='miss'?' miss':''}">`
+        + `<div class="cname"><div class="cn1">${c.name} <span class="cv">${c.ver}</span></div><div class="cn2">${c.sup}</div></div>`
+        + `<span class="ctype">${c.type}</span>`
+        + `<span class="licbadge${c.licPaid?' paid':''}">${c.lic}</span>`
+        + `<span class="invstat ${c.inv}">${invLbl[c.inv]}</span>`
+        + `<span class="vulnpill${c.vuln>0?' has':''}">${c.vuln>0?c.vuln+' vuln':'0'}</span>`
+        + `</div>`).join('');
+      if (more > 0) html += `<div class="comp-more">+ ${more} more ${moreLbl} component${more===1?'':'s'} in this manifest</div>`;
+      if (!list.length) html += `<div class="comp-more">no ${moreLbl} components</div>`;
+      $('#compBody').innerHTML = html;
+      $('#cfMeta').textContent = `${s.total} components · ${s.inInv} inventoried`;
+    }
+
+    function applyTab(){
+      const sbom = curTab==='sbom';
+      $('#findingsView').hidden = sbom;
+      $('#sbomView').hidden = !sbom;
+      $('#tabFindings').classList.toggle('active', !sbom);
+      $('#tabSbom').classList.toggle('active', sbom);
+    }
+
+    // prev/next cycles the two assessed components
+    function step(dir){ const i = ORDER.indexOf(curKey); render(ORDER[(i + dir + ORDER.length) % ORDER.length]); }
+    $('#pnPrev').addEventListener('click', () => step(-1));
+    $('#pnNext').addEventListener('click', () => step(1));
+    // sibling link switches in place
+    document.addEventListener('click', e => {
+      const a = e.target.closest('#siblingBody .lrow');
+      if (a){ e.preventDefault(); render(a.getAttribute('href')==='?c=ctr' ? 'ctr' : 'vm'); }
+    });
+    document.querySelectorAll('.rulefilter .fchip').forEach(el =>
+      el.addEventListener('click', () => {
+        curFilter = el.dataset.rf;
+        document.querySelectorAll('.rulefilter .fchip').forEach(c => c.classList.toggle('sel', c===el));
+        renderRules(DATA[curKey]);
+      }));
+
+    // SBOM component filter chips
+    document.querySelectorAll('.compfilter .fchip').forEach(el =>
+      el.addEventListener('click', () => {
+        curCompFilter = el.dataset.cf;
+        document.querySelectorAll('.compfilter .fchip').forEach(c => c.classList.toggle('sel', c===el));
+        renderComps(DATA[curKey]);
+      }));
+
+    // tab switching (Findings <-> SBOM)
+    $('#tabFindings').addEventListener('click', e => { e.preventDefault(); curTab='findings'; applyTab(); syncUrl(); });
+    $('#tabSbom').addEventListener('click', e => { e.preventDefault(); curTab='sbom'; applyTab(); syncUrl(); });
+
+    render(curKey);
+    applyTab();
+  })();
+  </script>
+
+</body>
+</html>

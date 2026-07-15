@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boundary Manager — Operations Center / Tool inventory (enforce + verify layer, composited on real BM shell)</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1232px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/bm-shell-operations-center.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* boundary header */
+  .phead{ padding:16px 20px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:16px; background:#424242; padding:14px 18px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:56px; height:56px; flex:none; display:flex; align-items:center; justify-content:center; color:#8fd06a; }
+  .ricon svg{ width:44px; height:44px; }
+  .rmain{ display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ background:#1e1e1e; color:#8fd0a6; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; text-decoration:none; }
+  .rcrumb .cchip:hover{ background:#262b30; }
+  .rtitle-row{ display:flex; align-items:center; gap:12px; }
+  .titlerow h1{ font-size:22px; font-weight:500; }
+  .rsub{ font-size:13px; color:#9aa0aa; }
+
+  /* operations-center sub-tabs */
+  .subtabs{ display:flex; align-items:center; gap:30px; padding:0 26px; margin-top:14px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .subtabs a{ color:#9aa0aa; text-decoration:none; font-size:15px; font-weight:500; padding:12px 0; position:relative; }
+  .subtabs a.active{ color:#fff; }
+  .subtabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#03aff0; }
+  .octag{ font-size:11px; color:#7d828d; margin-left:auto; align-self:center; padding-bottom:2px; }
+
+  /* lens pointer bar */
+  .lensbar{ display:flex; align-items:center; gap:10px; margin:14px 24px 0; padding:10px 14px; background:#20313d; border-left:3px solid #03aff0; font-size:12px; color:#a8c9dd; }
+  .lensbar svg{ width:16px; height:16px; flex:none; color:#03aff0; }
+  .lensbar b{ color:#d7e6f0; font-weight:600; }
+  .lensbar a{ color:#6fc3f0; text-decoration:none; font-weight:600; margin-left:auto; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .lensbar a svg{ color:#6fc3f0; }
+
+  /* stat strip */
+  .statrow{ display:flex; gap:1px; margin:14px 24px 0; background:rgba(255,255,255,.06); box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .stat{ flex:1; background:#424242; padding:14px 18px; }
+  .stat .sv{ font-size:26px; font-weight:600; color:#fff; line-height:1; }
+  .stat .sv.warn{ color:#e6b15e; }
+  .stat .sl{ font-size:12px; color:#8a8f9a; margin-top:6px; }
+
+  /* toolbar */
+  .toolbar{ display:flex; align-items:center; gap:12px; padding:16px 24px 12px; }
+  .selbox{ display:inline-flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; color:#c3c8d2; font-size:13px; cursor:pointer; }
+  .selbox .lb{ color:#8a8f9a; }
+  .selbox svg{ width:15px; height:15px; color:#8a8f9a; }
+  .searchbox{ display:flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:6px; width:340px; color:#8a8f9a; font-size:13px; }
+  .searchbox svg{ width:16px; height:16px; }
+  .spacer{ flex:1; }
+  .addbtn{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px; background:#03aff0; color:#04222e; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
+  .addbtn svg{ width:16px; height:16px; }
+
+  /* table */
+  .tablewrap{ margin:0 24px 8px; background:#424242; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ text-align:left; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a8f9a;
+            padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.12); white-space:nowrap; }
+  thead th.num{ text-align:right; }
+  tbody tr{ border-bottom:1px solid rgba(255,255,255,.06); }
+  tbody tr:hover{ background:rgba(255,255,255,.035); }
+  tbody tr.stale{ background:rgba(230,177,94,.05); }
+  td{ padding:13px 16px; font-size:13px; color:#dfe3ea; vertical-align:middle; }
+  /* name cell */
+  .namecell{ display:flex; align-items:center; gap:12px; }
+  .tico{ width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:#2a2f38; color:#9fb6cc; }
+  .tico svg{ width:18px; height:18px; }
+  .nm{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .nm .n1{ font-size:14px; color:#fff; font-weight:500; }
+  .nm .n2{ font-size:11px; color:#8a8f9a; }
+  /* category chip */
+  .catchip{ display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:4px; font-size:12px; font-weight:600; }
+  .catchip.enforce{ background:#233247; color:#8fc7f0; }   /* config enforcement */
+  .catchip.scan{ background:#2e2747; color:#b39ae6; }      /* benchmark / vuln scanner */
+  .catchip.sbom{ background:#1f3a33; color:#79d0b1; }      /* SBOM generator */
+  .catchip.cloud{ background:#3a3320; color:#e6c15e; }     /* cloud posture */
+  .catchip.monitor{ background:#33283a; color:#e0a6d8; }   /* drift / runtime monitor */
+  .enf{ color:#dfe3ea; } .enf .sub{ color:#8a8f9a; font-size:11px; display:block; margin-top:2px; }
+  .stds{ display:flex; flex-wrap:wrap; gap:5px; }
+  .stdchip{ display:inline-flex; align-items:center; height:19px; padding:0 8px; border-radius:4px; font-size:11px; font-weight:500; background:#2a2f38; color:#9fb6cc; }
+  .cov{ text-align:right; color:#c3c8d2; } .cov .u{ color:#8a8f9a; font-size:11px; }
+  .licbadge{ display:inline-flex; align-items:center; height:21px; padding:0 9px; border-radius:4px; font-size:11px; font-weight:500; background:#2a2a2a; color:#b7bcc6; border:1px solid #4a4a4a; }
+  .licbadge.paid{ background:#3a2e18; color:#e6b15e; border-color:#5a4520; }
+  .stpill{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .stpill .d{ width:6px; height:6px; border-radius:50%; }
+  .stpill.ok{ background:#1f3d17; color:#8fd06a; } .stpill.ok .d{ background:#8fd06a; }
+  .stpill.stale{ background:#4a3320; color:#e6b15e; } .stpill.stale .d{ background:#e6b15e; }
+  /* pagination */
+  .pager{ display:flex; align-items:center; justify-content:flex-end; gap:18px; margin:0 24px 26px; padding:12px 4px; color:#9aa0aa; font-size:12px; }
+  .pager .pg{ display:flex; align-items:center; gap:6px; }
+  .pager .pbtn{ width:28px; height:28px; border-radius:6px; border:1px solid #4a4a4a; background:#2a2a2a; display:flex; align-items:center; justify-content:center; color:#9aa0aa; }
+  .pager .pbtn svg{ width:14px; height:14px; }
+  .pager .pbtn.dis{ opacity:.4; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div class="rmain">
+          <div class="rcrumb"><a class="cchip" href="#">Platform</a></div>
+          <div class="rtitle-row"><h1>Platform</h1><span class="stpill ok"><span class="d"></span>Active</span></div>
+          <span class="rsub">Operations Center &mdash; the boundary's internal reality: controls, responsible parties, and the component / software / tool inventory that evidence is collected from.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operations Center sub-tabs -->
+    <nav class="subtabs">
+      <a href="#">Controls</a>
+      <a href="#">Parties</a>
+      <a href="#">Roles</a>
+      <a href="bm-components-list.html">Components</a>
+      <a href="bm-software-inventory.html">Software</a>
+      <a href="#" class="active">Tools</a>
+      <span class="octag">Operations Center</span>
+    </nav>
+
+    <!-- lens pointer -->
+    <div class="lensbar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>
+      <span>The tools that <b>enforce and verify</b> a <b>Component's</b> control obligations in this boundary &mdash; each tool discharges the requirements of the Components in scope and produces their evidence. Inventory reality. A control with <b>no enforcing tool</b>, or a tool that isn't actively checking, is an <b>ineffective-control finding</b> measured in the project readiness lens.</span>
+      <a href="projects-cmmc-readiness.html">Tool-coverage control &amp; findings in project <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg></a>
+    </div>
+
+    <div class="statrow">
+      <div class="stat"><div class="sv" id="kTools">11</div><div class="sl">tools inventoried</div></div>
+      <div class="stat"><div class="sv" id="kEnforce">4</div><div class="sl">config-enforcement</div></div>
+      <div class="stat"><div class="sv" id="kScan">5</div><div class="sl">scanners / generators</div></div>
+      <div class="stat"><div class="sv" id="kCov">38</div><div class="sl">of 42 assets covered</div></div>
+      <div class="stat"><div class="sv warn" id="kGap">4</div><div class="sl">assets with no enforcing tool</div></div>
+    </div>
+
+    <div class="toolbar">
+      <span class="selbox"><span class="lb">Category:</span> All <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="selbox"><span class="lb">Standard:</span> All <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Search tools&hellip;</span>
+      <span class="spacer"></span>
+      <button class="addbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Register tool</button>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:19%;">Tool</th>
+            <th style="width:14%;">Category</th>
+            <th style="width:22%;">Enforces / checks</th>
+            <th style="width:14%;">Standards</th>
+            <th class="num" style="width:9%;">Coverage</th>
+            <th style="width:11%;">License</th>
+            <th style="width:9%;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"><!-- rendered --></tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <span>Rows per page: 11</span>
+      <span>1&ndash;11 of 11</span>
+      <span class="pg">
+        <span class="pbtn dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+        <span class="pbtn dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>
+      </span>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const ICON = {
+      enforce:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4l-5 5A2 2 0 0 0 7 20l5-5a4 4 0 0 0 5.4-5.4l-2 2-2.1-2.1z"/></svg>',
+      scan:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+      sbom:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>',
+      cloud:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-11.6-1.5A4 4 0 0 0 6.5 19z"/></svg>',
+      monitor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>'
+    };
+    const CATLBL = { enforce:'Config enforcement', scan:'Benchmark scanner', sbom:'SBOM generator', cloud:'Cloud posture', monitor:'Drift monitor' };
+    const ROWS = [
+      {name:'Ansible',        maker:'Red Hat',        cat:'enforce', does:'Applies + corrects STIG/CIS hardening', sub:'playbook enforcement, drift correction', stds:['DISA STIG','CIS'], cov:24, lic:'GPL-3.0',   st:'ok'},
+      {name:'Terraform',      maker:'HashiCorp',      cat:'enforce', does:'Provisions + enforces baseline config', sub:'IaC guardrails', stds:['CIS AWS'], cov:12, lic:'BSL-1.1', paid:true, st:'ok'},
+      {name:'Puppet',         maker:'Perforce',       cat:'enforce', does:'Enforces config state, corrects drift', sub:'declarative config', stds:['CIS'], cov:6, lic:'Apache-2.0', st:'ok'},
+      {name:'Chef',           maker:'Progress',       cat:'enforce', does:'Applies hardening cookbooks', sub:'convergence runs', stds:['DISA STIG'], cov:4, lic:'Apache-2.0', st:'ok'},
+      {name:'OpenSCAP',       maker:'Red Hat',        cat:'scan',    does:'Scans STIG/CIS rules, emits ValidationReport', sub:'SCAP content v2026.05', stds:['DISA STIG','CIS'], cov:22, lic:'LGPL-2.1', st:'ok'},
+      {name:'Aqua Trivy',     maker:'Aqua Security',  cat:'scan',    does:'Vuln scan + SBOM generation', sub:'image + fs scan', stds:['SPDX','CycloneDX'], cov:18, lic:'Apache-2.0', st:'ok'},
+      {name:'Anchore Syft',   maker:'Anchore',        cat:'sbom',    does:'Emits CycloneDX SBOM on spin-up', sub:'instance provenance', stds:['CycloneDX'], cov:20, lic:'Apache-2.0', st:'ok'},
+      {name:'Prowler',        maker:'Prowler Inc.',   cat:'cloud',   does:'Checks AWS posture against SBP/CIS', sub:'cloud config audit', stds:['AWS SBP','CIS AWS'], cov:9, lic:'Apache-2.0', st:'ok'},
+      {name:'Datadog CSM',    maker:'Datadog',        cat:'monitor', does:'Continuous config-drift + posture', sub:'agent-based, real-time', stds:['CIS'], cov:15, lic:'proprietary', paid:true, st:'ok'},
+      {name:'AIDE',           maker:'GNU',            cat:'scan',    does:'File-integrity checks', sub:'baseline DB compare', stds:['DISA STIG'], cov:8, lic:'GPL-2.0', st:'ok'},
+      {name:'Falco',          maker:'Sysdig',         cat:'monitor', does:'Runtime threat detection', sub:'last run 9d ago', stds:['runtime rules'], cov:7, lic:'Apache-2.0', st:'stale'}
+    ];
+    const tbody = document.getElementById('tbody');
+    let html = '';
+    ROWS.forEach(r => {
+      html += `<tr class="${r.st==='stale'?'stale':''}">`
+        + `<td><div class="namecell"><span class="tico">${ICON[r.cat]}</span>`
+        +   `<div class="nm"><span class="n1">${r.name}</span><span class="n2">${r.maker}</span></div></div></td>`
+        + `<td><span class="catchip ${r.cat}">${CATLBL[r.cat]}</span></td>`
+        + `<td><span class="enf">${r.does}<span class="sub">${r.sub}</span></span></td>`
+        + `<td><span class="stds">${r.stds.map(s=>`<span class="stdchip">${s}</span>`).join('')}</span></td>`
+        + `<td class="cov">${r.cov} <span class="u">asset${r.cov===1?'':'s'}</span></td>`
+        + `<td><span class="licbadge${r.paid?' paid':''}">${r.lic}</span></td>`
+        + `<td><span class="stpill ${r.st}"><span class="d"></span>${r.st==='ok'?'Checking':'Stale'}</span></td>`
+        + `</tr>`;
+    });
+    tbody.innerHTML = html;
+  })();
+  </script>
+
+</body>
+</html>
