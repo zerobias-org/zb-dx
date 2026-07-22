@@ -8,6 +8,58 @@ visual-explainer skill (dark theme · 16px font floor · Mermaid resize+fullscre
 editing the `.md`, mirror the change into the `.html` and log both here so the handoff
 history is clear for 3P devs and future sessions.
 
+## 2026-07-21 — Correction: `satisfied_by` (snake_case) and it is DELIVERED, not planned
+
+**Two factual errors corrected in `transparency-architecture.md` (+ `README.md`).** Both were
+prod-verified 2026-07-20 before changing the docs.
+
+1. **Spelling — the reverse predicate is `satisfied_by`, not `satisfiedBy`.** The doc used the
+   camelCase form in the §8 heading and prose, §5.2, the ASCII boundary diagram, the open-items
+   list, and the glossary line about paired types — while the §5.2 link-type *table* and the
+   glossary entry already had `satisfied_by` correct. So the doc contradicted itself and the
+   wrong form was the more prominent one. Link-type predicates render via the UI `snakeToSpaces`
+   pipe, so snake_case is the house convention (`engaged_by`, `governed_by`, `dependency_of`) —
+   already documented in `SYNC-RECIPE.md`.
+
+2. **Status — `[PLANNED]` → `[EXISTS]`.** §8 said "these link types are proposed, not yet in the
+   link-type registry. Verify before use," and the `[TBD] / open` list carried "Need Nic to
+   register them (per env)" as item 3. Both are stale. Live on prod:
+   `tasksatisfiestask`, id `182d7fd6-6f3e-11f1-866f-7f0be032d30e`, `task -> task`,
+   `multi: true`, `inherit: false` — same id batch as `governs` (`182d7b8a-…`), so it shipped in
+   the ~2026-06-19 wave with the other RL-001 types. Item 3 removed from the open list (remaining
+   items renumbered 3–7) with a resolved-note pointing at §8.
+
+**Why it mattered:** a 3P dev reading this doc would have coded `satisfiedBy` against a predicate
+that does not exist, and would have treated a shipped capability as unavailable. Verified against
+prod via `linkTypeSearch` rather than from the doc's own claims.
+
+**Not touched:** `boundary-project-mocks/fixtures/cmmc-instances.json` also contains `satisfiedBy`,
+but that is a **mock fixture field name** (which boundary satisfies a thread leaf) — unrelated to
+the ResourceLink predicate. Left as-is deliberately.
+
+**✅ `.html` MIRRORED 2026-07-21** (was outstanding — see the note that previously stood here).
+Seven surgical edits, no regeneration: the four `satisfiedBy` → `satisfied_by` occurrences (the
+TAB-3 Mermaid entangled-pair edge label, the multi-party `mm-cap`, the ResourceLink glossary
+`<dd>`, and the JS glossary object key — the key was renamed so the click-to-define lookup still
+resolves); the §8 "Naming change" note reworded from "the current proposal is" to delivered, with
+the prod-verified id; and the open-items bullet flipped `chip planned` → `chip exists` with a
+RESOLVED note. `satisfiedBy` and "pending registration" now both appear **zero** times.
+
+**Chose a surgical mirror over regeneration deliberately.** The README says regenerate and do not
+hand-edit; the standing risk that rule guards against is `.md`/`.html` drift, which a five-string
+correction does not create. Regenerating would rebuild ~100KB of hand-tuned interactive scaffolding
+(4 tabs, click-to-filter status chips, scroll-spy TOC, copyable RDF compass) to change five strings.
+The 2026-06-01 entry below set the precedent — "mirrored surgically (structure/tabs/RDF/scroll-spy
+preserved)". Verified after editing: `<div>`/`</div>` 155/155, `<script>` 2/2, `class="tab` 9/9,
+mermaid refs 32/32, all unchanged from the pre-edit file; 14 changed lines total.
+
+**Caught during the edit:** the id was first written as `182d7f5f-…` from recall and corrected to
+`182d7fd6-6f3e-11f1-866f-7f0be032d30e` against the `.md`. Anyone re-verifying should read the id
+from the `.md`, not from memory or from an older HTML build.
+
+**Prior note, now resolved:** the `.html` was left as the 2026-07-03 build, disagreeing with the
+`.md` on both points above, and was carried as outstanding until the mirror described here.
+
 ## 2026-07-03 — New: Continuous Assessment (Boundary Manager × Projects) model
 
 **Directional heads-up — not hard architecture facts.** Read this as a snapshot of the direction
