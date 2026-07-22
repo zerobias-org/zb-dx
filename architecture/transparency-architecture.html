@@ -626,7 +626,7 @@ flowchart TB
       </div>
     </div>
 
-    <div class="note info"><span class="nt">Naming change: <code>twin_of</code> &rarr; <code>satisfies</code> / <code>satisfied_by</code></span>The old handoff used a single symmetric <code>twin_of</code> link. The current proposal is a <strong>directed pair</strong> of Task&harr;Task ResourceLinkTypes &mdash; the supply task <code>satisfies</code> the demand task; the demand task is <code>satisfied_by</code> the supply task &mdash; marking an entangled <strong>Requirement&harr;Satisfaction</strong> pair. Decided on task-13 (cleared to build), task&harr;task; the project&rarr;project trio (<code>governs</code>/<code>engages</code>/<code>depends_on</code>) is <strong>LIVE on CI 2026-06-19</strong> while satisfies is pending registration.</div>
+    <div class="note info"><span class="nt">Naming change: <code>twin_of</code> &rarr; <code>satisfies</code> / <code>satisfied_by</code></span>The old handoff used a single symmetric <code>twin_of</code> link. This is a <strong>directed pair</strong> of Task&harr;Task ResourceLinkTypes &mdash; the supply task <code>satisfies</code> the demand task; the demand task is <code>satisfied_by</code> the supply task &mdash; marking an entangled <strong>Requirement&harr;Satisfaction</strong> pair. Decided on task-13, task&harr;task. <strong>Both are LIVE on prod</strong> &mdash; <code>tasksatisfiestask</code>, id <code>182d7fd6-6f3e-11f1-866f-7f0be032d30e</code>, <code>task -&gt; task</code>, <code>multi: true</code>, <code>inherit: false</code>, verified 2026-07-20. Same id batch as <code>governs</code>, so it shipped in the ~2026-06-19 RL-001 wave alongside the project&rarr;project trio (<code>governs</code>/<code>engages</code>/<code>depends_on</code>).</div>
 
     <section>
       <h2>The multi-org, multi-project scenario &mdash; HIS &harr; Goshen &harr; ArmorStack</h2>
@@ -677,7 +677,7 @@ flowchart LR
           </div>
         </div>
       </div>
-      <div class="mm-cap">A single supply task (#3309) <code>satisfies</code> both an auditor REQ (#A101) and the buyer's own REQ (#8422) &mdash; one piece of evidence answering many parties. Only <code>satisfies</code>/<code>satisfiedBy</code> crosses the commercial boundary.</div>
+      <div class="mm-cap">A single supply task (#3309) <code>satisfies</code> both an auditor REQ (#A101) and the buyer's own REQ (#8422) &mdash; one piece of evidence answering many parties. Only <code>satisfies</code>/<code>satisfied_by</code> crosses the commercial boundary.</div>
 
       <h3>The mechanics</h3>
       <ul>
@@ -726,7 +726,7 @@ flowchart TB
     DT["DEMAND-HALF TASK (1/2)<br/>private state · boundary mgr gates<br/>'Need access-control evidence'"]
     ST["SUPPLY-HALF TASK (2/2)<br/>private state · boundary mgr gates<br/>'Access-control policy v2.1 + evidence'"]
   end
-  DT <-->|"entangled (satisfies / satisfiedBy)<br/>paired by Requirement id"| ST
+  DT <-->|"entangled (satisfies / satisfied_by)<br/>paired by Requirement id"| ST
   AP{{"acceptance_primitive<br/>= conjunction (default)<br/>= measurement operator"}}
   DT --> AP
   ST --> AP
@@ -1002,7 +1002,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
       <ul>
         <li><span class="chip tbd">TBD</span> <strong>Hierarchy level-matching enforcement</strong> &mdash; how is "both sides mirror tier names" enforced in schema for entanglement?</li>
         <li><span class="chip planned">PLANNED</span> <strong>Board Settings</strong> &mdash; custom fields + per-Board activity scoping designed-not-built; RACI-in-Board uncertain.</li>
-        <li><span class="chip planned">PLANNED</span> <strong><code>satisfies</code> / <code>satisfied_by</code> link types</strong> &mdash; decided on task-13 (task&harr;task); the project&rarr;project trio <code>governs</code>/<code>engages</code>/<code>depends_on</code> is <strong>LIVE on CI 2026-06-19</strong>; satisfies pending registration.</li>
+        <li><span class="chip exists">EXISTS</span> <strong><code>satisfies</code> / <code>satisfied_by</code> link types</strong> &mdash; <strong>RESOLVED 2026-07-20.</strong> Registered and live on prod (<code>tasksatisfiestask</code>, <code>182d7fd6-6f3e-11f1-866f-7f0be032d30e</code>); shipped in the same RL-001 wave as the project&rarr;project trio <code>governs</code>/<code>engages</code>/<code>depends_on</code>. See &sect;8.</li>
         <li><span class="chip planned">PLANNED</span> <strong>Requirement / Assessment / Record entities</strong> &mdash; agreed in narrative, not yet in AuditgraphDB.</li>
         <li><span class="chip planned">PLANNED</span> <strong>Transparency Center surface + Multi-Protocol Gateway</strong> &mdash; publication/query layer + RDF endpoint, platform-team scope.</li>
         <li><span class="chip tbd">TBD</span> <strong>System / Hologram vocabulary adoption</strong> &mdash; schema-of-record entities vs. narrative-only? (BACKLOG-110)</li>
@@ -1059,7 +1059,7 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
           <dt>Task</dt><dd>Atomic unit; owned by <em>exactly one Board</em>; RACI fields take Party UUIDs.</dd>
           <dt>Sub-Task</dt><dd>A Task whose parent is another Task.</dd>
           <dt>Tag</dt><dd>hydra filter, no scope. Use <code>tagType: "marketplace"</code> for new SME Mart tags.</dd>
-          <dt>ResourceLink</dt><dd>Typed link (cross-engagement / lateral). <code>linkResources</code> stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, planned <code>satisfies</code> &harr; <code>satisfiedBy</code>) call twice to materialize both partner rows.</dd>
+          <dt>ResourceLink</dt><dd>Typed link (cross-engagement / lateral). <code>linkResources</code> stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, <code>satisfies</code> &harr; <code>satisfied_by</code>) call twice to materialize both partner rows.</dd>
           <dt><code>satisfies</code> / <code>satisfied_by</code></dt><dd>Directed Task&harr;Task link for the entangled Req&harr;Sat pair (replaces <code>twin_of</code>). Registered on task-13; task&rarr;requirement traceability flavor stays on task-29.</dd>
           <dt>Requirement</dt><dd>The contract: demand-half + supply-half task. <em>(OWL class + SHACL NodeShape.)</em> <span class="chip planned">PLANNED</span></dd>
           <dt>Assessment</dt><dd>Measurement of satisfaction. <em>(SHACL ValidationReport.)</em> <span class="chip planned">PLANNED</span></dd>
@@ -1330,7 +1330,7 @@ const GLOSSARY = {
   'Multi-Protocol Gateway': 'Acceptance/denial vehicle; RDF content-negotiation across the seam. [PLANNED]',
   'acceptance_primitive': 'conjunction (default) / precedence / disjunction collapse operator. Maps to sh:and / sh:xone / sh:or. [PLANNED]',
   'Transparency Center': 'The shared, opt-in publication surface over entangled task pairs.',
-  'satisfiedBy': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
+  'satisfied_by': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
   'satisfied_by': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
   'satisfies': 'Directed Task→Task link from supply-task to demand-task (replaces twin_of). Registered on task-13 (task->task).',
   'Engagement': 'Commercial relationship between two Parties; an optional node-role, off the containment axis. Mirrored: each org owns its OWN Engagement node, bound to the counterpart by engages/engaged_by (counterparty by-reference). Each node governs its own Project tree via the governs link. (SHACL Profile.)',

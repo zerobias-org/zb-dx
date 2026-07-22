@@ -163,7 +163,7 @@ When you need to associate one unit of work with another, pick the **lightest me
 
 - The platform's typed link primitive (hydra `ResourceLink`). The **`linkResources` endpoint** (`POST /resources/{id}/links`) **creates exactly ONE row** in `hydra.resource_link`. The read path (`listResourceLinksExtended`) queries both columns with OR, so the link is **visible from both endpoints** with a `link_side: 'fromSide' | 'toSide'` discriminator — you do **not** need to call from both sides for read visibility.
 - For **symmetric link types** (e.g., `relates_to`), one call is fully sufficient.
-- For **paired/asymmetric types** (`child_of` ↔ `parent_to`, `blocked_by` ↔ `blocks`, planned `satisfies` ↔ `satisfiedBy`), one call stores ONE row with ONE `link_type` UUID. Whether downstream code expects the partner-type row to also exist is per-consumer: the platform supports inverse-rendering from a single row via `link_type.fromLinkType` / `toLinkType` + the `getLinkTypeByFromToAndFromLinkType` DAO helper, but not every consumer uses it. **Call twice if you need both partner rows materialized.**
+- For **paired/asymmetric types** (`child_of` ↔ `parent_to`, `blocked_by` ↔ `blocks`, `satisfies` ↔ `satisfied_by`), one call stores ONE row with ONE `link_type` UUID. Whether downstream code expects the partner-type row to also exist is per-consumer: the platform supports inverse-rendering from a single row via `link_type.fromLinkType` / `toLinkType` + the `getLinkTypeByFromToAndFromLinkType` DAO helper, but not every consumer uses it. **Call twice if you need both partner rows materialized.**
 - The genuinely one-directional path is the `links[]` array specified inline on `Task.create` — there the reverse link must be added separately.
 
 > *Verified 2026-05-22 against `~/Projects/zb/hydra/dao/sql/hydra/resource/{link,linkResources,listResourceLinksExtended}.sql` (single-INSERT writes, OR-on-both-columns read; no DB triggers mirror writes). Empirical record: memex `memex/zerobias/platform/hydra-resource-links-write-creates-one-row-read-is-bidirectional-via-or-query`.*
@@ -254,17 +254,23 @@ The old handoff put a lot of weight on "Board sits alongside Workspace, polymorp
 
 ---
 
-## 8. The entangled Req⟷Sat task pair — `satisfies` / `satisfiedBy`
+## 8. The entangled Req⟷Sat task pair — `satisfies` / `satisfied_by` **[EXISTS]**
 
 This is the cross-party seam. It replaces the old `twin_of` framing.
 
-> **Naming change:** the old handoff used a single symmetric `twin_of` link. The current proposal is a **directed pair** of Task↔Task ResourceLinkTypes: **`satisfies` / `satisfiedBy`**, marking an entangled **Requirement⟷Satisfaction** task pair. **[PLANNED]** — these link types are proposed, not yet in the link-type registry. Verify before use.
+> **Naming change:** the old handoff used a single symmetric `twin_of` link. This is now a **directed pair** of Task↔Task ResourceLinkTypes: **`satisfies` / `satisfied_by`**, marking an entangled **Requirement⟷Satisfaction** task pair.
+>
+> **⚠ Corrected 2026-07-21 — this section previously said `satisfiedBy` (camelCase) and `[PLANNED]`. Both were wrong:**
+> - **The reverse predicate is `satisfied_by` (snake_case)**, not `satisfiedBy`. Link-type predicates render through the UI `snakeToSpaces` pipe, so snake_case is the convention across the board (`engaged_by`, `governed_by`, `dependency_of`). See `SYNC-RECIPE.md`.
+> - **It is DELIVERED, not proposed.** Prod-verified 2026-07-20: `tasksatisfiestask`, id `182d7fd6-6f3e-11f1-866f-7f0be032d30e`, `task -> task`, `multi: true`, `inherit: false`. Same id batch as `governs` (`182d7b8a-…`), so it shipped in the ~2026-06-19 wave alongside the other RL-001 types.
+>
+> IDs are environment-specific — resolve by predicate string via `linkTypeSearch`; do not hardcode across envs.
 
 ### 8.1 The model
 
 - A **demand-half task** (the Requirement, "1 of 2") on the demand side states what's needed.
 - A **supply-half task** (the Satisfaction/Acceptance, "2 of 2") on the supply side answers it.
-- They are linked: the supply task **`satisfies`** the demand task; the demand task is **`satisfiedBy`** the supply task.
+- They are linked: the supply task **`satisfies`** the demand task; the demand task is **`satisfied_by`** the supply task.
 - This is the **only** link type that legitimately crosses the commercial (Engagement) boundary. Each task is still single-owned by its own Board on its own side; neither owns the other.
 
 ### 8.2 Many-to-one
@@ -311,7 +317,7 @@ This is the centerpiece. The reference scenario (carried from the original hando
  │   HIS ⟷ ModelAudit (3PAO)               │     │   SAT "Model lineage manifest" #3411│
  │   REQ "Review model lineage"   #M202 ───┼─────┼─▶ satisfies #3411                   │
  └───────────────────────────────────────┘     └──────────────────────────────────┘
-        commercial boundary (Engagement)  ← only `satisfies`/`satisfiedBy` crosses →
+        commercial boundary (Engagement)  ← only `satisfies`/`satisfied_by` crosses →
 ```
 
 **The mechanics:**
@@ -470,12 +476,13 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 
 1. **Hierarchy level-matching enforcement** — how is "both sides must mirror tier names" enforced in schema for entanglement? (per-link level marker vs. position+name validation)
 2. **Board Settings** — custom fields + per-Board activity scoping are designed-not-built. RACI-in-Board is uncertain.
-3. **`satisfies` / `satisfiedBy` link types** — proposed, not yet in the link-type registry. Need Nic to register them (per env).
-4. **Requirement / Assessment / Record entities** — agreed in narrative, not yet in the AuditgraphDB schema.
-5. **Transparency Center surface + Multi-Protocol Gateway** — the publication/query layer and the RDF content-negotiation endpoint are platform-team scope, not yet built.
-6. **System / Hologram vocabulary adoption** — schema-of-record entities vs. narrative-only language? (Brian/Kevin/Nic decision; BACKLOG-110)
-7. **Per-engagement SHACL profile versioning** — does the platform support it today, or is it a platform-team gap? (compass C-5)
-8. **PROV-O on Records** — when do ZB Records gain PROV-O attribution surfaces?
+3. **Requirement / Assessment / Record entities** — agreed in narrative, not yet in the AuditgraphDB schema.
+4. **Transparency Center surface + Multi-Protocol Gateway** — the publication/query layer and the RDF content-negotiation endpoint are platform-team scope, not yet built.
+5. **System / Hologram vocabulary adoption** — schema-of-record entities vs. narrative-only language? (Brian/Kevin/Nic decision; BACKLOG-110)
+6. **Per-engagement SHACL profile versioning** — does the platform support it today, or is it a platform-team gap? (compass C-5)
+7. **PROV-O on Records** — when do ZB Records gain PROV-O attribution surfaces?
+
+*(Resolved 2026-07-21: `satisfies` / `satisfied_by` was item 3 here as "proposed, needs Nic to register." It is registered and live — see §8.)*
 9. **JSONL/RDF container shape** — Brian's "final deliverable" references JSONL/RDF; is it JSONL-of-quads, JSON-LD, TriG? Pending platform spec.
 10. **OSCAL → SHACL binding** — a spike, likely Kevin/Nic/external; the path to a real (not metaphorical) STIG/SOC2 Hologram.
 11. **3P app boundary of responsibility** — exactly what each of SME Mart / Readiness Center / Work Worlds uniquely renders vs. shares is unsettled (BACKLOG #095 convergence sync).
@@ -494,7 +501,7 @@ Any design that touches Engagement / Project / Task / Vetting / Record shapes MU
 - **Task** — atomic unit; owned by one Board; RACI via Party UUIDs.
 - **Sub-Task** — Task owned by another Task.
 - **Tag** — hydra filter, no scope (`tagType: marketplace`).
-- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, planned `satisfies` ↔ `satisfiedBy`) call twice if you need both partner rows materialized.
+- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, `satisfies` ↔ `satisfied_by`) call twice if you need both partner rows materialized.
 - **`satisfies` / `satisfied_by`** — directed **Task→Task** link for the entangled Req⟷Sat pair (replaces `twin_of`). Registered on task-13 (cross-party task-entanglement seam); the task/project→requirement traceability flavor stays parked on task-29.
 - **Requirement** — the contract: demand-half + supply-half task. *(OWL class + SHACL NodeShape.)* [PLANNED]
 - **Assessment** — measurement of satisfaction. *(SHACL ValidationReport.)* [PLANNED]
