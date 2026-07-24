@@ -71,6 +71,21 @@ A living list of tools, patterns, guides, skills, and notes that could improve t
 - [ ] **VS Code snippets** for common SDK patterns
 - [ ] **Debug dashboards** — Grafana/Lightstep links + what to watch
 - [ ] **Friction → Pattern promotion log** — track which friction entries graduated to patterns
+- [ ] **`zb-sdk-explorer` — a browsable, deployed SDK type/API reference (the "Dev Toolkit" the README points at).** A micro-site where a dev navigates every SDK surface — API methods, request/response classes, models, enums, generics — cross-linked so you click a method → its response type → each field's type. Grew out of the `example-nextjs-v2` 0.4.0 "response type shape" popover (names the response class, e.g. `ProjectExtended`, and copies the real shape) — the explorer is that idea taken SDK-wide.
+
+  **Data source (already exists, anti-rot):** the SDK packages ship complete `.d.ts` (methods, classes, enums, optionality, unions) AND every OpenAPI-generated model carries a runtime `static attributeTypeMap`. Extract from the installed `node_modules/@zerobias-com/*-sdk` at build time — never hand-authored, so it can't drift from the shipped SDK.
+
+  **Build pipeline (recommended):** `typedoc` + **`typedoc-plugin-markdown`** → Markdown → **Hugo** → static site. TypeDoc does the hard parsing; Markdown is the neutral hand-off; Hugo gives full branding/layout control AND lets generated reference co-live with hand-written narrative. (Raw TypeDoc + custom CSS is the fast path; a bespoke React explorer is only worth it for interactivity a static site can't do — probably unnecessary.)
+
+  **Where it lives / how it deploys:** a **sibling app in `zerobias-org/app`** (`package/zerobias/zb-sdk-explorer/`), NOT bolted onto this content repo. Reuses the monorepo's existing S3 pipeline unchanged — CI runs `.nvmrc → npm ci → npm run build → aws s3 sync dist/`, and `dispatch.yml` auto-detects the new package dir. Make `npm run build` = `typedoc(-markdown) && hugo --destination dist`, with **Hugo as a devDependency** (`hugo-bin`/`hugo-extended` npm wrapper) so `npm ci` installs it and the shared CI action needs zero changes. `baseURL`/basePath `/zb-sdk-explorer`; SDKs declared as deps so TypeDoc reads their `.d.ts`.
+
+  **Gating:** reuse the example apps' `AuthGate` / platform-SSO so it isn't publicly crawlable. Note this is access-control/brand, NOT type-secrecy — the `.d.ts` already ship in the npm packages any authenticated dev installs.
+
+  **zb-dx integration:** zb-dx stays the raw content repo; the explorer app INGESTS its markdown (patterns/guides) at build time so reference + narrative land in one deployed site.
+
+  **KB-article integration (Clark, 2026-07-23) — the trickier piece:** the **KB repo** (`zb/auditlogic/kb`) already publishes via **Hugo → CDN**, so the explorer's build could pull in / deep-link relevant KB articles per SDK surface (e.g. a method's page linking the KB how-to for that API). Two integration shapes: (a) **link out** to KB articles — cheap, but (b) **inline/embed** KB content is harder because the **`kbViewer`** (`zb/auditmation/kbViewer`) requires **auth headers** to fetch article content — so embedding KB bodies into a static Hugo build (or a gated SPA) needs the auth story worked out (server-side fetch at build time with a service token? client-side fetch through the same session the explorer is gated by?). Start with **links-out**, treat **inline KB embedding as a follow-up** once the auth path is settled.
+
+  Cross-ref: `example-nextjs-v2` 0.4.0 `TypeShapePopover` + `scripts/extract-response-shapes.mjs` (the working seed of the extraction approach).
 
 ## Patterns to Study: Multica
 
