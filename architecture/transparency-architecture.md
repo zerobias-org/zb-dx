@@ -2,7 +2,7 @@
 status: draft
 author: clark
 app: general
-updated: 2026-05-22
+updated: 2026-08-12
 ---
 
 # ZeroBias Transparency Architecture — 3P Developer Handoff
@@ -39,6 +39,20 @@ This document describes a system that is **partly shipped, partly planned, partl
 
 Do not treat a **[PLANNED]** or **[TBD]** construct as callable. Verify any specific API/field claim against ZB MCP (`zerobias_search` / `zerobias_describe`) before coding — memory and handoffs are point-in-time.
 
+### 1.1 ⚠ CHURN WINDOW — the platform and boundary-specific APIs are being refactored right now
+
+**The backend is deep in a refactor of the platform API and the boundary-specific APIs. Expect this surface to churn for the next few weeks.** (Clark, 2026-08-12.)
+
+**What that means for you, concretely:**
+
+- **An API that exists today may move, be renamed, or disappear in the next SDK release.** This is not deprecation-with-notice; it is in-flight refactoring. It has already happened once at scale — see §2.1.
+- **Do not build a hard dependency on any single platform endpoint** until the refactor settles, and do not treat "it is in the SDK I installed" as a durable contract. Pin your SDK version deliberately and read the diff before you bump.
+- **`[EXISTS]` in this document means "shipped and verifiable when last checked," not "stable."** During the churn window, treat `[EXISTS]` as *verify before coding*, exactly as you would `[PLANNED]` — the difference is only that the verification is likely to succeed.
+- **The model layer is the stable part.** Engagement, Project, Task, ResourceLinks, the entangled-pair structure (§8) and the RDF compass (§11) are the substrate this document exists to describe, and they are not what is churning. The churn is in the *API shape* over that model.
+- **If something you depend on vanishes, raise it rather than working around it.** A workaround built during a refactor usually has to be removed again.
+
+This banner comes off when the refactor lands. If you are reading it long after 2026-08-12 and nothing else in this doc has changed, check with Clark before trusting the date.
+
 ---
 
 ## 2. The platform ↔ 3P-app relationship
@@ -74,6 +88,37 @@ Do not treat a **[PLANNED]** or **[TBD]** construct as callable. Verify any spec
 - **Records / audit trail** — the hash-chained Record stream is app-agnostic; it's produced by the platform, not any one UI.
 
 **[TBD]** The exact division of "what each app uniquely renders" vs. "what's shared chrome" is not settled. The convergence sync (Joe + Dan + Clark) is the forum for that. The non-negotiable: **same entities underneath, regardless of UI**.
+
+### 2.1 The SDK and client surface you consume — state as of 2026-08-12
+
+Read this together with the churn warning in §1.1. Versions below were read from the published npm packages.
+
+| Package | Version | What changed since 2026-07-21 |
+|---|---|---|
+| `@zerobias-com/zerobias-client` | **2.0.24** | **Nothing functional.** Nine releases, all dependency bumps — no type or API change in the package at all. |
+| `@zerobias-com/zerobias-angular-client` | **2.0.24** | Same — version churn only. |
+| `@zerobias-com/platform-sdk` | **2.0.19** | Substantial, both directions. See below. |
+| `@zerobias-com/hydra-sdk` | **2.0.9** | New developer-settings surface: `UserDevSettings`, `UserDevSettingsCredentials`, `UserDevSettingsField`, `SaveUserDevSettingsBody`, `GithubOrgAccess`, `SshKeyPair`. `UserApi`, `ResourceApi`, `ApiKey`/`ApiKeyWithData` and `ResourceSearchFilter` all changed. |
+| `@zerobias-com/zerobias-sdk` | **2.0.20** | Aggregator — tracks the above. |
+| `@zerobias-com/zerobias-mcp` | **2.0.21** | Credential-profile values now accept `${VAR_NAME}` env references, resolved from `process.env` at load and **never persisted back**; an unset variable fails as `MISSING_ENV_VAR` naming profile/field/variable. `meta.status` reports the *resolved* URL. |
+
+**`platform-sdk` additions — the model axes this document describes are now typed:**
+
+- **2.0.15** (07-28) — `ProjectLifecycle`
+- **2.0.16** (07-29) — `ProjectType`, `ProjectContextTree` / `ProjectContextTreeNode` / `ProjectContextTreeView` / `ProjectContextOption`
+- **2.0.19** (08-12) — `TaskRequirement` / `TaskRequirements`, `ActivityCustomField`, `ProducingActivity`, `IdNameCodeStatusObject`, `PipelineJobAttemptGroup`, `EvidenceDefinitionWithTags`
+
+See §4.5 for the Project axes and §10 for `TaskRequirement`.
+
+**⚠ `platform-sdk` removals — the SCF / control-authoring surface is GONE.** In **2.0.13** (published 2026-07-23) the SDK went from 54 APIs / 1038 models to **48 / 923** in a single release. Removed outright, with **no replacement API added**:
+
+`FrameworkApi` (18 methods — the framework/SCF catalog reads: `listFrameworks`, `getFrameworkElement`, `getScfControl`, `scfSearch`, …) · `InternalControlApi` (21) · `ImplementationStatementApi` (19) · `ControlActivityApi` (8) · `InternalDomainApi` (2) · `SuggestedActivityApi` (2)
+
+**This is confirmed at the source, not inferred from the SDK.** Platform commit `23d27bce` (2026-07-17), *"remove all SCF usage from hydra changes"* — 98 files, **-16,533 lines** — deleted the specs for all six, deleted the `BoundaryScfControl` / `BoundaryTeamScfControl` schema family, and rewrote `boundary.yml` (779 lines). **The endpoints are gone from the platform API, not merely absent from the generated SDK.**
+
+**What survived:** the compliance domain was *not* removed. `EvidenceDefinitionApi`, `EvidenceRequestApi`, `ComponentEvidenceApi`, `ComplianceFeatureApi`, `StandardApi`, `CrosswalkApi`, `BenchmarkApi`, `AuditApi` and `FindingApi` are all still present. What went is specifically the framework/SCF **catalog-read** layer and the control-authoring / implementation-statement / control-RACI layer.
+
+**This lands hardest on Readiness Center.** If you were calling any of the six, you are broken now, and the fix is a conversation with the backend rather than a workaround — see §1.1.
 
 ---
 
@@ -136,10 +181,28 @@ Engagement                          [FIXED]   — commercial seam, outermost bou
 
 Brian: *"Both side of project must have this same level shit / names. Both side Transparency."* For two parties to entangle tasks (§8) at a given tier, **both sides must mirror the same tier structure and names** at that level. Mismatch = no entanglement at that level. Each tier carries a **per-level publish toggle** — a level may opt out of transparency entirely while siblings publish. **[TBD]** how level-matching is enforced in schema (likely a position-in-template + name marker validated at link-write time).
 
-### 4.5 Project type / lifecycle flips **[PLANNED]**
+### 4.5 Project type / lifecycle **[EXISTS]** — and types are IMMUTABLE
 
-- **Pilot ⟷ Production flip** — same Project entity; a type discriminator flips on graduation, preserving history/links/sub-projects/tasks. New ZB signups land in pilot type.
-- These are discriminator flips on the *same* entity, not migrations to a new entity. Designs must keep the entity stable across the flip.
+> **⚠ Corrected 2026-08-12. This section previously described a "Pilot ⟷ Production flip" on the same entity, chipped `[PLANNED]`. Both halves were wrong: the axes shipped, and the flip was explicitly ruled out. If you designed against the old text, re-read this.**
+
+**Both axes are shipped types in `@zerobias-com/platform-sdk` (read from the published package, not from a spec):**
+
+- **`ProjectType`** (the *species* axis) — `Standard · Program · Phase · Assessment · Engagement · Rfp · Pilot`. Landed in **2.0.16** (2026-07-29).
+- **`ProjectLifecycle`** (the *term* axis) — `FixedTerm · Evergreen`. Landed in **2.0.15** (2026-07-28).
+
+The two are **orthogonal**: term is a property of a node, not of its species, so a perpetual tree can nest fixed-term layers.
+
+**🔒 `ProjectType` is required, immutable, and set at creation — platform-extensible only.** That is the shipped contract's own wording, not a local convention. Customers cannot mint species.
+
+**So graduation is CONVERT-AND-LINK, never a re-type.** Pilot → production **mints a NEW project** with the target species and writes a lineage pointer (`promotedProjectId`) onto the pilot. **The pilot persists as an immutable origination record.** Same lineage, different entity — that distinction is the whole rule.
+
+> **Precision on the pointer:** `promotedProjectId` is written by the *app* (verified in `zb-org-app`'s `promoteToProject()`, which is create-new-never-mutate). It is **not** a field on the shipped `platform.Project` model — do not look for it in `Project.d.ts`. The shipped model carries `projectType`, `lifecycle`, and `projectContextId`; the lineage pointer rides above that. If you need lineage as a platform-level guarantee rather than an app convention, raise it.
+
+**What this means for your design:**
+
+- **Never build a "promote" path that mutates `projectType` in place.** There is no in-place conversion, and a migration path between types may land later but does not exist today. Do not invent one.
+- **Cost a graduation as a new entity + a lineage pointer** (plus whatever must be carried or re-pointed), not as a cheap discriminator write. This is the estimate that most often comes in wrong.
+- **Follow the lineage pointer, not the identity,** when you need a project's history across a graduation.
 
 ---
 
@@ -355,6 +418,12 @@ Brian's 2026-05-07 reframe: *"REQUIREMENT is the contract."* The platform gains 
 | **Record** | Hash-chained, append-only memory of every exchange touching a Requirement — end-to-end data + scripts. *"The memory system is the RECORD, full hash too."* Replaces "legibility record." | RDF + **PROV-O** |
 
 Plus **one new field** (`acceptance_primitive` on Requirement) and **one definitional addition** (the word "contract" enters the definition of Requirement). **Zero entity renames** — Engagement, Party, Boundary, RACI all stay.
+
+> **📌 UPDATE 2026-08-12 — the Requirement half is no longer entirely planned.** `@zerobias-com/platform-sdk` **2.0.19** ships **`TaskRequirement`** / **`TaskRequirements`**: a requirement carried *on a Task*, with `satisfied: boolean`, `producedBy: ProducingActivity[]`, and `producedByTasks: IdNameCodeStatusObject[]` alongside a custom-field shape (`customFieldType`, `enumeration`, `defaultValue`, `value`, `example`, `quickLink`).
+>
+> **Read that carefully before assuming §10 has landed.** What shipped is a **Task-attached requirement with a satisfaction flag and a producing-task pointer** — which is the §8 entangled-pair idea expressed as typed fields. What has **not** shipped is the standalone three-entity contract model of this section: there is no `Assessment` entity, no `Record` entity, and no `acceptance_primitive`. Those remain **[PLANNED]**.
+>
+> `ActivityCustomField` (same release) is the sibling shape on Activity, carrying `required`.
 
 ### 10.2 The three-layer agreement **[EXISTS as behavior / PLANNED as named invariants]**
 

@@ -373,6 +373,19 @@ h2:hover .anchor-link, h3:hover .anchor-link { opacity: 1; }
   </div>
   <div class="filter-banner" id="filterBanner">Filtering the doc to status: <strong id="filterBannerStatus">&mdash;</strong> &mdash; click the active chip again or "Show all" to clear.</div>
 
+  <div class="note warn" style="margin:18px 0 4px">
+    <span class="nt">&#9888; CHURN WINDOW &mdash; the platform and boundary-specific APIs are being refactored right now</span>
+    <strong>The backend is deep in a refactor of the platform API and the boundary-specific APIs. Expect this surface to churn for the next few weeks.</strong> (Clark, 2026-08-12.)
+    <ul style="margin:10px 0 0 18px">
+      <li><strong>An API that exists today may move, be renamed, or disappear in the next SDK release.</strong> This is not deprecation-with-notice; it is in-flight refactoring &mdash; and it has already happened once at scale (see <em>The SDK and client surface</em> below).</li>
+      <li><strong>Do not build a hard dependency on any single platform endpoint</strong> until the refactor settles, and do not treat "it is in the SDK I installed" as a durable contract. Pin your SDK version deliberately and read the diff before you bump.</li>
+      <li><strong>EXISTS means "shipped and verifiable when last checked," not "stable."</strong> During the churn window treat it as <em>verify before coding</em>, exactly as you would PLANNED &mdash; the difference is only that the verification is likely to succeed.</li>
+      <li><strong>The model layer is the stable part.</strong> Engagement, Project, Task, ResourceLinks, the entangled-pair structure and the RDF compass are the substrate this document describes, and they are not what is churning. The churn is in the <em>API shape</em> over that model.</li>
+      <li><strong>If something you depend on vanishes, raise it rather than working around it.</strong> A workaround built during a refactor usually has to be removed again.</li>
+    </ul>
+    <div style="margin-top:10px">This banner comes off when the refactor lands. If you are reading it long after 2026-08-12 and nothing else here has changed, check with Clark before trusting the date.</div>
+  </div>
+
   <div class="tabs-nav" role="tablist">
     <button class="tab-btn active" data-tab="system" role="tab">1 &middot; The System</button>
     <button class="tab-btn" data-tab="primitives" role="tab">2 &middot; Primitives &amp; Hierarchy</button>
@@ -458,6 +471,44 @@ flowchart TB
     </section>
 
     <section>
+      <h2>The SDK and client surface you consume</h2>
+      <div class="lede">State as of 2026-08-12, read from the published npm packages &mdash; not from a spec. Read this together with the churn warning at the top of the page.</div>
+
+      <div class="tbl-wrap">
+        <table class="map">
+          <thead><tr><th style="width:30%">Package</th><th style="width:12%">Version</th><th>What changed since 2026-07-21</th></tr></thead>
+          <tbody>
+            <tr><td class="k"><code>@zerobias-com/zerobias-client</code></td><td><strong>2.0.24</strong></td><td><strong>Nothing functional.</strong> Nine releases, all dependency bumps &mdash; identical file sets, zero type changes, <code>package.json</code> the only differing file. Stated explicitly so nobody goes hunting for a client change that is not there.</td></tr>
+            <tr><td class="k"><code>@zerobias-com/zerobias-angular-client</code></td><td><strong>2.0.24</strong></td><td>Same &mdash; version churn only.</td></tr>
+            <tr><td class="k"><code>@zerobias-com/platform-sdk</code></td><td><strong>2.0.19</strong></td><td>Substantial, in both directions &mdash; see below.</td></tr>
+            <tr><td class="k"><code>@zerobias-com/hydra-sdk</code></td><td><strong>2.0.9</strong></td><td>New developer-settings surface: <code>UserDevSettings</code>, <code>UserDevSettingsCredentials</code>, <code>UserDevSettingsField</code>, <code>SaveUserDevSettingsBody</code>, <code>GithubOrgAccess</code>, <code>SshKeyPair</code>. <code>UserApi</code>, <code>ResourceApi</code>, <code>ApiKey</code>/<code>ApiKeyWithData</code> and <code>ResourceSearchFilter</code> all changed.</td></tr>
+            <tr><td class="k"><code>@zerobias-com/zerobias-sdk</code></td><td><strong>2.0.20</strong></td><td>Aggregator &mdash; tracks the above.</td></tr>
+            <tr><td class="k"><code>@zerobias-com/zerobias-mcp</code></td><td><strong>2.0.21</strong></td><td>Credential-profile values now accept <code>${VAR_NAME}</code> env references, resolved from <code>process.env</code> at load and <strong>never persisted back</strong>; an unset variable fails as <code>MISSING_ENV_VAR</code> naming profile, field and variable. <code>meta.status</code> reports the <em>resolved</em> URL.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note warn">
+        <span class="nt">&#9940; REMOVED &mdash; the SCF / control-authoring API surface is gone</span>
+        In <strong><code>platform-sdk@2.0.13</code></strong> (published 2026-07-23) the SDK went from <strong>54 APIs / 1038 models to 48 / 923 in a single release</strong>. Removed outright, with <strong>no replacement API added</strong>:
+        <div style="margin:10px 0"><code>FrameworkApi</code> (18 methods &mdash; the framework/SCF catalog reads: <code>listFrameworks</code>, <code>getFrameworkElement</code>, <code>getScfControl</code>, <code>scfSearch</code>, &hellip;) &middot; <code>InternalControlApi</code> (21) &middot; <code>ImplementationStatementApi</code> (19) &middot; <code>ControlActivityApi</code> (8) &middot; <code>InternalDomainApi</code> (2) &middot; <code>SuggestedActivityApi</code> (2)</div>
+        <strong>Confirmed at the source, not inferred from the SDK.</strong> Platform commit <code>23d27bce</code> (2026-07-17), <em>"remove all SCF usage from hydra changes"</em> &mdash; 98 files, <strong>&minus;16,533 lines</strong> &mdash; deleted the specs for all six, deleted the <code>BoundaryScfControl</code> / <code>BoundaryTeamScfControl</code> schema family, and rewrote <code>boundary.yml</code> (779 lines). <strong>The endpoints are gone from the platform API, not merely absent from the generated SDK.</strong>
+        <div style="margin-top:10px"><strong>What survived:</strong> the compliance domain was <em>not</em> removed. <code>EvidenceDefinitionApi</code>, <code>EvidenceRequestApi</code>, <code>ComponentEvidenceApi</code>, <code>ComplianceFeatureApi</code>, <code>StandardApi</code>, <code>CrosswalkApi</code>, <code>BenchmarkApi</code>, <code>AuditApi</code> and <code>FindingApi</code> are all still present. What went is specifically the framework/SCF <em>catalog-read</em> layer and the control-authoring / implementation-statement / control-RACI layer.</div>
+        <div style="margin-top:10px"><strong>This lands hardest on Readiness Center.</strong> If you were calling any of the six you are broken now, and the fix is a conversation with the backend about where the capability re-lands &mdash; not a workaround built mid-refactor.</div>
+      </div>
+
+      <div class="note good">
+        <span class="nt">&#10003; Additions &mdash; the model axes this document describes are now typed</span>
+        <ul style="margin:6px 0 0 18px">
+          <li><strong>2.0.15</strong> (07-28) &mdash; <code>ProjectLifecycle</code>: <code>FixedTerm</code> &middot; <code>Evergreen</code></li>
+          <li><strong>2.0.16</strong> (07-29) &mdash; <code>ProjectType</code>: <code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code>; plus <code>ProjectContextTree</code> / <code>Node</code> / <code>View</code> and <code>ProjectContextOption</code></li>
+          <li><strong>2.0.19</strong> (08-12) &mdash; <code>TaskRequirement</code> / <code>TaskRequirements</code>, <code>ActivityCustomField</code>, <code>ProducingActivity</code>, <code>IdNameCodeStatusObject</code>, <code>PipelineJobAttemptGroup</code>, <code>EvidenceDefinitionWithTags</code></li>
+        </ul>
+        <div style="margin-top:10px">See <strong>Tab&nbsp;2</strong> for the Project axes and <strong>Tab&nbsp;4</strong> for <code>TaskRequirement</code>.</div>
+      </div>
+    </section>
+
+    <section>
       <h2>The Party / Boundary / Engagement frame</h2>
       <p>Three load-bearing platform concepts everything else hangs on.</p>
       <div class="tbl-wrap">
@@ -496,9 +547,17 @@ flowchart TB
             <tr><td class="k">Boundary set</td><td><span class="chip exists">EXISTS</span></td><td>Own boundaries with subset enforcement against parent. A nested Project's primary <code>boundaryId</code> must <strong>match its parent's</strong> (inherit-or-reject). Resource-linked boundaries are unconstrained.</td></tr>
             <tr><td class="k">Membership / RBAC</td><td><span class="chip exists">EXISTS</span></td><td>"Project Scoped Access Rules": <code>addMember</code> / <code>listMembers</code> / <code>removeMember</code> on <code>platform.Project</code>. <strong>This is why roster lives on Project, not Board.</strong></td></tr>
             <tr><td class="k">Default Board</td><td><span class="chip exists">EXISTS</span></td><td>Creating a Project auto-creates a default Kanban Board (see below).</td></tr>
-            <tr><td class="k">Pilot &harr; Production flip</td><td><span class="chip planned">PLANNED</span></td><td>Same entity; a type discriminator flips on graduation, preserving history/links/sub-projects/tasks. New ZB signups land in pilot type.</td></tr>
+            <tr><td class="k"><code>projectType</code> &mdash; the species axis</td><td><span class="chip exists">EXISTS</span></td><td><strong>Required, immutable, single-valued</strong> scalar on <code>platform.Project</code>. Shipped values: <code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code>. Set at creation, platform-extensible only &mdash; customers cannot mint species. Landed in <code>platform-sdk@2.0.16</code>.</td></tr>
+            <tr><td class="k"><code>lifecycle</code> &mdash; the term axis</td><td><span class="chip exists">EXISTS</span></td><td>Required scalar: <code>FixedTerm</code> &middot; <code>Evergreen</code>. <strong>Orthogonal to species</strong> &mdash; term is a property of a node, so a perpetual tree can nest fixed-term layers. Landed in <code>platform-sdk@2.0.15</code>. <strong>Note the value is <code>FixedTerm</code>, not <code>standard</code></strong>; <code>Standard</code> is a <em>projectType</em> value, so a literal <code>'standard'</code> sent as a lifecycle silently never matches.</td></tr>
+            <tr><td class="k">Pilot &rarr; Production graduation</td><td><span class="chip exists">EXISTS</span></td><td><strong>CONVERT-AND-LINK, never a type flip.</strong> Graduation <strong>mints a NEW project</strong> with the target species and writes a lineage pointer (<code>promotedProjectId</code>) onto the pilot; <strong>the pilot persists as an immutable origination record</strong>. Same lineage, different entity. Cost it as a new entity plus a lineage pointer, not a cheap discriminator write &mdash; that is the estimate that most often comes in wrong.</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="note warn">
+        <span class="nt">&#9888; Corrected 2026-08-12 &mdash; this table previously said the opposite</span>
+        The row above used to read <em>"Pilot &harr; Production flip &mdash; same entity; a type discriminator flips on graduation"</em>, chipped PLANNED. <strong>Both halves were wrong:</strong> the axes shipped, and the in-place flip was explicitly ruled out. <strong>Never build a "promote" path that mutates <code>projectType</code>.</strong> A migration path between species may land later; none exists today, and nobody should invent one. If you designed against the old text, re-read this section.
+        <div style="margin-top:10px"><strong>Precision on the pointer:</strong> <code>promotedProjectId</code> is written by the <em>app</em> (verified in <code>zb-org-app</code>'s <code>promoteToProject()</code>, which is create-new-never-mutate). It is <strong>not</strong> a field on the shipped <code>platform.Project</code> model &mdash; do not look for it in <code>Project.d.ts</code>. The shipped model carries <code>projectType</code>, <code>lifecycle</code> and <code>projectContextId</code>; the lineage pointer rides above that.</div>
       </div>
 
       <h3>The hierarchy &mdash; fixed ends, flexible middle</h3>
@@ -780,6 +839,13 @@ flowchart TB
       </div>
       <p>Plus <strong>one new field</strong> (<code>acceptance_primitive</code> on Requirement: <code>conjunction</code> default / <code>precedence</code> / <code>disjunction</code>), <strong>one definitional addition</strong> (the word "contract"), and <strong>zero entity renames</strong>.</p>
 
+      <div class="note info">
+        <span class="nt">&#128204; Update 2026-08-12 &mdash; the Requirement half is no longer entirely planned</span>
+        <code>platform-sdk@2.0.19</code> ships <strong><code>TaskRequirement</code></strong> / <strong><code>TaskRequirements</code></strong>: a requirement carried <em>on a Task</em>, with <code>satisfied: boolean</code>, <code>producedBy: ProducingActivity[]</code> and <code>producedByTasks: IdNameCodeStatusObject[]</code>, alongside a custom-field shape (<code>customFieldType</code>, <code>enumeration</code>, <code>defaultValue</code>, <code>value</code>, <code>example</code>, <code>quickLink</code>).
+        <div style="margin-top:10px"><strong>Read that carefully before assuming this section has landed.</strong> What shipped is a <strong>Task-attached requirement with a satisfaction flag and a producing-task pointer</strong> &mdash; the entangled-pair idea of Tab&nbsp;3 expressed as typed fields. What has <strong>not</strong> shipped is the standalone three-entity model above: there is <strong>no <code>Assessment</code> entity, no <code>Record</code> entity, and no <code>acceptance_primitive</code></strong>. Those remain PLANNED.</div>
+        <div style="margin-top:10px"><code>ActivityCustomField</code> (same release) is the sibling shape on Activity, carrying <code>required</code>.</div>
+      </div>
+
       <h3>The three-layer agreement = SHACL profile inheritance</h3>
       <div class="mermaid-host" id="host-stack">
         <div class="mm-toolbar">
@@ -1037,9 +1103,11 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
 - **Task** — atomic unit; owned by exactly one Board; RACI fields take Party UUIDs.
 - **Sub-Task** — Task owned by another Task.
 - **Tag** — hydra filter, no scope (tagType: marketplace for new SME Mart tags).
-- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, planned `satisfies` ↔ `satisfied_by`) call twice if you need both partner rows materialized.
+- **ResourceLink** — typed link (cross-engagement / lateral). `linkResources` stores ONE row; the read path is OR-on-both-columns so it's visible from both endpoints with a `link_side` discriminator. For paired/asymmetric types (`child_of` ↔ `parent_to`, `satisfies` ↔ `satisfied_by`) call twice if you need both partner rows materialized.
 - **satisfies / satisfied_by** — directed Task→Task link for the entangled Req↔Sat pair (replaces twin_of). Registered on task-13 (cross-party task-entanglement seam); task→requirement traceability flavor stays on task-29.
-- **Requirement** — the contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) [PLANNED]
+- **Requirement** — the contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) PARTLY SHIPPED 2026-08-12 — `platform-sdk@2.0.19` ships `TaskRequirement` (a `satisfied` flag + `producedByTasks`) on a Task; the standalone Requirement entity, Assessment, Record and `acceptance_primitive` remain [PLANNED]
+- **ProjectType** — the species axis on `platform.Project`. Required, immutable, single-valued, set at creation: `Standard` · `Program` · `Phase` · `Assessment` · `Engagement` · `Rfp` · `Pilot`. Platform-extensible only. Graduation is convert-and-link, never a type flip. `platform-sdk@2.0.16` [EXISTS]
+- **ProjectLifecycle** — the term axis on `platform.Project`: `FixedTerm` · `Evergreen`. Orthogonal to species. The value is `FixedTerm`, not `standard` (`Standard` is a projectType value). `platform-sdk@2.0.15` [EXISTS]
 - **Assessment** — measurement of satisfaction. (SHACL ValidationReport.) [PLANNED]
 - **Record** — hash-chained append-only memory. (RDF + PROV-O.) [PLANNED]
 - **acceptance_primitive** — conjunction (default) / precedence / disjunction collapse operator. (sh:and / sh:xone / sh:or.) [PLANNED]
@@ -1061,7 +1129,9 @@ Source: `.planning/docs/RDF-COMPASS.md` (SME Mart) · canonical: `zb-dx/architec
           <dt>Tag</dt><dd>hydra filter, no scope. Use <code>tagType: "marketplace"</code> for new SME Mart tags.</dd>
           <dt>ResourceLink</dt><dd>Typed link (cross-engagement / lateral). <code>linkResources</code> stores <strong>ONE row</strong>; the read path is bidirectional (OR-on-both-columns) with a <code>link_side</code> discriminator. For paired/asymmetric types (<code>child_of</code> &harr; <code>parent_to</code>, <code>satisfies</code> &harr; <code>satisfied_by</code>) call twice to materialize both partner rows.</dd>
           <dt><code>satisfies</code> / <code>satisfied_by</code></dt><dd>Directed Task&harr;Task link for the entangled Req&harr;Sat pair (replaces <code>twin_of</code>). Registered on task-13; task&rarr;requirement traceability flavor stays on task-29.</dd>
-          <dt>Requirement</dt><dd>The contract: demand-half + supply-half task. <em>(OWL class + SHACL NodeShape.)</em> <span class="chip planned">PLANNED</span></dd>
+          <dt>Requirement</dt><dd>The contract: demand-half + supply-half task. <em>(OWL class + SHACL NodeShape.)</em> <strong>Partly shipped 2026-08-12</strong> &mdash; <code>platform-sdk@2.0.19</code> ships <code>TaskRequirement</code> (a <code>satisfied</code> flag + <code>producedByTasks</code>) <em>on a Task</em>. The standalone Requirement entity, <code>Assessment</code>, <code>Record</code> and <code>acceptance_primitive</code> remain <span class="chip planned">PLANNED</span></dd>
+          <dt>ProjectType</dt><dd>The <strong>species</strong> axis on <code>platform.Project</code>. <strong>Required, immutable, single-valued</strong>, set at creation: <code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code>. Platform-extensible only &mdash; customers cannot mint species. Graduation is <strong>convert-and-link</strong>, never a type flip. <code>platform-sdk@2.0.16</code> <span class="chip exists">EXISTS</span></dd>
+          <dt>ProjectLifecycle</dt><dd>The <strong>term</strong> axis on <code>platform.Project</code>: <code>FixedTerm</code> &middot; <code>Evergreen</code>. Orthogonal to species, so a perpetual tree can nest fixed-term layers. <strong>The value is <code>FixedTerm</code>, not <code>standard</code></strong> &mdash; <code>Standard</code> is a <em>projectType</em> value. <code>platform-sdk@2.0.15</code> <span class="chip exists">EXISTS</span></dd>
           <dt>Assessment</dt><dd>Measurement of satisfaction. <em>(SHACL ValidationReport.)</em> <span class="chip planned">PLANNED</span></dd>
           <dt>Record</dt><dd>Hash-chained append-only memory. <em>(RDF + PROV-O.)</em> <span class="chip planned">PLANNED</span></dd>
           <dt><code>acceptance_primitive</code></dt><dd>Conjunction (default) / precedence / disjunction collapse operator. <em>(<code>sh:and</code> / <code>sh:xone</code> / <code>sh:or</code>.)</em> <span class="chip planned">PLANNED</span></dd>
@@ -1331,13 +1401,14 @@ const GLOSSARY = {
   'acceptance_primitive': 'conjunction (default) / precedence / disjunction collapse operator. Maps to sh:and / sh:xone / sh:or. [PLANNED]',
   'Transparency Center': 'The shared, opt-in publication surface over entangled task pairs.',
   'satisfied_by': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
-  'satisfied_by': 'Reverse of satisfies; on the demand-half task. Registered on task-13 (task->task). Replaces twin_of.',
   'satisfies': 'Directed Task→Task link from supply-task to demand-task (replaces twin_of). Registered on task-13 (task->task).',
   'Engagement': 'Commercial relationship between two Parties; an optional node-role, off the containment axis. Mirrored: each org owns its OWN Engagement node, bound to the counterpart by engages/engaged_by (counterparty by-reference). Each node governs its own Project tree via the governs link. (SHACL Profile.)',
   'engages': 'Directional ResourceLink binding the two mirrored Engagement nodes; direction encodes provider/customer. Durable counterparty seam. LIVE on CI 2026-06-19.',
   'engaged_by': 'Reverse of engages; on the counterparty Engagement node. LIVE on CI 2026-06-19.',
   'governs': 'Directional ResourceLink: an Engagement node governs its Project-rooted tree, off the containment axis, zero data propagation. LIVE on CI 2026-06-19.',
-  'Requirement': 'The contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) [PLANNED]',
+  'Requirement': 'The contract: demand-half + supply-half task. (OWL class + SHACL NodeShape.) PARTLY SHIPPED as of 2026-08-12: platform-sdk 2.0.19 ships TaskRequirement (satisfied flag + producedByTasks) on a Task. The standalone Requirement entity, Assessment, Record and acceptance_primitive are still [PLANNED].',
+  'ProjectType': 'The species axis on platform.Project. Required, immutable, single-valued, set at creation: Standard, Program, Phase, Assessment, Engagement, Rfp, Pilot. Platform-extensible only. Shipped in platform-sdk 2.0.16. Graduation is convert-and-link (mint a new project), never a type flip.',
+  'ProjectLifecycle': 'The term axis on platform.Project: FixedTerm or Evergreen. Orthogonal to species, so a perpetual tree can nest fixed-term layers. Shipped in platform-sdk 2.0.15. Note the value is FixedTerm, not standard.',
   'Assessment': 'Measurement of satisfaction. (SHACL ValidationReport.) [PLANNED]',
   'Hologram': "A System's validated state at time T, projectable onto any surface.",
   'Boundary': 'Scope perimeter; subset chain (tighten-never-loosen); is a System.',
