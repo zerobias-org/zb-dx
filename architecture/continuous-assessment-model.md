@@ -2,7 +2,7 @@
 status: draft
 author: clark
 app: general
-updated: 2026-07-03
+updated: 2026-08-12
 ---
 
 # Continuous Assessment — the Boundary Manager × Projects model (3P Developer Handoff)
@@ -40,6 +40,24 @@ Do not treat **[PLANNED]** / **[TBD]** as callable. Verify any specific API/fiel
 
 ---
 
+### 1.1 ⚠ CHURN WINDOW — the platform and boundary-specific APIs are being refactored right now
+
+**The backend is deep in a refactor of the platform API and the boundary-specific APIs. Expect this surface to churn for the next few weeks.** (Clark, 2026-08-12.) Treat `[EXISTS]` as *verify before coding* until it settles, pin your SDK version deliberately, and raise a vanished dependency rather than working around it. Same banner as `transparency-architecture.md` §1.1 — read it there for the full detail.
+
+**This doc's audience is the most exposed of the three.** The SCF / control-authoring surface was **deleted outright** in the first wave — see §1.2.
+
+### 1.2 ⛔ REMOVED — the SCF / control-authoring API surface is gone
+
+Platform commit `23d27bce` (2026-07-17), *"remove all SCF usage from hydra changes"* — 98 files, **-16,533 lines** — deleted the API specs outright. It reached the published SDK in **`@zerobias-com/platform-sdk@2.0.13`** (2026-07-23), which dropped from 54 APIs / 1038 models to **48 / 923** in one release. **No replacement API was added.**
+
+**Gone:** `FrameworkApi` (the framework/SCF catalog reads — `listFrameworks`, `getFrameworkElement`, `getScfControl`, `scfSearch`, …) · `InternalControlApi` · `ImplementationStatementApi` · `ControlActivityApi` · `InternalDomainApi` · `SuggestedActivityApi`. The `BoundaryScfControl` / `BoundaryTeamScfControl` schema family went with them, and `boundary.yml` was rewritten (779 lines).
+
+**Still present:** `EvidenceDefinitionApi`, `EvidenceRequestApi`, `ComponentEvidenceApi`, `ComplianceFeatureApi`, `StandardApi`, `CrosswalkApi`, `BenchmarkApi`, `AuditApi`, `FindingApi`. **The compliance domain was not removed** — what went is the framework/SCF *catalog-read* layer and the control-authoring / implementation-statement / control-RACI layer.
+
+If you were calling any of the six, you are broken today. The fix is a conversation with the backend about where that capability re-lands, not a workaround built during a refactor.
+
+---
+
 ## 2. Naming — what the thing is called at each layer
 
 It is **not** called a "project." A `platform.Project` is only the structural container. Names by layer:
@@ -67,7 +85,9 @@ It is **not** called a "project." A `platform.Project` is only the structural co
 
 ## 4. Core model
 
-### 4.1 Program / Phase / Assessment — the primary types **[PLANNED]** (SC-008 / task-74)
+### 4.1 Program / Phase / Assessment — the primary types **[EXISTS]** (SC-008 / task-74)
+
+> **📌 Re-chipped 2026-08-12: these SHIPPED.** `@zerobias-com/platform-sdk` **2.0.16** (2026-07-29) publishes the `ProjectType` enum — `Standard · Program · Phase · Assessment · Engagement · Rfp · Pilot` — and `Project.projectType` is a **required** field. `Program`, `Phase` and `Assessment` are live species, not proposals. **Two shipped values this doc never anticipated: `Rfp` and `Pilot`.** See §5.1 for where the shipped shape departs from the design below.
 
 - **Program** (`type=program`, `lifecycle=evergreen`) — the ongoing umbrella that never completes ("the promise"). **Owns the canonical requirement set + the phase plan**; related children roll up to it; a top-tier program serves as a **portfolio**. Discharges its requirements to the Boundary/System. Carries an explicit **version anchor** on its requirement set (the version any report cites). *(Absorbs the earlier "commitment" concept — commitment = program(evergreen).)*
 - **Phase** (`type=phase`, `lifecycle=standard`) — a bounded **build** project that **rolls its requirements up to a program**; on completion its residual **promotes** to the program's **capabilities** (this defines "phase done"). Requires a program parent.
@@ -104,7 +124,27 @@ A boundary **Component** = a **responsibility unit** whose spine is **RACI** (Re
 
 The project model has **four axes** — two **structural** (the platform acts on them) and two **tag** axes (organizational / filtering). *(Kevin's 2026-07-03 revision; replaces the earlier mode/features + project-type shape.)*
 
-### 5.1 Structural — attributes on `platform.Project` **[PLANNED]** (SC-008 / task-74)
+### 5.1 Structural — attributes on `platform.Project` **[EXISTS — but NOT in the shape below]** (SC-008 / task-74)
+
+> **🔴 READ THIS BEFORE THE BULLETS. Re-chipped and corrected 2026-08-12 against the published `@zerobias-com/platform-sdk@2.0.19`. The axes shipped; the shape below is the 2026-07-03 *design*, and the delivered field shape differs from it in three ways that will break code written from the design.**
+>
+> **What the shipped `Project` actually carries** (read from `Project.d.ts`, all required unless noted):
+>
+> | Field | Type | Shipped values |
+> |---|---|---|
+> | `projectType` | `ProjectTypeDef` — **single scalar** | `Standard · Program · Phase · Assessment · Engagement · Rfp · Pilot` |
+> | `lifecycle` | `ProjectLifecycleDef` — **single scalar** | `FixedTerm · Evergreen` |
+> | `projectContextId` | `UUID` (`projectContext: TagView` on the extended view) | the context tag axis of §5.2 / §5.3 — confirmed |
+>
+> **The three departures:**
+>
+> 1. **There is no `types[]` array, and no primary-plus-stackable model.** `projectType` is **one scalar value**. The design's "one primary type + any number of stackable accessory types (`engagement`, `transparency-entangled`, `template`, …)" **did not ship that way** — `Engagement` is instead one of the seven mutually-exclusive species. Do not write code that reads or sets a list of types.
+> 2. **The `lifecycle` value is `FixedTerm`, not `standard`.** The design below names the bounded value `standard`; shipped it is `FixedTerm`. Confusingly, `Standard` *is* shipped — as a **`projectType`** value. A literal `'standard'` sent as a lifecycle will not match.
+> 3. **`projectType` is immutable.** Required, set at creation, platform-extensible only — customers cannot mint species, and nothing re-types in place. Graduation is convert-and-link (mint a new project, keep the origin as an immutable record), never a discriminator flip. See `transparency-architecture.md` §4.5.
+>
+> **`Rfp` and `Pilot` are shipped species** and appear nowhere in the design below.
+>
+> The design text is kept below because its *reasoning* (why lifecycle and type are structural rather than tags, what load-bearing means, the extensibility intent) still holds and explains the axes. **Treat it as rationale, not as the field contract.**
 
 - **`lifecycle`** — enum, single-valued: `standard` (temporary; has an end) | `evergreen` (ongoing; never completes). **Defaults to `standard` on create.** A primary type may dictate it (program → evergreen; phase / assessment → standard).
 - **`types`** — the logic/behavior a project carries:
@@ -113,7 +153,42 @@ The project model has **four axes** — two **structural** (the platform acts on
   - **primary-first, with constraints** — the primary type can force exclusion of others or require a structure (a phase needs a program parent). Some types stack; some are mutually exclusive.
   - **types are an extensibility point** — a base set ships; customers/orgs author their own feature packs (clinical, financial: templates + fields + widgets + workflow scripts) and load them **without core software changes** ("like making a Zoho app"). Load-bearing types (program/phase) are coded at the factory; accessory features are user-loadable. A type **bundles a lifecycle + a feature-set**, and may imply a lifecycle (program ⇒ evergreen).
   - **entanglement** (`transparency-entangled`) is a **feature, not structural** — mechanically *watch-a-change-in-one-project-and-enact-it-in-another* ("effectively copy-paste").
-- Both filterable on `searchProjects` (`lifecycles[]`, `types[]`). Supersedes the engagement-query driver of PS-003 / PS-004; **engagement is now a `type`**.
+- ~~Both filterable on `searchProjects` (`lifecycles[]`, `types[]`).~~ **Corrected 2026-08-12 — see below.** Supersedes the engagement-query driver of PS-003 / PS-004; **engagement is now a `projectType` species**.
+
+> **🔎 How you actually query projects — checked against `platform-sdk@2.0.19` and `hydra-sdk@2.0.9`.**
+>
+> **There is no `searchProjects`.** The only project-specific query is **`ProjectApi.list`**:
+>
+> ```ts
+> list(pageNumber?, pageSize?, boundaryId?, ownerId?,
+>      status?: ProjectStatusDef, visibility?: ProjectVisibilityDef,
+>      sort?: SortObject, pageToken?): Promise<PagedResults<Project>>
+> ```
+>
+> Filterable by **`boundaryId` · `ownerId` · `status` · `visibility`** — **not** by `projectType` or `lifecycle`. (Across all 48 platform-sdk APIs only `BoundaryApi`, `EvidenceDefinitionApi` and `StandardApi` have search methods at all; none are for projects.)
+>
+> **To filter by species or term, go through hydra's generic resource search — `hydra.ResourceApi.resourceSearch`:**
+>
+> ```ts
+> resourceSearch(pageNumber?, pageSize?, filter?: ResourceSearchFilter, pageToken?)
+>   : Promise<PagedResults<ResourceView>>
+>
+> ResourceSearchFilter { types?, keywords?, tags?, boundaryId?, conditions?, inflate?, alerts? }
+> Condition { property: string; operation: ConditionOperationDef; value?: … }
+> ```
+>
+> ```ts
+> resourceSearch(1, 50, {
+>   types: ['project'],
+>   conditions: [{ property: 'projectType', operation: 'AnyOf', value: ['pilot','rfp'] }]
+> })
+> ```
+>
+> `ConditionOperation` ships 20 operations: `Exists · DoesNotExist · IsDefined · IsUndefined · Equals · NotEquals · EqualsIc · NotEqualsIc · Like · NotLike · LikeIc · NotLikeIc · AtLeast · AtMost · LengthEquals · LengthAtMost · LengthAtLeast · AnyOf · NoneOf · AllOf`.
+>
+> **⛔ Use `resourceSearch`, NOT `searchResources`.** Both exist on `ResourceApi`, and `searchResources` (the flat keywords/tags/types form) is **effectively dead — treat it as deprecated.** It carries no formal deprecation marker; the evidence is usage: **every `ResourceApi` search call site in `zb/com/ui` uses `resourceSearch`, and none use `searchResources`.** It is also the only one that accepts a `ResourceSearchFilter`, so it is the only one that can express `conditions[]` at all.
+>
+> **Two caveats.** `Condition.property` is an untyped `string`, so nothing in the type system confirms `projectType` is an accepted property — verify against a live endpoint before relying on it. And `resourceSearch` returns **`ResourceView`**, not `Project`, so the species is not on the result: this is a filter-then-fetch pattern, not a one-call read.
 
 ### 5.2 Tags — global tag-types **[PLANNED]** (tag PR #8, `zerobias-com/tag`)
 
@@ -148,7 +223,7 @@ The model lands on the RDF-Compass vocabulary (Brian's "designs must serialize t
 
 | FR | id | What | Owner | Status |
 |---|---|---|---|---|
-| SC-008 | task-74 | `lifecycle` + `types` structural attrs on `platform.Project` + `searchProjects` filters | Nic | **[PLANNED]** (related task-34) |
+| SC-008 | task-74 | `lifecycle` + `projectType` structural attrs on `platform.Project` + `searchProjects` filters — **attrs SHIPPED** (sdk 2.0.15 / 2.0.16); **the filters never landed as `searchProjects`** (use `hydra.ResourceApi.resourceSearch` with `conditions[]`) | Nic | **[EXISTS]** partial (related task-34) |
 | PS-003 | task-30 | generic `tagIds[]` filter on projectSearch (re-scoped off engagement) | Nic | **[PLANNED]** open |
 | PS-004 | task-34 | `searchProjects` filter for Engagement Projects | Nic | **[EXISTS]** DONE |
 | RC-001 | task-73 | product catalog → requirement-products (private + global; pricing/licensing) | Kevin | **[TBD]** interim |

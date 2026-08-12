@@ -378,6 +378,20 @@ h2:hover .anchor-link, h3:hover .anchor-link { opacity: 1; }
   </div>
   <div class="filter-banner" id="filterBanner">Filtering the doc to status: <strong id="filterBannerStatus">&mdash;</strong> &mdash; click the active chip again or "Show all" to clear.</div>
 
+  <div class="note warn" style="margin:18px 0 4px">
+    <span class="nt">&#9888; CHURN WINDOW &mdash; the platform and boundary-specific APIs are being refactored right now</span>
+    <strong>The backend is deep in a refactor of the platform API and the boundary-specific APIs. Expect this surface to churn for the next few weeks.</strong> (Clark, 2026-08-12.) Treat EXISTS as <em>verify before coding</em> until it settles, pin your SDK version deliberately, and <strong>raise a vanished dependency rather than working around it</strong> &mdash; a workaround built during a refactor usually has to be removed again. The <em>model</em> layer is the stable part; the churn is in the API shape over it. The full banner is in <code>transparency-architecture.html</code>.
+    <div style="margin-top:10px"><strong>This document's audience is the most exposed of the three.</strong> The SCF / control-authoring surface was <strong>deleted outright</strong> in the first wave &mdash; see below.</div>
+  </div>
+
+  <div class="note warn" style="margin:10px 0 4px">
+    <span class="nt">&#9940; REMOVED &mdash; the SCF / control-authoring API surface is gone</span>
+    Platform commit <code>23d27bce</code> (2026-07-17), <em>"remove all SCF usage from hydra changes"</em> &mdash; 98 files, <strong>&minus;16,533 lines</strong> &mdash; deleted the API specs outright. It reached the published SDK in <strong><code>@zerobias-com/platform-sdk@2.0.13</code></strong> (2026-07-23), which dropped from <strong>54 APIs / 1038 models to 48 / 923</strong> in one release. <strong>No replacement API was added.</strong>
+    <div style="margin-top:10px"><strong>Gone:</strong> <code>FrameworkApi</code> (the framework/SCF catalog reads &mdash; <code>listFrameworks</code>, <code>getFrameworkElement</code>, <code>getScfControl</code>, <code>scfSearch</code>, &hellip;) &middot; <code>InternalControlApi</code> &middot; <code>ImplementationStatementApi</code> &middot; <code>ControlActivityApi</code> &middot; <code>InternalDomainApi</code> &middot; <code>SuggestedActivityApi</code>. The <code>BoundaryScfControl</code> / <code>BoundaryTeamScfControl</code> schema family went with them, and <code>boundary.yml</code> was rewritten (779 lines).</div>
+    <div style="margin-top:10px"><strong>Still present:</strong> <code>EvidenceDefinitionApi</code>, <code>EvidenceRequestApi</code>, <code>ComponentEvidenceApi</code>, <code>ComplianceFeatureApi</code>, <code>StandardApi</code>, <code>CrosswalkApi</code>, <code>BenchmarkApi</code>, <code>AuditApi</code>, <code>FindingApi</code>. <strong>The compliance domain was not removed</strong> &mdash; what went is the framework/SCF <em>catalog-read</em> layer and the control-authoring / implementation-statement / control-RACI layer.</div>
+    <div style="margin-top:10px">If you were calling any of the six you are broken today. The fix is a conversation with the backend about where that capability re-lands, not a workaround built during a refactor.</div>
+  </div>
+
   <div class="tabs-nav" role="tablist">
     <button class="tab-btn active" data-tab="model" role="tab">1 &middot; The Model</button>
     <button class="tab-btn" data-tab="types" role="tab">2 &middot; Program / Phase / Assessment</button>
@@ -477,16 +491,38 @@ flowchart LR
 
     <section>
       <h2>Program / Phase / Assessment &mdash; the primary types</h2>
-      <div class="lede">One primary type per project, plus stackable accessory types (Tab&nbsp;3). A type bundles a lifecycle + a feature-set, and may imply a lifecycle (program &rArr; evergreen).</div>
+      <div class="lede"><strong>One <code>projectType</code> per project &mdash; a single immutable scalar.</strong> A type bundles a feature-set and may imply a lifecycle (program &rArr; evergreen). <em>Corrected 2026-08-12: this line previously said "plus stackable accessory types," which is not what shipped &mdash; see the note under the table.</em></div>
       <div class="tbl-wrap">
         <table class="map">
           <thead><tr><th style="width:16%">Type</th><th style="width:12%">Status</th><th>What it is</th></tr></thead>
           <tbody>
-            <tr><td class="k"><strong style="color:var(--supply)">Program</strong><br/><code>evergreen</code></td><td><span class="chip planned">PLANNED</span><br/>SC-008 / task-74</td><td>The ongoing umbrella that never completes ("the promise"). <strong>Owns the canonical requirement set + the phase plan</strong>; related children roll up to it; a top-tier program serves as a <strong>portfolio</strong>. Discharges its requirements to the Boundary / System. Carries an explicit <strong>version anchor</strong> on its requirement set (the version any report cites). Absorbs the earlier "commitment" concept.</td></tr>
-            <tr><td class="k"><strong style="color:var(--demand)">Phase</strong><br/><code>standard</code></td><td><span class="chip planned">PLANNED</span></td><td>A bounded <strong>build</strong> project that <strong>rolls its requirements up to a program</strong>; on completion its residual <strong>promotes</strong> to the program's <strong>capabilities</strong> (this defines "phase done"). Requires a program parent.</td></tr>
-            <tr><td class="k"><strong style="color:var(--transp)">Assessment</strong><br/><code>standard</code></td><td><span class="chip tbd">TBD</span></td><td>A bounded project that performs an assessment ("audit without saying audit") &mdash; the point-in-time consumer that renders a deliverable from continuous System state (e.g. the blind-assessor's project). Assessment-vs-audit framing is a Brian / Kevin call.</td></tr>
+            <tr><td class="k"><strong style="color:var(--supply)">Program</strong><br/><code>Evergreen</code></td><td><span class="chip exists">EXISTS</span><br/><code>sdk@2.0.16</code></td><td>The ongoing umbrella that never completes ("the promise"). <strong>Owns the canonical requirement set + the phase plan</strong>; related children roll up to it; a top-tier program serves as a <strong>portfolio</strong>. Discharges its requirements to the Boundary / System. Carries an explicit <strong>version anchor</strong> on its requirement set (the version any report cites). Absorbs the earlier "commitment" concept.</td></tr>
+            <tr><td class="k"><strong style="color:var(--demand)">Phase</strong><br/><code>FixedTerm</code></td><td><span class="chip exists">EXISTS</span><br/><code>sdk@2.0.16</code></td><td>A bounded <strong>build</strong> project that <strong>rolls its requirements up to a program</strong>; on completion its residual <strong>promotes</strong> to the program's <strong>capabilities</strong> (this defines "phase done"). Requires a program parent.</td></tr>
+            <tr><td class="k"><strong style="color:var(--transp)">Assessment</strong><br/><code>FixedTerm</code></td><td><span class="chip exists">EXISTS</span><br/><code>sdk@2.0.16</code></td><td>A bounded project that performs an assessment ("audit without saying audit") &mdash; the point-in-time consumer that renders a deliverable from continuous System state (e.g. the blind-assessor's project). <strong>The species shipped;</strong> the assessment-vs-audit <em>framing</em> is still a Brian / Kevin call <span class="chip tbd">TBD</span>.</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="note warn">
+        <span class="nt">&#9888; Re-chipped and corrected 2026-08-12 &mdash; these shipped, and the delivered shape differs from the design</span>
+        <code>@zerobias-com/platform-sdk@2.0.16</code> (2026-07-29) publishes the <code>ProjectType</code> enum and <code>Project.projectType</code> is a <strong>required</strong> field, so Program / Phase / Assessment are <strong>live species, not proposals</strong>. Read from the shipped <code>Project.d.ts</code>:
+        <div class="tbl-wrap" style="margin:10px 0">
+          <table class="map">
+            <thead><tr><th style="width:26%">Field</th><th style="width:24%">Type</th><th>Shipped values</th></tr></thead>
+            <tbody>
+              <tr><td class="k"><code>projectType</code></td><td><strong>single scalar</strong></td><td><code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code></td></tr>
+              <tr><td class="k"><code>lifecycle</code></td><td><strong>single scalar</strong></td><td><code>FixedTerm</code> &middot; <code>Evergreen</code></td></tr>
+              <tr><td class="k"><code>projectContextId</code></td><td><code>UUID</code></td><td>the context tag axis &mdash; confirmed, see the four-axes section</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <strong>Three departures that will break code written from the design:</strong>
+        <ul style="margin:8px 0 0 18px">
+          <li><strong>There is no <code>types[]</code> array and no primary-plus-stackable model.</strong> <code>projectType</code> is <strong>one scalar value</strong>. <code>Engagement</code> shipped as one of the seven mutually-exclusive species, not as a stackable accessory. Do not write code that reads or sets a list of types.</li>
+          <li><strong>The bounded lifecycle value is <code>FixedTerm</code>, not <code>standard</code>.</strong> Confusingly <code>Standard</code> <em>is</em> shipped &mdash; as a <strong><code>projectType</code></strong> value. A literal <code>'standard'</code> sent as a lifecycle will silently never match.</li>
+          <li><strong><code>projectType</code> is immutable</strong> &mdash; required, set at creation, platform-extensible only. Nothing re-types in place; graduation is convert-and-link. See <code>transparency-architecture</code> Tab&nbsp;2.</li>
+        </ul>
+        <div style="margin-top:10px"><strong><code>Rfp</code> and <code>Pilot</code> are shipped species</strong> that this document never anticipated.</div>
       </div>
 
       <div class="mermaid-host" id="host-types">
@@ -573,8 +609,8 @@ flowchart TB
   PJ["platform.Project"]
   subgraph STRUCT["STRUCTURAL — the platform acts on it (SC-008 / task-74)"]
     direction TB
-    LC["lifecycle<br/>standard | evergreen<br/>single-valued · defaults standard"]
-    TY["types<br/>primary: program / phase / assessment<br/>+ stackable accessories"]
+    LC["lifecycle<br/>FixedTerm | Evergreen<br/>required single scalar"]
+    TY["projectType<br/>Standard | Program | Phase | Assessment<br/>Engagement | Rfp | Pilot<br/>required - immutable - single scalar"]
   end
   subgraph TAGS["TAGS — organize / filter (tag PR #8)"]
     direction TB
@@ -600,8 +636,8 @@ flowchart TB
         <table class="map">
           <thead><tr><th style="width:16%">Axis</th><th style="width:12%">Kind</th><th style="width:12%">Status</th><th>Values / rule</th></tr></thead>
           <tbody>
-            <tr><td class="k"><code>lifecycle</code></td><td>structural</td><td><span class="chip planned">PLANNED</span></td><td>Enum, single-valued: <code>standard</code> (temporary; has an end) | <code>evergreen</code> (ongoing; never completes). Defaults to <code>standard</code> on create. A primary type may dictate it (program &rarr; evergreen).</td></tr>
-            <tr><td class="k"><code>types</code></td><td>structural</td><td><span class="chip planned">PLANNED</span></td><td>One <strong>primary</strong> (program / phase / assessment) + any number of <strong>stackable</strong> accessories (<code>engagement</code>, <code>transparency-entangled</code>, <code>template</code>, + domain-specific). Primary-first, with constraints (a phase needs a program parent; some types are mutually exclusive). An extensibility point &mdash; user-loadable feature packs "like making a Zoho app." <code>entanglement</code> is a feature, not structural.</td></tr>
+            <tr><td class="k"><code>lifecycle</code></td><td>structural</td><td><span class="chip exists">EXISTS</span><br/><code>sdk@2.0.15</code></td><td>Required single scalar: <code>FixedTerm</code> (has an end) | <code>Evergreen</code> (never completes). A species may dictate it (program &rarr; evergreen). <strong>&#9888; The value is <code>FixedTerm</code>, NOT <code>standard</code></strong> &mdash; <code>Standard</code> is a <code>projectType</code> value, so a literal <code>'standard'</code> sent here silently never matches.</td></tr>
+            <tr><td class="k"><code>projectType</code><br/><span style="color:var(--text-dim);font-size:15px">(was "<code>types</code>")</span></td><td>structural</td><td><span class="chip exists">EXISTS</span><br/><code>sdk@2.0.16</code></td><td><strong>Required, immutable, single scalar</strong> &mdash; set at creation, platform-extensible only: <code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code>. <strong>&#9888; There is no <code>types[]</code> array and no primary-plus-stackable model</strong> &mdash; the design's stackable accessories did not ship, and <code>engagement</code> became one of the seven mutually-exclusive species. The extensibility intent survives as <em>platform</em>-extensible: customers cannot mint species.</td></tr>
             <tr><td class="k"><code>project-context</code></td><td>tag</td><td><span class="chip planned">PLANNED</span></td><td>Organizational label: <code>project</code> / <code>workspace</code> / <code>aperture</code> / <code>thread</code> (extensible). "Tree-like if we want" &mdash; but <strong>NOT</strong> the structural parent-child hierarchy. Inert / not load-bearing. <strong>Renamed from <code>project-type</code> 2026-07-03.</strong> This is the axis <code>projectTypeId</code> points at.</td></tr>
             <tr><td class="k"><code>project-domain</code></td><td>tag</td><td><span class="chip planned">PLANNED</span></td><td>The domain / GRC-vertical axis: <code>compliance</code> / <code>security</code> / <code>privacy</code> / <code>financial</code> / <code>clinical</code> / <code>quality</code> / <code>legal</code> / <code>esg</code> / <code>supply-chain</code>.</td></tr>
           </tbody>
@@ -611,7 +647,32 @@ flowchart TB
       <div class="principle">
         <div class="label">The rule</div>
         <div class="title">Load-bearing &rArr; NOT a tag</div>
-        <div class="body"><code>lifecycle</code> / <code>types</code> drive behavior / structure &rarr; structural. <code>project-context</code> / <code>project-domain</code> organize &rarr; tags. Both structural axes are filterable on <code>searchProjects</code> (<code>lifecycles[]</code>, <code>types[]</code>) &mdash; superseding the engagement-query driver of PS-003 / PS-004, since <strong>engagement is now a <code>type</code></strong>.</div>
+        <div class="body"><code>lifecycle</code> / <code>projectType</code> drive behavior / structure &rarr; structural. <code>project-context</code> / <code>project-domain</code> organize &rarr; tags. <strong>Engagement is a <code>projectType</code> species</strong>, superseding the engagement-query driver of PS-003 / PS-004.</div>
+      </div>
+
+      <div class="note info">
+        <span class="nt">&#128204; Checked 2026-08-12 &mdash; the <code>searchProjects</code> filter claim did not verify</span>
+        This block previously ended <em>"Both structural axes are filterable on <code>searchProjects</code> (<code>lifecycles[]</code>, <code>types[]</code>)."</em> <strong>There is no <code>searchProjects</code> method on <code>ProjectApi</code> in <code>platform-sdk@2.0.19</code>, and no <code>lifecycle</code>/<code>projectType</code> filter parameters on any of its methods.</strong> The shipped <code>ProjectApi</code> is: <code>list</code>, <code>get</code>, <code>create</code>, <code>update</code>, <code>delete</code>, <code>addMember</code>, <code>listMembers</code>, <code>removeMember</code>, <code>addRoleAssignments</code>, <code>listRoleAssignments</code>, <code>removeRoleAssignment</code>, <code>getProjectContextTree</code>, <code>setProjectContextTree</code>, <code>deleteProjectContextTree</code>, <code>listAllowedProjectContexts</code>, <code>listCustomFieldDefaults</code>, <code>setCustomFieldDefault</code>, <code>deleteCustomFieldDefault</code>.
+        <div style="margin-top:10px">Note also the <strong>new context-tree and custom-field-default methods</strong>, which pair with the <code>ProjectContextTree</code> models shipped in 2.0.16.</div>
+      </div>
+
+      <div class="note good">
+        <span class="nt">&#10003; How you actually query projects</span>
+        <strong>The only project-specific query is <code>ProjectApi.list</code></strong>, filterable by <code>boundaryId</code> &middot; <code>ownerId</code> &middot; <code>status</code> &middot; <code>visibility</code> &mdash; <strong>not</strong> by <code>projectType</code> or <code>lifecycle</code>. Across all 48 platform-sdk APIs only <code>BoundaryApi</code>, <code>EvidenceDefinitionApi</code> and <code>StandardApi</code> have search methods at all; none are for projects.
+        <div style="margin-top:10px"><strong>To filter by species or term, use hydra's generic resource search &mdash; <code>hydra.ResourceApi.resourceSearch</code>:</strong></div>
+        <pre style="margin:10px 0;padding:12px;border-radius:8px;background:rgba(0,0,0,0.25);overflow-x:auto;font-size:16px;line-height:1.6"><code>resourceSearch(pageNumber?, pageSize?, filter?: ResourceSearchFilter, pageToken?)
+  : Promise&lt;PagedResults&lt;ResourceView&gt;&gt;
+
+ResourceSearchFilter { types?, keywords?, tags?, boundaryId?, conditions?, inflate?, alerts? }
+Condition { property: string; operation: ConditionOperationDef; value?: &hellip; }
+
+resourceSearch(1, 50, {
+  types: ['project'],
+  conditions: [{ property: 'projectType', operation: 'AnyOf', value: ['pilot','rfp'] }]
+})</code></pre>
+        <code>ConditionOperation</code> ships 20 operations: <code>Exists</code> &middot; <code>DoesNotExist</code> &middot; <code>IsDefined</code> &middot; <code>IsUndefined</code> &middot; <code>Equals</code> &middot; <code>NotEquals</code> &middot; <code>EqualsIc</code> &middot; <code>NotEqualsIc</code> &middot; <code>Like</code> &middot; <code>NotLike</code> &middot; <code>LikeIc</code> &middot; <code>NotLikeIc</code> &middot; <code>AtLeast</code> &middot; <code>AtMost</code> &middot; <code>LengthEquals</code> &middot; <code>LengthAtMost</code> &middot; <code>LengthAtLeast</code> &middot; <code>AnyOf</code> &middot; <code>NoneOf</code> &middot; <code>AllOf</code>.
+        <div style="margin-top:10px"><strong>&#9940; Use <code>resourceSearch</code>, NOT <code>searchResources</code>.</strong> Both exist on <code>ResourceApi</code>, and <code>searchResources</code> (the flat keywords/tags/types form) is <strong>effectively dead &mdash; treat it as deprecated.</strong> It carries no formal deprecation marker; the evidence is usage: <strong>every <code>ResourceApi</code> search call site in <code>zb/com/ui</code> uses <code>resourceSearch</code>, and none use <code>searchResources</code>.</strong> It is also the only one that accepts a <code>ResourceSearchFilter</code>, so it is the only one that can express <code>conditions[]</code> at all.</div>
+        <div style="margin-top:10px"><strong>Two caveats.</strong> <code>Condition.property</code> is an untyped <code>string</code>, so nothing in the type system confirms <code>projectType</code> is an accepted property &mdash; verify against a live endpoint before relying on it. And <code>resourceSearch</code> returns <strong><code>ResourceView</code></strong>, not <code>Project</code>, so the species is not on the result: this is a <strong>filter-then-fetch</strong> pattern, not a one-call read.</div>
       </div>
     </section>
 
@@ -730,7 +791,7 @@ flowchart LR
         <table class="map">
           <thead><tr><th style="width:14%">FR</th><th style="width:12%">id</th><th>What</th><th style="width:10%">Owner</th><th style="width:14%">Status</th></tr></thead>
           <tbody>
-            <tr><td class="k">SC-008</td><td><code>task-74</code></td><td><code>lifecycle</code> + <code>types</code> structural attrs on <code>platform.Project</code> + <code>searchProjects</code> filters</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
+            <tr><td class="k">SC-008</td><td><code>task-74</code></td><td><code>lifecycle</code> + <code>projectType</code> structural attrs on <code>platform.Project</code> + <code>searchProjects</code> filters &mdash; <strong>attrs shipped</strong> (sdk 2.0.15 / 2.0.16); <strong>the filters did not verify</strong> on <code>ProjectApi@2.0.19</code></td><td>Nic</td><td><span class="chip exists">EXISTS</span><br/>partial</td></tr>
             <tr><td class="k">PS-003</td><td><code>task-30</code></td><td>generic <code>tagIds[]</code> filter on projectSearch (re-scoped off engagement)</td><td>Nic</td><td><span class="chip planned">PLANNED</span></td></tr>
             <tr><td class="k">PS-004</td><td><code>task-34</code></td><td><code>searchProjects</code> filter for Engagement Projects</td><td>Nic</td><td><span class="chip exists">EXISTS</span></td></tr>
             <tr><td class="k">RC-001</td><td><code>task-73</code></td><td>product catalog &rarr; requirement-products (private + global; pricing / licensing)</td><td>Kevin</td><td><span class="chip tbd">TBD</span></td></tr>
@@ -757,8 +818,9 @@ flowchart LR
 - **Check -> Finding** — the assessment primitive: a pass/fail review, invariant whether run by people or bots; generates System state.
 - **Finding** — a failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).
 - **Component** — a boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary "Teams" is dead.)
-- **lifecycle** — structural enum on platform.Project: standard | evergreen.
-- **types** — structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).
+- **lifecycle** — structural, required single scalar on platform.Project: `FixedTerm` | `Evergreen`. NOT `standard` (`Standard` is a projectType value). Shipped sdk@2.0.15.
+- **projectType** — structural, required, immutable, single scalar: `Standard` · `Program` · `Phase` · `Assessment` · `Engagement` · `Rfp` · `Pilot`. Set at creation, platform-extensible only. Shipped sdk@2.0.16. Replaces the designed `types` axis — no array, no stackable accessories.
+- **types** *(design-only, superseded)* — the 2026-07-03 design: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).
 - **project-context** — inert tag axis (project/workspace/aperture/thread); what projectTypeId points at; not load-bearing.
 - **project-domain** — tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.
 - **AuditCrowd** — the ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.
@@ -775,8 +837,9 @@ flowchart LR
           <dt>Check &rarr; Finding</dt><dd>The assessment primitive: a pass/fail review, invariant whether run by people or bots; generates System state.</dd>
           <dt>Finding</dt><dd>A failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).</dd>
           <dt>Component</dt><dd>A boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary "Teams" is dead.)</dd>
-          <dt>lifecycle</dt><dd>Structural enum on <code>platform.Project</code>: <code>standard</code> | <code>evergreen</code>.</dd>
-          <dt>types</dt><dd>Structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).</dd>
+          <dt>lifecycle</dt><dd>Structural, <strong>required single scalar</strong> on <code>platform.Project</code>: <code>FixedTerm</code> | <code>Evergreen</code>. <strong>Not <code>standard</code></strong> &mdash; <code>Standard</code> is a <code>projectType</code> value. Shipped <code>sdk@2.0.15</code>.</dd>
+          <dt>projectType</dt><dd>Structural, <strong>required, immutable, single scalar</strong> on <code>platform.Project</code>: <code>Standard</code> &middot; <code>Program</code> &middot; <code>Phase</code> &middot; <code>Assessment</code> &middot; <code>Engagement</code> &middot; <code>Rfp</code> &middot; <code>Pilot</code>. Set at creation, <strong>platform</strong>-extensible only. Shipped <code>sdk@2.0.16</code>. Replaces the designed <code>types</code> axis &mdash; there is no array and no stackable accessories.</dd>
+          <dt>types <span style="color:var(--text-dim)">(design-only, superseded)</span></dt><dd>The 2026-07-03 design: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).</dd>
           <dt>project-context</dt><dd>Inert tag axis (project/workspace/aperture/thread); what <code>projectTypeId</code> points at; not load-bearing.</dd>
           <dt>project-domain</dt><dd>Tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.</dd>
           <dt>AuditCrowd</dt><dd>The ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.</dd>
@@ -1070,8 +1133,9 @@ const GLOSSARY = {
   'Assessment': 'Bounded project (type=assessment) that renders a deliverable from continuous System state.',
   'Component': 'A boundary responsibility unit; spine is RACI over Parties + Roles; broad OSCAL-style types; carries an evidence obligation. (Boundary Teams is dead.)',
   'Finding': 'A failed measurement (missing-component / inventory-mismatch / missing-tool / ineffective-control).',
-  'lifecycle': 'Structural enum on platform.Project: standard | evergreen.',
-  'types': 'Structural: one primary (program/phase/assessment) + stackable accessories; an extensibility point (user-loadable feature packs).',
+  'lifecycle': 'Structural, required single scalar on platform.Project: FixedTerm | Evergreen. NOT standard - Standard is a projectType value, so a literal standard sent as a lifecycle never matches. Shipped in platform-sdk 2.0.15.',
+  'projectType': 'Structural, required, immutable, single scalar on platform.Project: Standard, Program, Phase, Assessment, Engagement, Rfp, Pilot. Set at creation, platform-extensible only. Shipped in platform-sdk 2.0.16. Replaces the designed types axis - no array, no stackable accessories.',
+  'types': 'DESIGN-ONLY, SUPERSEDED. The 2026-07-03 design: one primary (program/phase/assessment) + stackable accessories. What shipped is a single immutable projectType scalar - see projectType.',
   'project-context': 'Inert tag axis (project/workspace/aperture/thread); what projectTypeId points at; not load-bearing.',
   'project-domain': 'Tag axis: compliance/security/privacy/financial/clinical/quality/legal/esg/supply-chain.',
   'AuditCrowd': 'The ranked/scored blind-assessor crowd at extreme scale; ~500 assessors per supplier, variation-maximizing.',

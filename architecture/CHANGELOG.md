@@ -8,6 +8,59 @@ visual-explainer skill (dark theme · 16px font floor · Mermaid resize+fullscre
 editing the `.md`, mirror the change into the `.html` and log both here so the handoff
 history is clear for 3P devs and future sessions.
 
+## 2026-08-12 — Churn warning + SDK/client sync: the SCF control APIs are gone, and Project type/lifecycle shipped
+
+**The backend is deep in a refactor of the platform API and the boundary-specific APIs, and this surface will churn for the next few weeks.** Both architecture docs now carry that warning up front (§1.1). Two things you should act on today. **First: six APIs were deleted, not deprecated** — `FrameworkApi`, `InternalControlApi`, `ImplementationStatementApi`, `ControlActivityApi`, `InternalDomainApi` and `SuggestedActivityApi` are gone from `@zerobias-com/platform-sdk` as of **2.0.13**, with no replacement. If you call any of them you are broken now; talk to the backend about where the capability re-lands rather than building a workaround mid-refactor. **Second: `ProjectType` and `ProjectLifecycle` shipped**, and `projectType` is **required, immutable, and single-valued** — so pilot→production graduation mints a new project and keeps the pilot as an immutable origination record. It is never a discriminator flip. Docs that said otherwise have been corrected.
+
+**Sources:** the published npm artifacts (packed and diffed version-by-version, not read from a spec) and the platform repo at `origin/main`. Nothing below is from recall.
+
+### The removals — confirmed at the source, not inferred
+
+Platform commit **`23d27bce`** (2026-07-17), *"work to remove all SCF usage from hydra changes"* — 98 files, **+3,452 / −16,533** — deleted `api/src/api/app/{controlActivity,implementationStatement,internalControl,internalDomain}.yml`, `api/src/api/catalog/{framework,suggestedActivity}.yml`, the whole `BoundaryScfControl` / `BoundaryTeamScfControl` schema family, and rewrote `boundary.yml` (779 lines). It surfaced in **`platform-sdk@2.0.13`** (published 2026-07-23), which went **54 APIs / 1038 models → 48 / 923** in a single release. Bisected across every published version to pin it: `@2.0.12` still has `FrameworkApi`; `@2.0.13` does not.
+
+**The endpoints are gone from the platform API, not merely absent from the generated SDK** — that distinction was checked deliberately, because the SDK is generated from a spec fetched at build time and `platform.yml` is not tracked in git, so SDK absence alone would not have proved it.
+
+**The compliance domain was not removed.** `EvidenceDefinitionApi`, `EvidenceRequestApi`, `ComponentEvidenceApi`, `ComplianceFeatureApi`, `StandardApi`, `CrosswalkApi`, `BenchmarkApi`, `AuditApi` and `FindingApi` all survive. What went is the framework/SCF *catalog-read* layer plus the control-authoring / implementation-statement / control-RACI layer. **This lands hardest on Readiness Center.**
+
+### The additions — the model axes this documentation describes are now typed
+
+Read from the published `.d.ts`, with the release each landed in:
+
+- **2.0.15** (07-28) — `ProjectLifecycle`: `FixedTerm · Evergreen`
+- **2.0.16** (07-29) — `ProjectType`: `Standard · Program · Phase · Assessment · Engagement · Rfp · Pilot`; plus `ProjectContextTree` / `Node` / `View` / `ProjectContextOption`
+- **2.0.19** (08-12) — `TaskRequirement` / `TaskRequirements` (`satisfied: boolean`, `producedBy`, `producedByTasks`), `ActivityCustomField`, `ProducingActivity`, `IdNameCodeStatusObject`, `PipelineJobAttemptGroup`, `EvidenceDefinitionWithTags`
+
+### Doc corrections these forced
+
+1. **`transparency-architecture.md` §4.5 — was wrong on both halves.** It described a "Pilot ⟷ Production flip" on the same entity, chipped `[PLANNED]`. The axes shipped, and the flip is explicitly ruled out: `projectType` is required, immutable, set at creation, platform-extensible only. Rewritten as convert-and-link, with a precision note that `promotedProjectId` is an *app* convention and **not** a field on the shipped `Project` model.
+2. **`continuous-assessment-model.md` §5.1 — the delivered shape departs from the design in three ways.** There is no `types[]` array and no primary-plus-stackable model (`projectType` is one scalar; `Engagement` is a species, not an accessory); the bounded lifecycle value is **`FixedTerm`, not `standard`** (while `Standard` ships as a *projectType* value, which is an easy way to send a value that silently never matches); and `Rfp` / `Pilot` are shipped species the design never anticipated. The design text is kept as rationale, explicitly demoted from field contract.
+3. **`continuous-assessment-model.md` §4.1 — re-chipped `[PLANNED]` → `[EXISTS]`.** Program / Phase / Assessment are live species.
+4. **`transparency-architecture.md` §10** — the Requirement half is no longer entirely planned; `TaskRequirement` ships. `Assessment`, `Record` and `acceptance_primitive` remain `[PLANNED]`, and the note says so rather than letting the section read as delivered.
+5. **New `transparency-architecture.md` §2.1** — the SDK/client surface table: current versions of client, angular-client, platform-sdk, hydra-sdk, zerobias-sdk and mcp, with what changed in each.
+
+### Also worth knowing
+
+- **`zerobias-client` / `zerobias-angular-client` 2.0.15 → 2.0.24 changed nothing functional.** Nine releases, dependency bumps only — verified by packing both versions and diffing: identical file sets, zero `.d.ts` changes, `package.json` the only differing file. Worth stating explicitly so nobody goes hunting for a client change that is not there.
+- **`hydra-sdk` 2.0.9** gained a developer-settings surface — `UserDevSettings`, `UserDevSettingsCredentials`, `UserDevSettingsField`, `SaveUserDevSettingsBody`, `GithubOrgAccess`, `SshKeyPair` — with `UserApi`, `ResourceApi`, `ApiKey`/`ApiKeyWithData` and `ResourceSearchFilter` all changed.
+- **`zerobias-mcp` 2.0.21** — credential-profile values now accept `${VAR_NAME}` env references, resolved from `process.env` at load and never written back; unset fails as `MISSING_ENV_VAR`; `meta.status` reports the resolved URL.
+- **Residue to watch:** `BoundaryFrameworkControlOverviewInternalControl` still ships in 2.0.19 — a model referencing `InternalControl`, whose API no longer exists. Either an incomplete strip or it is still reachable through a surviving API.
+
+**Not touched:** `patterns/*` (the Multica study notes are unaffected) and `boundary-project-mocks/`.
+
+### ✅ `.html` MIRRORED — same day, surgically, no regeneration
+
+Both `.html` files are current with their `.md`. Hand-edited across every parallel representation rather than regenerated, so the interactive shells (tabs, Mermaid resize/fullscreen, scroll-spy TOC, click-to-filter status chips, the JS tooltip glossary) are intact.
+
+**Verified structurally against the committed versions before and after** — `transparency-architecture.html`: `<div>` 170/170 balanced, `<section>` 19/19, `<table>` 10/10, `<script>` 2/2 **unchanged**, `tab-panel` 19 and `mermaid-host` 12 **unchanged**. `continuous-assessment-model.html`: `<div>` 120/120, `<section>` 12/12 unchanged, `<table>` 6/6, `<dt>`/`</dd>` 17/17, `tab-panel` 20 and `mermaid-host` 10 **unchanged**. Both `GLOSSARY` objects extracted and parsed under `node` (18 and 17 keys) so a quoting slip could not break the tooltips silently.
+
+**The fan-out actually hit, per fact:** section prose · table cells · a `.note` callout · the `<dt><dd>` glossary · the embedded raw-markdown glossary block · the JS `GLOSSARY` object · **and a Mermaid node label** (`continuous-assessment-model.html` Diagram 3 carried `lifecycle: standard | evergreen` and `types: primary + stackable accessories` — both corrected, kept ASCII-only with `<br/>` as the sole markup).
+
+**Three stale copies found while mirroring that predate this sync** — all corrected, none of them things this update introduced:
+
+1. **A duplicated `'satisfied_by'` key in the JS `GLOSSARY`** of `transparency-architecture.html` (two identical adjacent lines). Harmless at runtime — a JS object literal takes the last one — but it is a leftover from the 2026-07-21 mirror, whose note said the key was "renamed"; it was evidently duplicated rather than replaced. Removed.
+2. **`planned \`satisfies\`` in the embedded raw-markdown glossary block** of the same file — the 2026-07-21 entry corrected `satisfies` to delivered and verified `satisfiedBy` reached zero occurrences, but that check did not catch this second, differently-worded copy in the raw-markdown block. Corrected. **This is exactly the fan-out failure `SYNC-RECIPE.md` warns about, and it survived a mirror that explicitly declared itself complete.**
+3. **The `searchProjects` filter claim** ("both structural axes are filterable on `searchProjects` (`lifecycles[]`, `types[]`)"). **There is no `searchProjects` method anywhere, and no lifecycle/projectType filter parameters on any `ProjectApi` method.** The only project-specific query is `ProjectApi.list`, filterable by `boundaryId` / `ownerId` / `status` / `visibility`. Both docs now carry the **replacement**: filter by species or term through **`hydra.ResourceApi.resourceSearch`** with `types: ['project']` and a `conditions[]` predicate (`Condition { property, operation, value }`, 20 operations from `Exists` to `AllOf`), with a worked example. **⛔ `resourceSearch`, not `searchResources`** — both exist on `ResourceApi`; the flat `searchResources` form is **effectively dead and should be treated as deprecated**, though it carries no formal marker. The evidence is usage: every `ResourceApi` search call site in `zb/com/ui` uses `resourceSearch` and none use `searchResources`, and it is also the only one accepting a `ResourceSearchFilter` and therefore `conditions[]`. Two caveats stated in the docs: `Condition.property` is an untyped `string` so `projectType` acceptance is unverified against a live endpoint, and `resourceSearch` returns `ResourceView` (not `Project`), making this filter-then-fetch rather than a one-call read. The shipped `ProjectApi` also gained `getProjectContextTree` / `setProjectContextTree` / `deleteProjectContextTree` / `listAllowedProjectContexts` and the custom-field-default trio, now named in the doc.
+
 ## 2026-07-21 — Correction: `satisfied_by` (snake_case) and it is DELIVERED, not planned
 
 **Two factual errors corrected in `transparency-architecture.md` (+ `README.md`).** Both were
