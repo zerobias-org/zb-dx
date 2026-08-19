@@ -1,0 +1,84 @@
+{
+  "_comment": [
+    "Documents the shapes the RFP screens render. NOT loaded at runtime — the mocks inline",
+    "their data as JS, per the house pattern. This file exists so a reader can see the intended",
+    "field set without reading the mock's script block.",
+    "",
+    "An RFP is a platform Project with projectType=rfp. projectType, visibility, status and",
+    "lifecycle below are REAL platform vocabularies, verified against @zerobias-com/platform-sdk",
+    "on 2026-08-18 — not invented for the mock.",
+    "",
+    "NO MONEY. The Ledger owns pricing; budget was deliberately dropped from the model. There is",
+    "no budget or price field here on purpose."
+  ],
+
+  "platformVocabularies": {
+    "projectType": ["Standard", "Program", "Phase", "Assessment", "Engagement", "Rfp", "Pilot"],
+    "visibility": ["Private", "Internal", "Public"],
+    "status": ["Draft", "Active", "Archived", "Closed"],
+    "lifecycle": ["FixedTerm", "Evergreen"],
+    "_note": "ProjectStatus cannot express open-for-bidding vs bidding-closed vs awarded — all three are Active. That gap is why the bidding lifecycle is proposed as activities on a board on the RFP project. Vocabulary UNCONFIRMED; the mocks show only Open and Closing soon."
+  },
+
+  "rfp": {
+    "id": "rfp-4392",
+    "projectType": "Rfp",
+    "visibility": "Public",
+    "status": "Active",
+    "lifecycle": "FixedTerm",
+    "name": "FedRAMP Moderate — continuous monitoring support",
+    "description": "Ongoing ConMon, monthly POA&M maintenance and annual assessment support for a SaaS platform.",
+    "buyerOrgId": "<uuid>",
+    "buyerOrgName": "Northwind Cloud",
+    "segmentIds": ["<catalog-uuid>", "<catalog-uuid>", "<catalog-uuid>"],
+    "requirementCount": 24,
+    "closesAt": "2026-08-30",
+    "_visibilityNote": "visibility=Private is what makes an RfpInvitation necessary. Private RFPs are BACKBURNERED until the rest of the arc exists (Clark, 2026-08-18)."
+  },
+
+  "candidatePrerequisite": {
+    "_comment": [
+      "The R5 bid gate. A vendor cannot bid until THEIR OWN pre-req pairs are accepted.",
+      "",
+      "This is one entangled PAIR per requirement per candidate — never one demand task with N",
+      "suppliers (D-59). The RFP's requirement set is a TEMPLATE authored once; candidacy",
+      "INSTANTIATES it per candidate. So nothing another vendor submits can satisfy yours.",
+      "",
+      "Link type is live on prod: tasksatisfiestask 182d7fd6-6f3e-11f1-866f-7f0be032d30e,",
+      "task -> task, multi:true.",
+      "",
+      "MVP CAVEAT (Parks): the live substrate is soft / one-legged today — close = done, no",
+      "mirror — until Project-as-Reactor (task-98) lands. The mocks show the full two-legged",
+      "shape deliberately. Mock the full shape, build against the soft one."
+    ],
+    "label": "Professional liability insurance",
+    "demand": {
+      "_leg": "buyer side — a task on the RFP",
+      "taskId": "<uuid>",
+      "name": "Is the seller insured to our threshold?",
+      "ownerOrgId": "<buyer-uuid>"
+    },
+    "supply": {
+      "_leg": "vendor side — a task on the vendor's engagement",
+      "taskId": "<uuid>",
+      "name": "Upload certificate of insurance",
+      "ownerOrgId": "<vendor-uuid>",
+      "evidence": { "fileName": "coi-2026-2027.pdf", "uploadedAt": "2026-08-17T00:00:00Z" }
+    },
+    "link": { "type": "satisfies", "from": "supply.taskId", "to": "demand.taskId" },
+    "state": "wait",
+    "_states": {
+      "done": "buyer accepted — the pair is satisfied",
+      "wait": "evidence submitted, awaiting the buyer's acceptance",
+      "need": "vendor's move, nothing submitted",
+      "none": "not started"
+    },
+    "acceptedBy": null,
+    "acceptedAt": null
+  },
+
+  "derivedEligibility": {
+    "_comment": "DERIVED, never stored — same discipline as projects-requirements.html:453. A vendor is eligible only when every one of their own pairs for that RFP is accepted.",
+    "rule": "all pairs accepted -> Eligible · some -> Pre-reqs outstanding · none -> Not started"
+  }
+}
