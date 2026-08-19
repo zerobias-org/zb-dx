@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SME Mart — Open RFPs, vendor view (table + eligibility + detail drawer) — composited on real Portal shell</title>
+<title>Marketplace — Open RFPs, vendor view (table + eligibility + detail drawer) — composited on real Portal shell</title>
 <style>
   :root{
     color-scheme: dark;
@@ -24,13 +24,14 @@
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ===== SME Mart top bar =====
+  /* ===== Marketplace top bar =====
      The shell PNG is the PROJECTS app's Portal chrome — black bar reading "Projects / Portfolio
-     Engagements Dashboard". SME Mart's real bar is a slate blue with a storefront glyph, the
-     name "SME Mart", and exactly two tabs: Services and RFPs (see the live app). So this paints
-     the WHOLE bar rather than a corner of it — a partial overlay would leave a visible seam
-     where slate meets black. The left rail still comes from the PNG.
-     A real SME Mart shell capture replaces this before PR — see README. */
+     Engagements Dashboard". The app we are building is MARKETPLACE; its bar is slate blue with a
+     storefront glyph and exactly two tabs, Services and RFPs. The deployed app still shows the
+     DEPRECATED name "SME Mart" in that slot — the mock shows the name we are building toward.
+     This paints the WHOLE bar rather than a corner of it: a partial overlay would leave a visible
+     seam where slate meets black. The left rail still comes from the PNG.
+     A real Marketplace shell capture replaces this before PR — see README. */
   .appbar{ position:absolute; left:0; top:0; width:2140px; height:59px; background:#2f3947; display:flex; align-items:center; z-index:5; }
   .appbar .aicon{ width:60px; display:flex; align-items:center; justify-content:center; flex:none; }
   .appbar .aicon .sq{ width:34px; height:34px; border-radius:8px; border:1.5px solid #cfd6e0; display:flex; align-items:center; justify-content:center; }
@@ -215,12 +216,12 @@
 </head>
 <body>
 
-  <!-- SME Mart's real top bar, painted over the Projects chrome in the shell PNG. See the CSS note.
+  <!-- Marketplace's real top bar, painted over the Projects chrome in the shell PNG. See the CSS note.
        Icon is the storefront glyph and the tabs are Services / RFPs — matching the live app, not
        an invented set. -->
   <div class="appbar">
     <span class="aicon"><span class="sq"><svg viewBox="0 0 24 24"><path d="M21.9 8.89l-1.05-4.37c-.22-.9-1-1.52-1.91-1.52H5.05c-.9 0-1.69.63-1.9 1.52L2.1 8.89c-.24 1.02-.02 2.06.62 2.88.08.11.19.19.28.29V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6.94c.09-.09.2-.18.28-.28.64-.82.87-1.87.62-2.89zM13 5h1.96l.54 4.52c.06.83-.57 1.48-1.5 1.48-.83 0-1.5-.67-1.5-1.5V5zm-5.15 4.52L8.03 5H10v4.5c0 .83-.67 1.5-1.5 1.5-.9 0-1.61-.75-1.5-1.68zm11.14 9.48H5v-6.03c.08.01.16.03.24.03.71 0 1.36-.29 1.85-.76.51.49 1.19.76 1.94.76.71 0 1.35-.29 1.83-.75.49.46 1.15.75 1.9.75.7 0 1.38-.27 1.89-.76.49.47 1.14.76 1.85.76.08 0 .16-.02.24-.03V19z"/></svg></span></span>
-    <span class="aname">SME Mart</span>
+    <span class="aname">Marketplace</span>
     <span class="atabs">
       <a href="#">Services</a>
       <a href="#" class="on">RFPs</a>
@@ -238,7 +239,7 @@
         <span class="ricon"><svg viewBox="0 0 64 64"><rect x="12" y="8" width="40" height="48" rx="4"/><line x1="22" y1="22" x2="42" y2="22"/><line x1="22" y1="32" x2="42" y2="32"/><line x1="22" y1="42" x2="34" y2="42"/></svg></span>
         <div class="rmain">
           <div class="rcrumb">
-            <a class="cchip" href="#">SME Mart</a>
+            <a class="cchip" href="#">Marketplace</a>
             <span class="sep">/</span>
           </div>
           <div class="rtitle-row">

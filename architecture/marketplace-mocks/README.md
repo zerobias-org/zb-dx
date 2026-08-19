@@ -1,6 +1,6 @@
-# Marketplace mocks — SME Mart
+# Marketplace mocks — Marketplace
 
-Static HTML mockups of the **SME Mart Marketplace** surfaces, for design review before any code
+Static HTML mockups of the **Marketplace Marketplace** surfaces, for design review before any code
 is written. Same house pattern as [`../boundary-project-mocks/`](../boundary-project-mocks/):
 one self-contained `.html` per screen, no build, no framework, real HTML composited on a
 screenshot of the app shell.
@@ -47,13 +47,17 @@ visibly rather than implied.
 ## ⚠️ The shell background is a stand-in
 
 `assets/portal-shell-empty.png` is the **Projects app's** Portal chrome, borrowed from
-`boundary-project-mocks`. SME Mart's real bar is slate blue with a storefront glyph, the name
-**SME Mart**, and exactly two tabs — **Services** and **RFPs**.
+`boundary-project-mocks`. Marketplace's bar is slate blue with a storefront glyph and exactly two
+tabs — **Services** and **RFPs**.
+
+> **Naming:** the app is **Marketplace**. **"SME Mart" is the deprecated name** and still appears
+> in the deployed app's title slot; these mocks show the name we are building toward. Do not
+> reintroduce it.
 
 So each screen **paints the whole top bar in HTML** over the PNG and lets only the left rail show
 through. A partial overlay would leave a visible seam where slate meets black.
 
-**Before these go to PR, capture a real SME Mart shell** (empty content area, 2140px wide) and
+**Before these go to PR, capture a real Marketplace shell** (empty content area, 2140px wide) and
 drop the HTML bar. The left rail in the borrowed PNG is still the Projects rail and will read
 wrong to anyone who looks closely.
 
