@@ -12,13 +12,13 @@ Start with `html/program-overview.html` or `html/projects-cmmc-readiness.html` �
 
 ```
 boundary-project-mocks/
-├── html/         # 14 screens — the mockups themselves
+├── html/         # 15 screens — the mockups themselves
 ├── assets/       # shell-background PNGs the screens sit on
 ├── fixtures/     # reference JSON data (see "About the data")
 └── README.md     # this file
 ```
 
-### The 14 screens
+### The 15 screens
 - **Boundary Manager (the runtime control plane):**
   - `bm-components-list.html` — Operations Center → Components list (RACI is the spine)
   - `bm-component-detail.html` — a single Component's detail
@@ -33,6 +33,7 @@ boundary-project-mocks/
   - `projects-coverage-forecast.html` — coverage forecast
   - `projects-system-state.html` — system-state / timeline view
   - `projects-boards.html` — the project's boards
+  - `projects-documents.html` — Documents tab: collapsible folder tree + file table + detail drawer (three drawer layouts, cycled by row position: A / B / C)
   - `projects-board-kanban.html` — a work-type board (open with `?b=default|evidence|findings|poam|remediation`)
 - **Cross-party:**
   - `transparency-center.html` — buyer/seller transparency center (entangled tasks, 3PAO/measurement conduit)

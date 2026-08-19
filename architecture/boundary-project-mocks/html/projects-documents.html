@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects — Documents tab (folder tree + file table + detail drawer) — composited on real Portal shell</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --zb-primary:#03aff0;
+    --zb-primary-rgb:3,175,240;
+    --panel:#424242;
+    --panel-2:#3a3a3a;
+    --dim:#9aa0aa;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:2140px; }
+  body{
+    position:relative; width:2140px; min-height:1267px; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; color:#fff; font-size:16px;
+    background:#303030 url("../assets/projects-shell-empty.png") 0 0 / 2140px auto no-repeat;
+    -webkit-font-smoothing:antialiased;
+  }
+  .content{ position:relative; margin:68px 0 0 64px; background:transparent; }
+
+  /* header — same chrome as projects-overview.html */
+  .phead{ padding:16px 16px 0; }
+  .titlerow{ display:flex; align-items:flex-start; gap:14px; background:var(--panel); padding:12px 16px; box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:54px; height:54px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .rcrumb{ display:flex; align-items:center; gap:8px; }
+  .rcrumb .cchip{ text-decoration:none; background:#1e1e1e; color:#75aae9; border-radius:4px; height:22px; line-height:22px; padding:0 9px; font-size:13px; cursor:pointer; font-weight:500; }
+  .rcrumb .sep{ color:#8a8f9a; font-size:14px; }
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:20px; font-weight:500; line-height:1.2; }
+  .ptype{ display:inline-flex; align-items:center; height:18px; padding:0 8px; border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#1a1a1a; }
+  .ptype.workspace{ background:#90CAF9; }
+  .chip{ display:inline-flex; align-items:center; font-size:12px; font-weight:500; padding:2px 10px; border-radius:4px; }
+  .chip.active{ background:#8fd14f; color:#fff; font-weight:600; }
+  .rsub{ font-size:13px; color:var(--dim); line-height:1.35; }
+
+  /* page tabs — production set: Overview Readiness Requirements Boards Tasks Documents Notes Schedule */
+  .ptabs{ display:flex; align-items:stretch; padding:0; margin-top:12px; border-bottom:1px solid rgba(255,255,255,.10); }
+  .ptabs a{ display:inline-flex; align-items:center; height:48px; padding:0 24px; color:rgba(255,255,255,.62); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.006em; position:relative; }
+  .ptabs a:hover{ color:rgba(255,255,255,.87); }
+  .ptabs a.active{ color:#fff; }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--zb-primary); }
+
+  /* mock-data banner — matches the treatment shipped on the Schedule tab */
+  .mockbanner{
+    display:flex; align-items:center; gap:12px; margin:12px 16px 0; padding:8px 16px;
+    background:rgba(var(--zb-primary-rgb),.1); border-bottom:2px solid var(--zb-primary); border-radius:0;
+    font-size:14px; color:#cfe9f7;
+  }
+  .mockbanner .i{ width:22px; height:22px; border-radius:50%; background:var(--zb-primary); color:#00222f; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex:none; }
+
+  /* ===== docws: collapsible folder rail + file table.
+     NOT named .workspace — the header chip is class="ptype workspace", and a bare .workspace rule
+     collides with it and blows the header up. ===== */
+  .docws{ display:flex; height:980px; margin:12px 16px 24px; background:var(--panel); box-shadow:1px 1px 4px 0 rgba(0,0,0,.4); }
+
+  .rail{ flex:0 0 280px; min-width:0; border-right:1px solid #4d4d4d; display:flex; flex-direction:column; transition:flex-basis .18s ease; }
+  .rail.collapsed{ flex-basis:44px; }
+  .railhead{ display:flex; align-items:center; gap:8px; height:46px; padding:0 8px 0 12px; border-bottom:1px solid #4d4d4d; flex:none; }
+  .railtitle{ font-size:13px; font-weight:700; letter-spacing:.06em; color:var(--dim); text-transform:uppercase; flex:1; white-space:nowrap; overflow:hidden; }
+  .rail.collapsed .railtitle, .rail.collapsed .treewrap, .rail.collapsed .railfoot{ display:none; }
+  .iconbtn{ width:28px; height:28px; border-radius:4px; border:none; background:transparent; color:#cfcfcf; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; font-family:inherit; padding:0; }
+  .iconbtn:hover{ background:rgba(255,255,255,.08); }
+  .iconbtn svg{ width:18px; height:18px; fill:currentColor; }
+  .btn svg{ width:18px; height:18px; fill:currentColor; flex:none; }
+  .treewrap{ flex:1 1 auto; overflow:auto; padding:6px 0; }
+  .railfoot{ flex:none; padding:8px 10px; border-top:1px solid #4d4d4d; }
+  .railfoot .btn{ width:100%; justify-content:center; height:32px; font-size:13px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border-radius:4px; border:1px solid var(--zb-primary); background:transparent; color:var(--zb-primary); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn.solid{ background:var(--zb-primary); color:#00222f; border-color:var(--zb-primary); }
+  .btn.ghost{ border-color:#5a5a5a; color:#ddd; }
+
+  /* tree — Material folder / folder_open in #ff9800, matching the Notes tree */
+  .node{ display:flex; align-items:center; gap:6px; height:32px; padding:0 10px 0 0; cursor:pointer; font-size:14px; color:#e4e6ea; white-space:nowrap; user-select:none; }
+  .node:hover{ background:rgba(255,255,255,.05); }
+  .node.sel{ background:rgba(var(--zb-primary-rgb),.16); box-shadow:inset 3px 0 0 var(--zb-primary); color:#fff; }
+  .node .tw{ width:18px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .node .tw svg{ width:16px; height:16px; fill:#8f959e; }
+  .node .fi{ width:20px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .node .fi svg{ width:18px; height:18px; fill:#ff9800; }
+  .node .nm{ overflow:hidden; text-overflow:ellipsis; }
+  .node .ct{ margin-left:auto; color:#8f959e; font-size:12px; padding-left:8px; }
+
+  .main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .toolbar{ display:flex; align-items:center; gap:10px; height:52px; padding:0 12px; border-bottom:1px solid #4d4d4d; flex:none; }
+  .crumbs{ display:flex; align-items:center; gap:6px; font-size:14px; color:var(--dim); flex:1; min-width:0; overflow:hidden; }
+  .crumbs b{ color:#fff; font-weight:500; }
+  .crumbs .s{ color:#6d737c; }
+  .count{ font-size:13px; color:var(--dim); flex:none; }
+  /* mat-icon-button color="primary" */
+  .mib{ width:36px; height:36px; border-radius:50%; border:none; background:transparent; color:var(--zb-primary); cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; padding:0; }
+  .mib:hover{ background:rgba(var(--zb-primary-rgb),.12); }
+  .mib svg{ width:20px; height:20px; fill:currentColor; }
+  /* outlined mat-form-field + separate search button — zb-search-input's shape */
+  .searchwrap{ display:flex; align-items:center; gap:8px; flex:none; }
+  .mff{ position:relative; width:250px; height:36px; border:1px solid #6d737c; border-radius:4px; display:flex; align-items:center; padding:0 12px; }
+  .mff label{ position:absolute; top:-8px; left:9px; padding:0 5px; background:var(--panel); font-size:12px; color:var(--dim); line-height:1; }
+  .mff .val{ font-size:14px; color:#8f959e; }
+
+  .split{ flex:1 1 auto; min-height:0; display:flex; overflow:hidden; }
+  .tablecol{ flex:1 1 auto; min-width:0; overflow:auto; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ position:sticky; top:0; background:var(--panel-2); text-align:left; font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--dim); text-transform:uppercase; padding:9px 12px; border-bottom:1px solid #4d4d4d; white-space:nowrap; }
+  tbody td{ padding:9px 12px; border-bottom:1px solid #3c3c3c; font-size:14px; vertical-align:middle; }
+  tbody tr{ cursor:pointer; }
+  tbody tr:hover{ background:rgba(255,255,255,.04); }
+  tbody tr.sel{ background:rgba(var(--zb-primary-rgb),.14); box-shadow:inset 3px 0 0 var(--zb-primary); }
+  .fname{ display:flex; align-items:center; gap:10px; min-width:0; }
+  /* MIME icons: FontAwesome solid, as MimetypeToFontawesomeIconPipe maps them, rendered at
+     color:var(--zb-primary) per _task-attachment-styles.scss — single-colour glyphs, not badges */
+  .ft{ width:26px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .ft svg{ width:19px; height:19px; fill:var(--zb-primary); }
+  .fmeta{ min-width:0; }
+  .fmeta .n{ font-weight:500; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fmeta .d{ font-size:12px; color:var(--dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tchip{ display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:3px; background:#4f4f4f; color:#dcdcdc; font-size:11px; font-weight:700; letter-spacing:.04em; }
+  .who{ display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  .av{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#00222f; flex:none; }
+  .num{ color:#cfcfcf; white-space:nowrap; }
+  .acts{ display:flex; align-items:center; gap:2px; justify-content:flex-end; }
+  .acts .menuwrap{ display:flex; }
+  .empty{ padding:56px 20px; text-align:center; color:var(--dim); }
+  .empty .big{ margin-bottom:10px; }
+  .empty .big svg{ width:44px; height:44px; fill:#ff9800; opacity:.55; }
+  .empty .t{ font-size:16px; color:#e4e6ea; margin-bottom:6px; }
+  .empty .s{ font-size:14px; }
+  .drop{ margin:14px auto 0; max-width:420px; border:1px dashed #5f6a72; border-radius:6px; padding:16px; font-size:13px; color:#8f959e; }
+
+  /* ===== side drawer — zb-remote-table + mat-drawer position="end" ===== */
+  .drawer{ width:460px; flex:none; margin:12px 12px 12px 0; background:#383838; border:1px solid rgba(255,255,255,.10); border-radius:5px; box-shadow:-2px 1px 12px 0 rgba(0,0,0,.45); padding:14px 16px 16px; display:flex; flex-direction:column; gap:13px; overflow:auto; }
+  .split:not(.drawer-open) .drawer{ display:none; }
+  .dhead{ display:flex; align-items:flex-start; gap:10px; }
+  .dicon{ width:34px; flex:none; display:flex; align-items:flex-start; justify-content:center; padding-top:2px; }
+  .dicon svg{ width:26px; height:26px; fill:var(--zb-primary); }
+  .dtitle{ font-size:18px; font-weight:600; color:#fff; line-height:1.25; word-break:break-all; }
+  .dsub{ font-size:12px; color:var(--dim); margin-top:3px; }
+  .dclose{ background:transparent; border:none; color:var(--dim); font-size:22px; line-height:1; cursor:pointer; padding:0 2px; font-family:inherit; }
+  .dclose:hover{ color:#fff; }
+  /* preview block — ⛔ THUMBNAIL BLOCKED, task-217. There is no thumbnail surface anywhere in
+     FileService and FileView.preview is a TEXT field, so this falls back to the file's type glyph
+     for every row. The FALLBACK ITSELF IS BUILDABLE — build that and stop there. Images could
+     later self-render from their view URL; nothing else can until task-217 lands. */
+  .dprev{ height:150px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; border:1px solid rgba(255,255,255,.10); border-radius:5px; background:#2f2f2f; cursor:pointer; }
+  .dprev:hover{ border-color:var(--zb-primary); }
+  .dprev svg{ width:54px; height:54px; fill:var(--zb-primary); opacity:.7; }
+  .dprev .cap{ font-size:12px; color:var(--dim); }
+  .dactions{ display:flex; gap:8px; }
+  .dactions .btn{ flex:1; justify-content:center; height:34px; font-size:13px; }
+  .dactions .btn.narrow{ flex:0 0 auto; padding:0 10px; }
+  .dsec{ font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--dim); padding-top:4px; }
+  .dmeta{ display:flex; flex-direction:column; border-top:1px solid rgba(255,255,255,.06); padding-top:10px; }
+  .drow{ display:flex; align-items:center; gap:10px; padding:7px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .drow:last-child{ border-bottom:none; }
+  .drow .k{ width:104px; flex:none; color:var(--dim); }
+  .drow .v{ color:#e4e6ea; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+
+  /* menus */
+  .menuwrap{ position:relative; }
+  .menu{ position:absolute; right:0; top:calc(100% + 4px); min-width:252px; background:#2f2f2f; border:1px solid rgba(255,255,255,.12); border-radius:4px; box-shadow:0 8px 24px rgba(0,0,0,.5); padding:6px 0; z-index:20; display:none; }
+  .menu.open{ display:block; }
+  .menu .mi{ display:flex; align-items:center; gap:10px; padding:8px 14px; font-size:13px; color:#e4e6ea; cursor:pointer; white-space:nowrap; }
+  .menu .mi:hover{ background:rgba(255,255,255,.07); }
+  .menu .mi svg{ width:16px; height:16px; fill:var(--dim); flex:none; }
+  .menu .sep{ height:1px; background:rgba(255,255,255,.08); margin:6px 0; }
+  .menu .lbl{ padding:6px 14px 4px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#7d838c; }
+  .menu .mi.danger{ color:#ff8a80; } .menu .mi.danger svg{ fill:#ff8a80; }
+
+  /* full-size viewer — mirrors zb-file-viewer-dialog (iframe on files/{id}/view) */
+  .scrim{ position:fixed; inset:0; background:rgba(0,0,0,.62); display:none; align-items:center; justify-content:center; z-index:50; }
+  .scrim.open{ display:flex; }
+  .dlg{ width:1180px; height:840px; max-width:94vw; max-height:92vh; background:var(--panel); border-radius:6px; box-shadow:0 12px 40px rgba(0,0,0,.6); display:flex; flex-direction:column; overflow:hidden; }
+  .dlg-head{ display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid #4d4d4d; }
+  .dlg-title{ font-size:18px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dlg-body{ flex:1 1 auto; min-height:0; background:#2b2b2b; display:flex; align-items:center; justify-content:center; }
+  .iframe-sim{ width:100%; height:100%; background:#f6f6f6; color:#333; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; font-size:14px; }
+  .iframe-sim .u{ font-family:ui-monospace,Menlo,monospace; font-size:12px; color:#666; background:#e9e9e9; border-radius:3px; padding:6px 10px; }
+  .dlg-foot{ display:flex; align-items:center; gap:8px; padding:12px 18px; border-top:1px solid #4d4d4d; }
+  .dlg-foot .spacer{ flex:1; }
+</style>
+</head>
+<body>
+
+  <main class="content">
+    <div class="phead">
+      <div class="titlerow">
+        <span class="ricon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pjxzdmcgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjZweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fS5jbHMtM3tmaWxsOm5vbmU7c3Ryb2tlOiMwMDA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7c3Ryb2tlLXdpZHRoOjNweDtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7fTwvc3R5bGU+PG1hc2sgaWQ9ImhpZGVVbmRlclBlbmNpbCI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IndoaXRlIi8+PGcgdHJhbnNmb3JtPSJyb3RhdGUoOTAgNjQgNzApIj48cmVjdCB4PSI1NCIgeT0iNjQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iYmxhY2siLz48L2c+PC9tYXNrPjwvZGVmcz48dGl0bGUvPjxnIGRhdGEtbmFtZT0iTGF5ZXIgNSIgaWQ9IkxheWVyXzUiPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMjIiIHk9IjI0IiB3aWR0aD0iODQiIGhlaWdodD0iOTIiIHJ4PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1MCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNCIgcng9IjIiLz48ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSA2NCA3MCkiIG1hc2s9InVybCgjaGlkZVVuZGVyUGVuY2lsKSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNjQiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI0NiIgeTE9IjY0IiB4Mj0iNDYiIHkyPSI2NyIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjUyIiB5MT0iNjQiIHgyPSI1MiIgeTI9IjcwIi8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNTgiIHkxPSI2NCIgeDI9IjU4IiB5Mj0iNjciLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI2NCIgeTE9IjY0IiB4Mj0iNjQiIHkyPSI3MCIvPjxsaW5lIGNsYXNzPSJjbHMtMyIgeDE9IjcwIiB5MT0iNjQiIHgyPSI3MCIgeTI9IjY3Ii8+PGxpbmUgY2xhc3M9ImNscy0zIiB4MT0iNzYiIHkxPSI2NCIgeDI9Ijc2IiB5Mj0iNzAiLz48bGluZSBjbGFzcz0iY2xzLTMiIHgxPSI4MiIgeTE9IjY0IiB4Mj0iODIiIHkyPSI2NyIvPjwvZz48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNjQgNzApIj48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2NCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEyIiByeD0iMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDkiIHk9IjY0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxMiIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTQiIHk9IjY0IiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTMiIHBvaW50cz0iNzYgNjQsIDg5IDcwLCA3NiA3NiIvPjwvZz48L2c+PC9zdmc+Cg==" alt="Project" width="54" height="54"></span>
+        <div class="rmain">
+          <div class="rcrumb">
+            <a class="cchip" href="program-overview.html">ZeroBias Compliance Readiness</a>
+            <span class="sep">/</span>
+          </div>
+          <div class="rtitle-row">
+            <h1>DOD CMMC v2.0 (L2)</h1>
+            <span class="ptype workspace">Framework</span>
+            <span class="chip active">Active</span>
+            <span class="chip" style="background:#17342a;color:#7fd6a8;font-weight:600;">Evergreen</span>
+          </div>
+          <span class="rsub">Project-scoped documents. Uploaded artifacts organised in folders — distinct from Notes, which are authored in the app.</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="ptabs">
+      <a href="projects-overview.html">Overview</a>
+      <a href="projects-cmmc-readiness.html">Readiness</a>
+      <a href="projects-requirements.html">Requirements</a>
+      <a href="projects-boards.html">Boards</a>
+      <a href="#">Tasks</a>
+      <a href="projects-documents.html" class="active">Documents</a>
+      <a href="#">Notes</a>
+      <a href="#">Schedule</a>
+    </nav>
+
+    <div class="mockbanner">
+      <div class="i">i</div>
+      <div>Showing mock data — this view is a preview and does not reflect real data.</div>
+    </div>
+
+    <div class="docws">
+      <!-- collapsible folder tree. The DOCUMENTS/ branch itself is hidden: a project has ONE root
+           folder (remoteTarget = projectId) with hidden NOTES/ and DOCUMENTS/ branches beneath it,
+           so this rail shows the CHILDREN of DOCUMENTS/, never the branch node.
+
+           ⛔ THERE IS NO FOLDER RENAME CONTROL, AND THAT IS DELIBERATE — task-220. FileService has
+           no folder update operation of any kind: PUT /folders/{id} returns 405 and there is no
+           UpdateFolder model. Files can be renamed, folders cannot. Do not add a rename affordance
+           here (context menu, inline edit, or otherwise) until task-220 lands — it cannot work.
+           Create and delete ARE backed (FolderApi.create / delete) and are safe to build. -->
+      <aside class="rail" id="rail">
+        <div class="railhead">
+          <div class="railtitle">Folders</div>
+          <button class="iconbtn" id="collapse" title="Collapse folder rail">
+            <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </button>
+        </div>
+        <div class="treewrap" id="tree"></div>
+        <div class="railfoot">
+          <button class="btn ghost">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg>
+            New folder
+          </button>
+        </div>
+      </aside>
+
+      <section class="main">
+        <!-- toolbar mirrors zb-remote-table + zb-search-input: filter_list primary icon-button in
+             leftActions, outlined field with a SEPARATE primary search button, then the page action -->
+        <div class="toolbar">
+          <button class="mib" title="Filter">
+            <svg viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+          </button>
+          <div class="crumbs" id="crumbs"></div>
+          <div class="count" id="count"></div>
+          <!-- "Search by name" is deliberate, NOT a placeholder to improve. Cross-file CONTENT
+               search does not exist in FileService — there is no /files/search?content= endpoint or
+               equivalent index, and it is the Blocker-severity gap #1 in FILESERVICE_REFERENCE.md.
+               What IS backed: name/keyword search via resourceSearch keywords or a name condition.
+               Saying "Search documents" implies searching inside them and overpromises. -->
+          <div class="searchwrap">
+            <div class="mff"><label>Search</label><span class="val">Search by name</span></div>
+            <button class="mib" title="Search">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+          </div>
+          <button class="btn solid">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            Upload
+          </button>
+        </div>
+
+        <div class="split" id="split">
+          <div class="tablecol" id="tablewrap"></div>
+          <aside class="drawer" id="drawer"></aside>
+        </div>
+      </section>
+    </div>
+  </main>
+
+<!-- full-size viewer (zb-file-viewer-dialog): iframe on the fileservice view URL -->
+<div class="scrim" id="scrim">
+  <div class="dlg">
+    <div class="dlg-head">
+      <div class="dlg-title" id="dlgTitle"></div>
+      <button class="dclose" onclick="closeViewer()" title="Close">&times;</button>
+    </div>
+    <div class="dlg-body">
+      <div class="iframe-sim">
+        <div><strong id="dlgKind"></strong></div>
+        <div class="u" id="dlgUrl"></div>
+        <div style="color:#888">&lt;iframe [src]="viewUrl | safe:'resourceUrl'"&gt;</div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn ghost" onclick="closeViewer()">Close</button>
+      <div class="spacer"></div>
+      <button class="btn ghost">Copy link</button>
+      <button class="btn ghost">Download</button>
+      <button class="btn solid">Open in New Window</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   Documents tab — folder tree + file table + detail drawer.
+
+   All identifiers are SYNTHETIC (e0000000-0000-4000-8000-…), consistent with the rest of this
+   mock set. Do not treat any id here as a real ZeroBias resource id.
+
+   All identifiers are SYNTHETIC. Do not treat any id here as a real ZeroBias resource id.
+
+   ############################################################################
+   ## ⛔ READ THIS BEFORE BUILDING ANY OF IT — MUCH OF THIS SCREEN IS NOT BACKED
+   ##
+   ## FileService was shipped largely at stub level and has not been a focus for a long time.
+   ## The API surface was probed live on 2026-08-05 (PROD/UAT/QA/CI), NOT read off SDK type
+   ## signatures — several methods exist in the SDK and throw or lie at runtime.
+   ##
+   ## Tracking epic: task-216 [EPIC] FileService completion. Each blocked affordance below
+   ## names the sub-task that gates it. DO NOT try to implement a blocked affordance — it
+   ## cannot work yet. Build the unblocked parts and leave the rest as designed-but-inert.
+   ##
+   ##  AFFORDANCE                      STATUS                                  BLOCKED BY
+   ##  ------------------------------- --------------------------------------- ----------
+   ##  Share > Create and copy link    500 "Not implemented" — BOTH flavours    task-224
+   ##    (both hydra + token)          ShareProducerImpl.create is a stub.
+   ##                                  Verified on all four environments.
+   ##  Share link consumption          TokenApi view/download/children are      task-225
+   ##    (what a recipient opens)      ALL stubbed. Sharing is dead end-to-end.
+   ##  Share link expiry / view cap    CreateShare has no expiration or         task-222
+   ##                                  viewsAllowed input. UI half: task-223.
+   ##  Manage / revoke existing shares ShareApi is create+get only. No delete,  task-218
+   ##                                  no update. DELIBERATELY absent from
+   ##                                  this mock — do not add it back.
+   ##  Folder sharing                  No /folders/{id}/shares route exists;    task-219
+   ##                                  inheritance to children undefined.
+   ##  Version history (More menu)     listVersions returns lifecycle states    task-226
+   ##                                  of the FIRST version and OMITS the
+   ##                                  current one. Rows carry null ids.
+   ##  Thumbnail in the preview block  No thumbnail surface anywhere.           task-217
+   ##                                  FileView.preview is a TEXT field.
+   ##  Editing a file's description    PUT /files/{id} accepts description,     task-221
+   ##                                  returns 200, and SILENTLY DISCARDS it.
+   ##                                  Never add an inline edit for it.
+   ##  Renaming a folder               No folder update endpoint at all;        task-220
+   ##                                  PUT /folders/{id} returns 405. There is
+   ##                                  no rename control here BY DESIGN.
+   ############################################################################
+
+   WHAT IS ACTUALLY BACKED AND SAFE TO BUILD (verified working 2026-08-05):
+     Folder tree        FolderApi create / get / listChildren / listRootChildren / delete
+     Upload             CreateFile + POST /files/{id}/upload?checksum=<md5>
+     Download           FilesService.download
+     View full size     getViewUrl(fileVersionId) -> /api/file-service/files/{fileVersionId}/view
+                        NOTE the id: keyed on the VERSION, not the file, so a view link is pinned
+                        to one version and does not follow later uploads. Every call site in
+                        zb/ui passes fileVersionId. This is an INTERNAL link — a raw API path
+                        built from location.host that 401s without a session and does NOT redirect
+                        to login. Never hand it to someone outside the org.
+     Rename / Move      UpdateFile.name / UpdateFile.folderId — files only, never folders
+     Copy Resource UUID the platform-reference affordance (never displays the uuid on screen)
+
+   The TYPE chip is DERIVED from mimeType, display-only — there is NO document-type field on
+   CreateFile/UpdateFile/FileView, so it cannot be edited (Clark's call, 2026-08-05; the earlier
+   "Edit document type" menu item promised a field that does not exist and has been removed).
+   Making it user-settable would mean backing it with hydra tags and registering a tagType first.
+
+   Row actions carry the same four affordances as the drawer — view / download / share / more — so
+   every action is reachable without opening the drawer (Clark, 2026-08-05).
+   ============================================================================ */
+
+/* Material icons — the same glyphs the app renders via <mat-icon>. */
+const IC = {
+  folder:      '<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
+  folder_open: '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>',
+  expand_more: '<svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>',
+  visibility:  '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>',
+  download:    '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
+  more_vert:   '<svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>',
+  copy:        '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+  share:       '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>',
+  link:        '<svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>',
+  lock:        '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>',
+  people:      '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+  open_new:    '<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>',
+  edit:        '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+  move:        '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.5 9v-2H10v-2h3.5V9l3.5 3-3.5 3z"/></svg>',
+  label:       '<svg viewBox="0 0 24 24"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>',
+  history:     '<svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>',
+  trash:       '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
+  caret:       '<svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M7 10l5 5 5-5z"/></svg>',
+};
+
+/* FontAwesome solid glyphs — path data from the installed @fortawesome packages, the icons
+   MimetypeToFontawesomeIconPipe maps mime types onto. (The real pipe keys on mimeType, not ext.) */
+const FA = {
+  pdf: ['0 0 512 512','M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 144-208 0c-35.3 0-64 28.7-64 64l0 144-48 0c-35.3 0-64-28.7-64-64L0 64zm384 64l-128 0L256 0 384 128zM176 352l32 0c30.9 0 56 25.1 56 56s-25.1 56-56 56l-16 0 0 32c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-48 0-80c0-8.8 7.2-16 16-16zm32 80c13.3 0 24-10.7 24-24s-10.7-24-24-24l-16 0 0 48 16 0zm96-80l32 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-32 0c-8.8 0-16-7.2-16-16l0-128c0-8.8 7.2-16 16-16zm32 128c8.8 0 16-7.2 16-16l0-64c0-8.8-7.2-16-16-16l-16 0 0 96 16 0zm80-112c0-8.8 7.2-16 16-16l48 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0 0 32 32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0 0 48c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-64 0-64z'],
+  xls: ['0 0 384 512','M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM155.7 250.2L192 302.1l36.3-51.9c7.6-10.9 22.6-13.5 33.4-5.9s13.5 22.6 5.9 33.4L221.3 344l46.4 66.2c7.6 10.9 5 25.8-5.9 33.4s-25.8 5-33.4-5.9L192 385.8l-36.3 51.9c-7.6 10.9-22.6 13.5-33.4 5.9s-13.5-22.6-5.9-33.4L162.7 344l-46.4-66.2c-7.6-10.9-5-25.8 5.9-33.4s25.8-5 33.4 5.9z'],
+  doc: ['0 0 384 512','M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM111 257.1l26.8 89.2 31.6-90.3c3.4-9.6 12.5-16.1 22.7-16.1s19.3 6.4 22.7 16.1l31.6 90.3L273 257.1c3.8-12.7 17.2-19.9 29.9-16.1s19.9 17.2 16.1 29.9l-48 160c-3 10-12 16.9-22.4 17.1s-19.8-6.2-23.2-16.1L192 336.6l-33.3 95.3c-3.4 9.8-12.8 16.3-23.2 16.1s-19.5-7.1-22.4-17.1l-48-160c-3.8-12.7 3.4-26.1 16.1-29.9s26.1 3.4 29.9 16.1z'],
+  png: ['0 0 384 512','M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM64 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm152 32c5.3 0 10.2 2.6 13.2 6.9l88 128c3.4 4.9 3.7 11.3 1 16.5s-8.2 8.6-14.2 8.6l-88 0-40 0-48 0-48 0c-5.8 0-11.1-3.1-13.9-8.1s-2.8-11.2 .2-16.1l48-80c2.9-4.8 8.1-7.8 13.7-7.8s10.8 2.9 13.7 7.8l12.8 21.4 48.3-70.2c3-4.3 7.9-6.9 13.2-6.9z'],
+  zip: ['0 0 384 512','M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM96 48c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm-6.3 71.8c3.7-14 16.4-23.8 30.9-23.8l14.8 0c14.5 0 27.2 9.7 30.9 23.8l23.5 88.2c1.4 5.4 2.1 10.9 2.1 16.4c0 35.2-28.8 63.7-64 63.7s-64-28.5-64-63.7c0-5.5 .7-11.1 2.1-16.4l23.5-88.2zM112 336c-8.8 0-16 7.2-16 16s7.2 16 16 16l32 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-32 0z'],
+  csv: ['0 0 384 512','M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM112 256l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z'],
+  md:  ['0 0 640 512','M593.8 59.1H46.2C20.7 59.1 0 79.8 0 105.2v301.5c0 25.5 20.7 46.2 46.2 46.2h547.7c25.5 0 46.2-20.7 46.1-46.1V105.2c0-25.4-20.7-46.1-46.2-46.1zM338.5 360.6H277v-120l-61.5 76.9-61.5-76.9v120H92.3V151.4h61.5l61.5 76.9 61.5-76.9h61.5v209.2zm135.3 3.1L381.5 256H443V151.4h61.5V256H566z'],
+};
+const faIcon = t => { const [vb,p] = FA[t] || FA.md; return `<svg viewBox="${vb}"><path d="${p}"/></svg>`; };
+
+/* TYPE chip — DERIVED, never authored. There is no document-type field in the SDK, so this is a
+   pure function of the file's mimeType, exactly like the icon above. Deriving it here (rather than
+   hand-writing a label per row) is deliberate: it keeps the mock from implying a stored, editable
+   field. If this ever needs to be user-settable it has to move to hydra tags. */
+const DOC_TYPE = { pdf:'DOCUMENT', doc:'DOCUMENT', md:'DOCUMENT', xls:'SPREADSHEET', csv:'DATA', png:'IMAGE', zip:'ARCHIVE' };
+const docType = d => DOC_TYPE[d.t] || 'FILE';
+
+/* Folder tree. The DOCUMENTS/ branch is hidden — these are its children. */
+const TREE = [
+  { id:'evidence',  name:'Evidence',      depth:0, docs:[] },
+  { id:'soc2',      name:'SOC 2 — FY26',  depth:1, docs:[
+      { id:'e0000000-0000-4000-8000-0000000000d1', n:'SOC2-readiness-gap-analysis.pdf', d:'Internal gap analysis for FY26 audit kick-off', t:'pdf', fv:'e0000000-0000-4000-8000-0000000000f1', by:'Jane Cooper', c:'#4f9cf9', sz:'2.4 MB', up:'2d ago' },
+      { id:'e0000000-0000-4000-8000-0000000000d2', n:'access-review-2026-Q2.csv',       d:'Quarterly access recertification raw export',   t:'csv', fv:'e0000000-0000-4000-8000-0000000000f2', by:'Jane Cooper', c:'#4f9cf9', sz:'88 KB',  up:'8d ago' },
+      { id:'e0000000-0000-4000-8000-0000000000d3', n:'control-mapping-NIST-CSF.xlsx',   d:'Acme controls mapped to NIST CSF v2',           t:'xls', fv:'e0000000-0000-4000-8000-0000000000f3', by:'Mark Lee',    c:'#3ec98a', sz:'486 KB', up:'3d ago' },
+  ]},
+  { id:'fy25',      name:'FY25 archive',  depth:1, docs:[
+      { id:'e0000000-0000-4000-8000-0000000000d4', n:'FY25-audit-evidence-bundle.zip', d:'Archived evidence package for FY25 SOC 2', t:'zip', fv:'e0000000-0000-4000-8000-0000000000f4', by:'Jane Cooper', c:'#4f9cf9', sz:'42 MB', up:'2mo ago' },
+  ]},
+  { id:'policies',  name:'Policies',      depth:0, docs:[
+      { id:'e0000000-0000-4000-8000-0000000000d5', n:'GDPR-DPIA-draft.pdf',            d:'Data protection impact assessment — draft',      t:'pdf', fv:'e0000000-0000-4000-8000-0000000000f5', by:'Tom Fischer', c:'#f2a33c', sz:'1.6 MB', up:'10d ago' },
+      { id:'e0000000-0000-4000-8000-0000000000d6', n:'subprocessor-list-Q2-2026.docx', d:'Tracked vendor list with risk classification',   t:'doc', fv:'e0000000-0000-4000-8000-0000000000f6', by:'Priya Patel', c:'#e06fae', sz:'122 KB', up:'5d ago' },
+  ]},
+  { id:'diagrams',  name:'Diagrams',      depth:0, docs:[
+      { id:'e0000000-0000-4000-8000-0000000000d7', n:'network-architecture-2026.png', d:'Production network diagram (evidence reference)', t:'png', fv:'e0000000-0000-4000-8000-0000000000f7', by:'Mark Lee', c:'#3ec98a', sz:'3.1 MB', up:'6d ago' },
+  ]},
+  { id:'contracts', name:'Contracts',     depth:0, docs:[] },
+];
+
+let selected  = 'soc2';
+let activeDoc = null;
+
+const initials = n => n.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+
+function pathTo(id){
+  const i = TREE.findIndex(n=>n.id===id);
+  const out = [TREE[i]]; let d = TREE[i].depth;
+  for(let j=i-1;j>=0 && d>0;j--){ if(TREE[j].depth < d){ out.unshift(TREE[j]); d = TREE[j].depth; } }
+  return out;
+}
+function hasKids(n){
+  const i = TREE.indexOf(n);
+  return TREE.some((c,j)=> j>i && c.depth===n.depth+1 && !TREE.slice(i+1,j).some(x=>x.depth<=n.depth));
+}
+
+function renderTree(){
+  document.getElementById('tree').innerHTML = TREE.map(n=>`
+    <div class="node ${n.id===selected?'sel':''}" data-id="${n.id}" style="padding-left:${8 + n.depth*16}px">
+      <span class="tw">${hasKids(n) ? IC.expand_more : ''}</span>
+      <span class="fi">${n.id===selected ? IC.folder_open : IC.folder}</span>
+      <span class="nm">${n.name}</span>
+      <span class="ct">${n.docs.length || ''}</span>
+    </div>`).join('');
+  document.querySelectorAll('.node').forEach(el=>{
+    el.onclick = ()=>{ selected = el.dataset.id; activeDoc = null; renderTree(); renderTable(); renderDrawer(); };
+  });
+}
+
+function renderTable(){
+  const node = TREE.find(n=>n.id===selected), docs = node.docs;
+  document.getElementById('crumbs').innerHTML =
+    `<span style="color:#6d737c">Documents</span> <span class="s">/</span> ` +
+    pathTo(selected).map((n,i,a)=> i===a.length-1 ? `<b>${n.name}</b>` : `${n.name} <span class="s">/</span>`).join(' ');
+  document.getElementById('count').textContent = docs.length ? `${docs.length} document${docs.length>1?'s':''}` : '';
+
+  if(!docs.length){
+    document.getElementById('tablewrap').innerHTML = `
+      <div class="empty">
+        <div class="big">${IC.folder}</div>
+        <div class="t">No documents in &ldquo;${node.name}&rdquo;</div>
+        <div class="s">Drag files here, or use Upload.</div>
+        <div class="drop">Drop files to upload to this folder</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('tablewrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="width:42%">Name</th><th>Type</th><th>Uploaded by</th>
+        <th style="text-align:right">Size</th><th style="text-align:right">Uploaded</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${docs.map((d,i)=>`
+          <tr data-i="${i}" class="${activeDoc && activeDoc.id===d.id ? 'sel':''}">
+            <td><div class="fname">
+              <div class="ft">${faIcon(d.t)}</div>
+              <div class="fmeta"><div class="n">${d.n}</div><div class="d">${d.d}</div></div>
+            </div></td>
+            <td><span class="tchip">${docType(d)}</span></td>
+            <td><div class="who"><div class="av" style="background:${d.c}">${initials(d.by)}</div>${d.by}</div></td>
+            <td class="num" style="text-align:right">${d.sz}</td>
+            <td class="num" style="text-align:right">${d.up}</td>
+            <td><div class="acts">
+              <button class="iconbtn" title="View" data-act="view">${IC.visibility}</button>
+              <button class="iconbtn" title="Download" data-act="stop">${IC.download}</button>
+              <div class="menuwrap"><button class="iconbtn" title="Share" data-menu="rs${i}">${IC.share}</button>${shareMenu('rs'+i)}</div>
+              <div class="menuwrap"><button class="iconbtn" title="More" data-menu="rm${i}">${IC.more_vert}</button>${moreMenu('rm'+i)}</div>
+            </div></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  const wrap = document.getElementById('tablewrap');
+  wrap.querySelectorAll('tbody tr').forEach(tr=>{
+    tr.onclick = ()=>{ activeDoc = docs[+tr.dataset.i]; renderTable(); renderDrawer(); };
+  });
+  /* the row's own View shortcut opens the viewer WITHOUT selecting the row or opening the drawer */
+  wrap.querySelectorAll('[data-act="view"]').forEach(b=>{
+    b.onclick = e=>{ e.stopPropagation(); openViewer(docs[+b.closest('tr').dataset.i]); };
+  });
+  wrap.querySelectorAll('[data-act="stop"]').forEach(b=>{ b.onclick = e=>e.stopPropagation(); });
+  wireMenus(wrap);
+}
+
+/* ⛔ BLOCKED — task-224 (share create/get stubbed) + task-225 (TokenApi stubbed).
+   BOTH "Create and copy link" items are INERT. POST /shares returns 500 "Not implemented" on every
+   environment, and the TokenApi a recipient would hit is stubbed too. Sharing does not exist yet in
+   any form. This menu is a DESIGN ARTIFACT — wire nothing here until task-224 and task-225 land.
+   "Copy view link" and "Copy Resource UUID" below ARE buildable; they touch no share API.
+
+   Share menu. Two rules shape it:
+
+   1. "Manage existing shares" is DELIBERATELY absent (Tom): ShareApi is create+get only — no
+      delete, no update — so a list of shares would be one you cannot revoke from (task-218).
+   2. "Copy share link" was REMOVED as a standalone item (Clark, 2026-08-05) and folded into the
+      two Create items. It could not answer "WHICH share?" — nothing can be deleted, so shares only
+      accumulate, and after three Creates there are three permanent URLs and no basis for calling
+      any of them "the" share link. Copying at the moment of creation is unambiguous.
+
+   The two kinds of link here are NOT variants of one thing, and the grouping says so:
+     * CREATE  = a write. ShareApi.create mints a permanent Share and returns a url that GRANTS
+                 access to someone who does not otherwise have it. Irreversible.
+     * VIEW    = not an API call at all. getViewUrl() composes /files/{fileVersionId}/view client
+                 side. Grants NOTHING — the recipient still needs their own access. A deep link. */
+function shareMenu(id){
+  return `<div class="menu" id="${id}">
+    <div class="lbl">Create share link — grants access, cannot be undone</div>
+    <div class="mi">${IC.link} Create and copy link — anyone with the link</div>
+    <div class="mi">${IC.lock} Create and copy link — ZeroBias sign-in required</div>
+    <div class="sep"></div>
+    <div class="lbl">View link — grants nothing</div>
+    <div class="mi">${IC.copy} Copy view link</div>
+    <div class="sep"></div>
+    <div class="lbl">Reference in ZeroBias</div>
+    <div class="mi">${IC.copy} Copy Resource UUID</div>
+  </div>`;
+}
+/* Rename / Move / Delete / Open-in-new-window are all BACKED and safe to build (UpdateFile.name,
+   UpdateFile.folderId, FileApi.delete, the view URL). "Version history" is NOT — see below.
+   Note there is no "Edit description" item and there must never be one: task-221 — PUT /files/{id}
+   accepts a description, returns 200, and silently discards it, so the control would appear to work
+   and lose the user's input. */
+function moreMenu(id){
+  return `<div class="menu" id="${id}">
+    <div class="mi">${IC.open_new} Open in new window</div>
+    <div class="sep"></div>
+    <div class="mi">${IC.edit} Rename</div>
+    <div class="mi">${IC.move} Move to folder…</div>
+    <!-- ⛔ BLOCKED — task-226. listVersions returns lifecycle states of the FIRST version, omits the
+         current one, and most rows carry a null fileVersionId. There is no usable version list to
+         render. Chris Scarola has also questioned whether versioning is an intended feature at all
+         (S3 overwrites), so this may be removed rather than built. Leave inert. -->
+    <div class="mi">${IC.history} Version history</div>
+    <div class="sep"></div>
+    <div class="mi danger">${IC.trash} Delete</div>
+  </div>`;
+}
+
+/* One wiring routine for every [data-menu] trigger — drawer and table rows alike. The trigger stops
+   propagation so it never selects the row; a single document listener closes whatever is open. */
+function wireMenus(scope){
+  scope.querySelectorAll('[data-menu]').forEach(b=>{
+    b.onclick = (e)=>{
+      e.stopPropagation();
+      const m = document.getElementById(b.dataset.menu);
+      const wasOpen = m.classList.contains('open');
+      document.querySelectorAll('.menu.open').forEach(x=>x.classList.remove('open'));
+      if(!wasOpen) m.classList.add('open');
+    };
+  });
+  scope.querySelectorAll('.menu').forEach(m=>{
+    m.onclick = (e)=>{ e.stopPropagation(); m.classList.remove('open'); };
+  });
+}
+document.addEventListener('click', ()=> document.querySelectorAll('.menu.open').forEach(x=>x.classList.remove('open')));
+/* Detail rows. ALL READ-ONLY — do not add inline editing to any of them without checking the epic:
+     Type        derived from mimeType, no stored field exists to edit (see the header block)
+     Description ⛔ task-221 — set at upload and permanently immutable. PUT accepts it, returns 200,
+                 and DISCARDS it, so an inline editor would silently swallow the user's input.
+                 Renaming is fine (UpdateFile.name); describing is not.
+     Uploaded by resolved from ownerId, which is a bare UUID — rendering a NAME and avatar needs a
+                 PrincipalApi lookup per distinct owner. Buildable, but it is an extra call, not free. */
+const metaRows = d => `
+  <div class="drow"><span class="k">Type</span><span class="v"><span class="tchip">${docType(d)}</span></span></div>
+  <div class="drow"><span class="k">Size</span><span class="v">${d.sz}</span></div>
+  <div class="drow"><span class="k">Uploaded by</span><span class="v"><span class="who"><span class="av" style="background:${d.c}">${initials(d.by)}</span>${d.by}</span></span></div>
+  <div class="drow"><span class="k">Uploaded</span><span class="v">${d.up}</span></div>
+  <div class="drow"><span class="k">Folder</span><span class="v">${TREE.find(n=>n.id===selected).name}</span></div>
+  <div class="drow"><span class="k">Description</span><span class="v">${d.d}</span></div>`;
+const headBlock = d => `
+  <div class="dhead">
+    <div class="dicon">${faIcon(d.t)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="dtitle">${d.n}</div>
+    </div>
+    <button class="dclose" title="Close" id="dclose">&times;</button>
+  </div>`;
+
+/* Drawer — LAYOUT A, locked (Clark, 2026-08-05). B and C are out; B's icon set moved to the table
+   row actions instead, so every action is reachable without opening this drawer.
+   Actions row per Tom: View as a full button, then download / share / more as icons. */
+const drawerView = d => headBlock(d) + `
+  <div class="dprev" id="dprev" title="View full size">
+    ${faIcon(d.t)}
+    <div class="cap">No preview yet — showing the ${d.t.toUpperCase()} type icon</div>
+  </div>
+  <div class="dactions">
+    <button class="btn solid" id="fullprev">${IC.visibility} View</button>
+    <button class="btn ghost narrow" title="Download">${IC.download}</button>
+    <div class="menuwrap"><button class="btn ghost narrow" data-menu="mShare" title="Share">${IC.share}</button>${shareMenu('mShare')}</div>
+    <div class="menuwrap"><button class="btn ghost narrow" data-menu="mMore" title="More">${IC.more_vert}</button>${moreMenu('mMore')}</div>
+  </div>
+  <div class="dmeta">${metaRows(d)}</div>`;
+
+function renderDrawer(){
+  const split = document.getElementById('split'), el = document.getElementById('drawer');
+  if(!activeDoc){ split.classList.remove('drawer-open'); el.innerHTML=''; return; }
+  split.classList.add('drawer-open');
+
+  el.innerHTML = drawerView(activeDoc);
+
+  document.getElementById('dclose').onclick = ()=>{ activeDoc = null; renderTable(); renderDrawer(); };
+  document.getElementById('fullprev').onclick = ()=> openViewer();
+  document.getElementById('dprev').onclick    = ()=> openViewer();
+
+  wireMenus(el);
+}
+
+function openViewer(doc){
+  const d = doc || activeDoc; if(!d) return;
+  document.getElementById('dlgTitle').textContent = d.n;
+  /* keyed on fileVersionId, NOT the file id — getViewUrl(fileVersionId). A view link is pinned to
+     one version and will not follow a later upload.
+     NOTE the /api prefix and that getZerobiasURL composes this from location.host — it is a raw
+     API endpoint on whatever host you happen to be on, NOT a portal route. It carries no session
+     bootstrap and 401s for anyone without a live session, so it is an INTERNAL link only. */
+  document.getElementById('dlgUrl').textContent   = `/api/file-service/files/${d.fv}/view`;
+  document.getElementById('dlgKind').textContent  = `${d.t.toUpperCase()} rendered through the beautifier — pinned to this version`;
+  document.getElementById('scrim').classList.add('open');
+}
+function closeViewer(){ document.getElementById('scrim').classList.remove('open'); }
+
+const CHEV_L = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+const CHEV_R = '<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
+document.getElementById('collapse').onclick = ()=>{
+  const rail = document.getElementById('rail'), btn = document.getElementById('collapse');
+  rail.classList.toggle('collapsed');
+  const isC = rail.classList.contains('collapsed');
+  btn.innerHTML = isC ? CHEV_R : CHEV_L;
+  btn.title = isC ? 'Expand folder rail' : 'Collapse folder rail';
+};
+
+renderTree(); renderTable(); renderDrawer();
+</script>
+</body>
+</html>
