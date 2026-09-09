@@ -18,8 +18,13 @@
   be edited, cannot resize, and pins the canvas to whatever width the screenshot was taken at.
   The top bar and left rail below are markup instead — every dimension, colour and weight was
   read off a running ZeroBias app with devtools (dark theme, 2140x1267) rather than eyeballed
-  from an image. Values with no design token behind them are marked MEASURED where they appear;
-  those are the only raw literals in this file.
+  from an image.
+
+  Their CSS is not in this file. It is published at
+  <https://cdn.zerobias.com/static/stylesheets/zb-mock-shell.css> and linked below, so a fix to
+  the chrome reaches every mock instead of needing 20 copies edited. That sheet's header records
+  what it was measured against and lists every value to re-check. The MARKUP stays here, because
+  it is the part you edit.
 
   ⚠️ COLOURS COME FROM zb-theme.css AND NOWHERE ELSE.
   <https://cdn.zerobias.com/static/stylesheets/zb-theme.css> is generated from the same design
@@ -46,10 +51,10 @@
   are used to a 16px minimum from document/report styling, it does not apply here — a 16px floor
   makes every mock visibly larger than the app it is mocking.
 
-  NETWORK: four remote references, all deliberate — zb-theme.css, the Roboto webfont, the
-  Material Icons font, and the ZeroBias CDN icons. Everything else is inline. This is the trade
-  for having no local files; the alternative is a vendored copy of the tokens, which is exactly
-  the drift the published stylesheet exists to end.
+  NETWORK: five remote references, all deliberate — zb-theme.css, zb-mock-shell.css, the Roboto
+  webfont, the Material Icons font, and the ZeroBias CDN icons. Everything else is inline. This
+  is the trade for having no local files; the alternative is vendored copies of the tokens and
+  the chrome, which is exactly the drift these published sheets exist to end.
 -->
 <html lang="en" data-theme="dark">
 <head>
@@ -58,6 +63,9 @@
 <title>Projects — Screen title (what this mock shows)</title>
 
 <link rel="stylesheet" href="https://cdn.zerobias.com/static/stylesheets/zb-theme.css">
+<!-- The app chrome (.zb-bar / .zb-rail / .content) lives here. MUST load after zb-theme.css,
+     whose tokens supply every colour it uses. Mockups only — never a production page. -->
+<link rel="stylesheet" href="https://cdn.zerobias.com/static/stylesheets/zb-mock-shell.css">
 <!-- Roboto is not installed on a stock Mac. Declaring it in font-family without loading it
      falls back to Helvetica Neue — close enough in metrics that measuring a text width will
      NOT catch it, and obvious enough on screen that a reviewer will. This is the same link
@@ -113,149 +121,9 @@
     font-size:var(--zb-font-size-sm);
     color:var(--zb-text);
     background:var(--zb-background);
-    display:flow-root;  /* BFC — without it .content's top margin collapses through body and
-                           pushes the whole page down, dropping the shell onto the content. */
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ==========================================================================
-     APP SHELL — top bar. Do not restyle; edit the MARKUP below to change the
-     app name, icon and tabs.
-     Measured: bar 2140x64 bg #000 padding 0 · icon img 36x36 at (14,14) ·
-     h1 at x=64 fs16 fw400 · tab strip from x=172, tabs h48 at y=8, label fs16
-     fw500 with 24px side padding, active #03aff0 + 2px underline at tab bottom,
-     inactive #b6b6b6 · chip 61x20 at y=22 radius 20px pad 0 8px fs14 ·
-     icon buttons 36x36 at y=14 · user block w148 h64, name fs15/fw600/lh15,
-     org fs12/fw400/lh12, avatar 32x32.
-     ========================================================================== */
-  .zb-bar{
-    position:absolute; left:0; top:0; z-index:10;
-    width:var(--canvas); height:var(--bar-h);
-    background:#000;                              /* MEASURED: rgb(0,0,0). The toolbar is black, not a token. */
-    color:var(--zb-text-on-dark-bg);
-    display:flex; align-items:center; padding:0;
-  }
-  .zb-bar .app-icon{ width:36px; height:36px; margin:0 14px; flex:none; display:block; }
-  /* MEASURED: the app-name box is 100px wide regardless of the text, which is what puts the
-     tab strip at x=172. A longer app name just pushes the tabs right. */
-  .zb-bar .app-name{ min-width:100px; font-size:var(--zb-font-size-md); font-weight:400; line-height:1; white-space:nowrap; }
-
-  .zb-bar .tabs{ display:flex; align-items:stretch; height:48px; margin-left:8px; }
-  .zb-bar .tabs a{
-    display:inline-flex; align-items:center; padding:0 24px; position:relative;
-    font-size:var(--zb-font-size-md); font-weight:500; text-decoration:none;
-    color:#b6b6b6;                                /* MEASURED: inactive tab label. No token. */
-    white-space:nowrap;
-  }
-  .zb-bar .tabs a.active{ color:var(--zb-primary); }
-  .zb-bar .tabs a.active::after{
-    content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--zb-primary);
-  }
-
-  .zb-bar .spacer{ flex:1; }
-
-  .zb-bar .status-chip{
-    height:20px; line-height:20px; padding:0 8px; border-radius:20px;
-    background:#d89415;                           /* MEASURED: the ALPHA chip. No token. */
-    color:var(--zb-text-on-dark-bg); font-size:var(--zb-font-size-sm); font-weight:400;
-    margin-right:16px; flex:none;
-  }
-
-  .zb-bar .iconbtn{
-    width:36px; height:36px; margin-right:8px; flex:none; position:relative;
-    display:flex; align-items:center; justify-content:center;
-    color:var(--zb-text-on-dark-bg); background:none; border:0; cursor:pointer;
-  }
-  .zb-bar .iconbtn .material-icons{ font-size:24px; }
-  .zb-bar .iconbtn .badge{
-    position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%;
-    background:var(--zb-warn);
-  }
-
-  .zb-bar .user{ display:flex; align-items:center; height:100%; margin-left:8px; padding-right:8px; flex:none; }
-  .zb-bar .user .who{ width:108px; }
-  .zb-bar .user .who b{ display:block; font-size:15px; font-weight:600; line-height:15px; }
-  .zb-bar .user .who span{ display:block; font-size:var(--zb-font-size-xs); font-weight:400; line-height:12px; }
-  .zb-bar .user .avatar{ width:32px; height:32px; margin-left:8px; border-radius:50%; display:block; }
-
-  /* ==========================================================================
-     APP SHELL — left rail. EXPANDS ON HOVER after a delay, exactly like the app.
-     Measured: collapsed w64 from y=68, expanded w238 · width transition 0.1s,
-     opens ~400ms after the pointer arrives (the app toggles an `expanded` class
-     on a timer; a hover transition-delay reproduces it with no JS) · rows 48px,
-     icon 24x24 at x=20, label at x=60 fs12 white · active row full-bleed
-     --zb-primary, radius 0 · hover row rgba(--zb-primary-rgb,.2) ·
-     group heading is a 16px flex row, gap 8px, with a 1px rgba(255,255,255,.5)
-     rule filling whatever the label leaves · expanded box-shadow #555 0 0 10px 1px.
-
-     ⚠️ THE RAIL HAS ITS OWN BACKGROUND — it must NOT match the content area.
-     Measured off the running app; there is no token for it.
-     ========================================================================== */
-  .zb-rail{
-    position:absolute; left:0; top:var(--content-top); bottom:0; z-index:9;
-    width:var(--rail-w); padding:8px 0;
-    display:flex; flex-direction:column;
-    overflow:hidden;
-    background:radial-gradient(circle at 200% 50%, #232323 25%, #323232 50%, #232323 75%) left center / 323px auto fixed;
-    transition:width .1s;                    /* MEASURED: 0.1s */
-  }
-  .zb-rail:hover{
-    width:238px;                             /* MEASURED: expanded width */
-    box-shadow:0 0 10px 1px #555;            /* MEASURED */
-    transition-delay:.4s;                    /* MEASURED: ~405ms from pointer-in to expanded */
-  }
-
-  .zb-rail a{
-    height:48px; flex:none; display:flex; align-items:center; gap:16px; padding-left:20px;
-    color:var(--zb-text-on-dark-bg); text-decoration:none; white-space:nowrap;
-  }
-  .zb-rail a:hover{ background:rgba(var(--zb-primary-rgb),.2); }
-  .zb-rail a.active,
-  .zb-rail a.active:hover{ background:var(--zb-primary); }
-  .zb-rail a img{ width:24px; height:24px; flex:none; display:block; }
-  .zb-rail a .material-icons{ font-size:24px; flex:none; }
-
-  /* Labels are always in the DOM and clipped by the rail's overflow; max-width
-     (not display) is what animates, so the reveal can carry the same delay. */
-  .zb-rail .label{
-    font-size:var(--zb-font-size-xs); color:var(--zb-text-on-dark-bg);
-    max-width:0; overflow:hidden; text-overflow:ellipsis;
-    transition:max-width .1s;
-  }
-  .zb-rail:hover .label{ max-width:175px; transition-delay:.4s; }  /* MEASURED: max-width 175px */
-
-  .zb-rail .rule{
-    height:16px; margin:12px 0; flex:none;
-    display:flex; align-items:center; gap:8px; padding:0 16px;
-  }
-  .zb-rail .rule span{
-    font-size:var(--zb-font-size-md); color:var(--zb-text-on-dark-bg);
-    max-width:0; overflow:hidden; white-space:nowrap;
-    transition:max-width .1s;
-  }
-  .zb-rail:hover .rule span{ max-width:175px; transition-delay:.4s; }
-  .zb-rail .rule::after{
-    content:""; flex-grow:1;
-    border-bottom:1px solid rgba(255,255,255,.5); /* MEASURED off the running app. No token. */
-  }
-
-  .zb-rail .grow{ flex:1; }
-
-  /* Bottom logo: mark collapsed, wordmark revealed on expand. */
-  .zb-rail .bottom-logo{ padding-left:10px; gap:0; }
-  .zb-rail .bottom-logo img:first-of-type{ margin-left:4px; }
-  .zb-rail .bottom-logo img:last-of-type{
-    width:148px; height:auto; margin-left:4px;    /* MEASURED */
-    max-width:0; transition:max-width .1s;
-  }
-  .zb-rail:hover .bottom-logo img:last-of-type{ max-width:148px; transition-delay:.4s; }
-
-  /* ==========================================================================
-     PAGE CHROME — resource header, mock banner, tabs. Matches
-     zb-resource-container-page as built in projects-app. Delete what the screen
-     does not use; do not restyle what it keeps.
-     ========================================================================== */
-  .content{ position:relative; margin:var(--content-top) 0 0 var(--rail-w); }
 
   .phead{ padding:var(--zb-spacing-md) var(--zb-spacing-md) 0; }
   .titlerow{
