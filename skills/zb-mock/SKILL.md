@@ -129,12 +129,23 @@ for instance, is a class the app toggles on a timer — the 400ms delay was meas
 
 ## 5. Fake data, honestly fake
 
-- **Keep the mock-data banner.** It is in the template. Every screen should say on its face that
-  what you are looking at is not real.
+- **Keep the mock-data banner, and keep it to one line.** It is in the template. Its only job is
+  to say the data is not real, plus a link to a sibling screen if there is one.
+  **Do not use it as a notes field.** It is not the place for design rationale, what is proposed
+  versus what already exists, what you read off the running app, or anything anyone said in a
+  meeting. A reviewer opened the page to look at a screen — a paragraph of unrequested
+  explanation across the top makes the mock worse, and at body size it is a wall of small text
+  nobody reads. If context genuinely needs to travel with the mock, it goes in an HTML comment
+  or the folder README, not on the screen.
 - **Obfuscate every identifier.** Synthetic UUIDs (`e0000000-0000-4000-8000-…`), applied
   *consistently* so cross-references between screens still line up. Never a real resource id —
   a mock that looks live invites someone to wire it up.
 - **People and companies are fictional.** Never a real customer, a real colleague, or a real org.
+- **⛔ NEVER put internal meeting material in a mock — not in visible content, and not in an HTML
+  or CSS comment.** No quoting a colleague, no "X said / X wants / X ruled", no meeting dates or
+  timestamps, no internal ticket numbers, no unshipped roadmap. Mocks live in a public repo and
+  comments travel with the file. If a decision needs recording, it belongs in the ticket or an
+  internal doc; the mock states the design, not who argued for it or when.
 - **Standards and control codes are real** — CMMC `AC.L2-3.1.1`, SOC 2, ISO 27001, and so on.
   Those should be accurate; fictionalising them makes the mock useless for the conversation it
   is meant to support.
@@ -184,5 +195,9 @@ folder of HTML files with no index is a folder nobody opens.
 *Sign you applied the wrong font rule: your body text is 16px. Mocks are 14px.*
 
 *Sign you nudged instead of measuring: you adjusted an offset until it "looked right." If the app is running, read the rect.*
+
+*Sign you leaked internal material: the file names a colleague, quotes something said in a meeting, or carries a meeting date, timestamp or ticket number — in the page OR in a comment. Comments ship with the file and the repo is public.*
+
+*Sign you used the banner as a notes field: it runs to more than one line, or it explains design rationale, what is proposed vs. real, or quotes someone. Cut it back to "this data is not live" — the reviewer came to look at a screen.*
 
 *Sign the mock is not findable: you created a screen and did not add it to the folder README.*
