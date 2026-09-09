@@ -2,12 +2,17 @@
 set -euo pipefail
 
 # zb-dx skill installer
-# Installs the /friction slash command for Claude Code
+# Installs the /friction slash command, plus any agent skills under skills/<name>/SKILL.md
+#
+# Two different things live in skills/ and they install to different places:
+#   skills/friction.md          -> ~/.claude/commands/friction.md   (slash command, user types it)
+#   skills/<name>/SKILL.md      -> ~/.claude/skills/<name>/         (agent skill, the model picks it)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_SOURCE="${SCRIPT_DIR}/skills/friction.md"
 CONFIG_FILE="${HOME}/.claude/zb-dx.json"
 GLOBAL_COMMANDS="${HOME}/.claude/commands"
+GLOBAL_SKILLS="${HOME}/.claude/skills"
 
 # Colors (safe for terminals that don't support them)
 RED='\033[0;31m'
@@ -40,6 +45,47 @@ detect_author() {
         *dan*)    echo "dan" ;;
         *)        echo "" ;;
     esac
+}
+
+# --- agent skills (skills/<name>/SKILL.md) ---------------------------------
+
+# Echoes one skill name per line. Empty output means there are none.
+discover_agent_skills() {
+    local d
+    for d in "${SCRIPT_DIR}"/skills/*/; do
+        [[ -f "${d}SKILL.md" ]] || continue
+        basename "${d}"
+    done
+}
+
+# install_agent_skills <method>   method: 1 = symlink, 2 = copy
+install_agent_skills() {
+    local method="$1" name src target
+    local names; names=$(discover_agent_skills)
+    [[ -z "${names}" ]] && return 0
+
+    mkdir -p "${GLOBAL_SKILLS}"
+    while IFS= read -r name; do
+        src="${SCRIPT_DIR}/skills/${name}"
+        target="${GLOBAL_SKILLS}/${name}"
+
+        # Never silently replace a skill this repo does not own — a local skill of the
+        # same name may be someone's own work.
+        if [[ -e "${target}" && ! -L "${target}" ]]; then
+            warn "Skipping '${name}': ${target} exists and is not a symlink from this repo."
+            warn "  Remove or rename it first if you want the zb-dx version."
+            continue
+        fi
+        rm -rf "${target}"
+
+        if [[ "${method}" == "2" ]]; then
+            cp -R "${src}" "${target}"
+            info "Skill '${name}' copied to ${target}"
+        else
+            ln -s "${src}" "${target}"
+            info "Skill '${name}' symlinked to ${target}"
+        fi
+    done <<< "${names}"
 }
 
 write_config() {
@@ -120,11 +166,18 @@ do_install() {
         info "Symlinked to ${target_file}"
     fi
 
+    # Agent skills always install globally — Claude Code resolves them from
+    # ~/.claude/skills/ regardless of which project you are in.
+    install_agent_skills "${method_choice}"
+
     # Write config
     write_config "${author}"
 
     echo ""
     info "Installation complete! Use /friction in Claude Code."
+    if [[ -n "$(discover_agent_skills)" ]]; then
+        info "Agent skills installed: $(discover_agent_skills | tr '\n' ' ')"
+    fi
 }
 
 do_update() {
@@ -170,6 +223,20 @@ do_update() {
         warn "No installations found. Run './install.sh install' first."
     fi
 
+    # Agent skills: symlinks are already current; refresh copies in place.
+    local name target
+    while IFS= read -r name; do
+        [[ -z "${name}" ]] && continue
+        target="${GLOBAL_SKILLS}/${name}"
+        if [[ -L "${target}" ]]; then
+            info "Skill '${name}' is symlinked — already up to date"
+        elif [[ -d "${target}" ]]; then
+            rm -rf "${target}"
+            cp -R "${SCRIPT_DIR}/skills/${name}" "${target}"
+            info "Skill '${name}' updated: ${target}"
+        fi
+    done <<< "$(discover_agent_skills)"
+
     echo ""
     info "Update complete."
 }
@@ -196,6 +263,20 @@ do_status() {
     else
         warn "Global: not installed"
     fi
+
+    echo ""
+    local name target
+    while IFS= read -r name; do
+        [[ -z "${name}" ]] && continue
+        target="${GLOBAL_SKILLS}/${name}"
+        if [[ -L "${target}" ]]; then
+            info "Skill '${name}': symlinked -> $(readlink "${target}")"
+        elif [[ -d "${target}" ]]; then
+            info "Skill '${name}': copied (run './install.sh update' to refresh)"
+        else
+            warn "Skill '${name}': not installed"
+        fi
+    done <<< "$(discover_agent_skills)"
 }
 
 do_uninstall() {
@@ -208,6 +289,21 @@ do_uninstall() {
         rm -f "${global_target}"
         info "Removed: ${global_target}"
     fi
+
+    # Only remove agent skills this repo installed — a symlink pointing back here,
+    # or a copy. Never touch an unrelated skill that happens to share the name.
+    local name target
+    while IFS= read -r name; do
+        [[ -z "${name}" ]] && continue
+        target="${GLOBAL_SKILLS}/${name}"
+        if [[ -L "${target}" && "$(readlink "${target}")" == "${SCRIPT_DIR}/skills/${name}" ]]; then
+            rm -f "${target}"
+            info "Removed skill: ${target}"
+        elif [[ -d "${target}" && -f "${target}/SKILL.md" ]]; then
+            rm -rf "${target}"
+            info "Removed skill: ${target}"
+        fi
+    done <<< "$(discover_agent_skills)"
 
     if [[ -f "${CONFIG_FILE}" ]]; then
         rm -f "${CONFIG_FILE}"
