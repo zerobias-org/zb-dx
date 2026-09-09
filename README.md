@@ -31,6 +31,7 @@ Each participant has a profile in [`participants/`](./participants/). New devs c
 - **Patterns** — Reusable integration patterns for the ZB SDK/client
 - **How-tos** — Step-by-step guides born from real development friction
 - **Skills** — Claude/LLM skill definitions for common ZB development tasks
+- **Templates** — Starting points for common artifacts. [`templates/mock-screen.html`](./templates/mock-screen.html) is a static HTML mock of a ZeroBias app screen: real app chrome around fake content, themed from the published design tokens, in one self-contained file. Its companion skill is [`skills/zb-mock/`](./skills/zb-mock/).
 - **Documents** — Architecture notes, decision records, and reference material
 
 ## Got an Idea?

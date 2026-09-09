@@ -1,0 +1,416 @@
+<!doctype html>
+<!--
+  ZeroBias mock screen — SEED TEMPLATE
+  ===================================
+  A "mock" here is a static HTML prototype of a screen inside a ZeroBias app: real app chrome
+  around fake content, so you can show a design or an idea without building it. No build step,
+  no framework, no backend, no local assets — one file you open in a browser.
+
+  HOW TO USE THIS
+  1. Copy this file and rename it.
+  2. Edit SLOT 1 (title), the shell markup (app name, tabs, rail), then SLOT 2 (your screen)
+     and SLOT 3 (its styles).
+  3. Open it in a browser. That is the whole loop.
+
+  WHY THE SHELL IS REAL HTML AND NOT A SCREENSHOT
+  The obvious way to build one of these is to screenshot the app, use the image as a page
+  background, and position content on top. Don't. That ships a binary with every mock, cannot
+  be edited, cannot resize, and pins the canvas to whatever width the screenshot was taken at.
+  The top bar and left rail below are markup instead — every dimension, colour and weight was
+  read off a running ZeroBias app with devtools (dark theme, 2140x1267) rather than eyeballed
+  from an image. Values with no design token behind them are marked MEASURED where they appear;
+  those are the only raw literals in this file.
+
+  ⚠️ COLOURS COME FROM zb-theme.css AND NOWHERE ELSE.
+  <https://cdn.zerobias.com/static/stylesheets/zb-theme.css> is generated from the same design
+  tokens every ZeroBias app compiles, and is published precisely so non-Angular pages — mockups,
+  docs, third-party sites — can match the apps without copying values. Use var(--zb-*).
+
+  Do not eyedrop a colour off a screenshot. Two colours that circulated in earlier mocks turned
+  out to exist in no ZeroBias stylesheet at all: they were sampled from an image, looked right,
+  and got copied forward for months. Screenshots are lossy, monitor-profiled and often show a
+  colour composited over something else. The stylesheet is the source of truth.
+
+  ⚠️ DARK MODE — SET BOTH SWITCHES, and understand why.
+  The component library scopes its dark block to `body.dark-theme`. zb-theme.css keeps that
+  selector AND aliases [data-theme="dark"] / [data-dark-mode] on the root element. This template
+  sets both: the root attribute so any script reading tokens off document.documentElement gets
+  dark values, and the body class so markup pasted out of a running app keeps working. Remove
+  either and you get a page that half-themes.
+
+  There is deliberately no prefers-color-scheme rule. A mock should look the same for everyone
+  reviewing it, not flip with the reader's OS. Keeping the switch on an attribute also means a
+  light/dark toggle is a one-line change if you want one.
+
+  ⚠️ FONT SIZE: body is 14px (--zb-font-size-sm), which is what the ZeroBias apps use. If you
+  are used to a 16px minimum from document/report styling, it does not apply here — a 16px floor
+  makes every mock visibly larger than the app it is mocking.
+
+  NETWORK: four remote references, all deliberate — zb-theme.css, the Roboto webfont, the
+  Material Icons font, and the ZeroBias CDN icons. Everything else is inline. This is the trade
+  for having no local files; the alternative is a vendored copy of the tokens, which is exactly
+  the drift the published stylesheet exists to end.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<!-- SLOT 1 — title. Convention: "<App> — <Screen> (<what is being shown>)" -->
+<title>Projects — Screen title (what this mock shows)</title>
+
+<link rel="stylesheet" href="https://cdn.zerobias.com/static/stylesheets/zb-theme.css">
+<!-- Roboto is not installed on a stock Mac. Declaring it in font-family without loading it
+     falls back to Helvetica Neue — close enough in metrics that measuring a text width will
+     NOT catch it, and obvious enough on screen that a reviewer will. This is the same link
+     the ZeroBias portal itself uses. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+<style>
+  /* ==========================================================================
+     CANVAS + ALIASES — the only place this file may name a colour, and every
+     alias resolves to a --zb-* token. Add an alias here rather than writing a
+     raw value further down.
+     ========================================================================== */
+  :root{
+    /* 2140px is a wide-desktop canvas — big enough that a dense screen does not
+       have to be invented smaller than it will really be. Because the shell is
+       markup, this is a free choice: set `100%` for a mock that resizes with the
+       window, or a narrower fixed width to design for a smaller viewport. Keep it
+       fixed if your screen has a grid sized in px. */
+    --canvas: 2140px;
+
+    --rail-w:   64px;   /* MEASURED: nav.navigation width */
+    --bar-h:    64px;   /* MEASURED: mat-toolbar.portal-toolbar height */
+    --content-top: 68px;/* MEASURED: main.page-content top — the bar plus a 4px gap */
+
+    --panel:   var(--zb-background-card);        /* #424242 dark — cards, toolbars, table surface */
+    --panel-2: var(--zb-background-card-dark);   /* #1e1e1e dark — recessed / chip backgrounds */
+    --panel-3: var(--zb-background-card-darker); /* #555555 dark — raised / hover surface */
+    --dim:     var(--zb-secondary-text);         /* ALL secondary text. One of the two invented
+                                                    hexes was a "dim grey" sampled from a
+                                                    screenshot — use the token. */
+    --line:    var(--zb-divider);
+    --link:    var(--zb-primary);                /* breadcrumb chips, inline links. The other
+                                                    invented hex was a "link blue" here. If you
+                                                    need a different real colour, read it off a
+                                                    running app with devtools — never off a PNG. */
+    --ok:      #8fd14f;                          /* KNOWN GAP: this success green is still
+                                                    hardcoded in the ZeroBias component library
+                                                    rather than exposed as a token, so there is
+                                                    nothing to point var() at yet. Replace with
+                                                    the token once one exists. */
+    --warn:    var(--zb-color-warning);
+    --bad:     var(--zb-warn);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ width:var(--canvas); }
+  body{
+    position:relative;
+    width:var(--canvas);
+    min-height:100vh;
+    font-family:Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:var(--zb-font-size-sm);
+    color:var(--zb-text);
+    background:var(--zb-background);
+    display:flow-root;  /* BFC — without it .content's top margin collapses through body and
+                           pushes the whole page down, dropping the shell onto the content. */
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ==========================================================================
+     APP SHELL — top bar. Do not restyle; edit the MARKUP below to change the
+     app name, icon and tabs.
+     Measured: bar 2140x64 bg #000 padding 0 · icon img 36x36 at (14,14) ·
+     h1 at x=64 fs16 fw400 · tab strip from x=172, tabs h48 at y=8, label fs16
+     fw500 with 24px side padding, active #03aff0 + 2px underline at tab bottom,
+     inactive #b6b6b6 · chip 61x20 at y=22 radius 20px pad 0 8px fs14 ·
+     icon buttons 36x36 at y=14 · user block w148 h64, name fs15/fw600/lh15,
+     org fs12/fw400/lh12, avatar 32x32.
+     ========================================================================== */
+  .zb-bar{
+    position:absolute; left:0; top:0; z-index:10;
+    width:var(--canvas); height:var(--bar-h);
+    background:#000;                              /* MEASURED: rgb(0,0,0). The toolbar is black, not a token. */
+    color:var(--zb-text-on-dark-bg);
+    display:flex; align-items:center; padding:0;
+  }
+  .zb-bar .app-icon{ width:36px; height:36px; margin:0 14px; flex:none; display:block; }
+  /* MEASURED: the app-name box is 100px wide regardless of the text, which is what puts the
+     tab strip at x=172. A longer app name just pushes the tabs right. */
+  .zb-bar .app-name{ min-width:100px; font-size:var(--zb-font-size-md); font-weight:400; line-height:1; white-space:nowrap; }
+
+  .zb-bar .tabs{ display:flex; align-items:stretch; height:48px; margin-left:8px; }
+  .zb-bar .tabs a{
+    display:inline-flex; align-items:center; padding:0 24px; position:relative;
+    font-size:var(--zb-font-size-md); font-weight:500; text-decoration:none;
+    color:#b6b6b6;                                /* MEASURED: inactive tab label. No token. */
+    white-space:nowrap;
+  }
+  .zb-bar .tabs a.active{ color:var(--zb-primary); }
+  .zb-bar .tabs a.active::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--zb-primary);
+  }
+
+  .zb-bar .spacer{ flex:1; }
+
+  .zb-bar .status-chip{
+    height:20px; line-height:20px; padding:0 8px; border-radius:20px;
+    background:#d89415;                           /* MEASURED: the ALPHA chip. No token. */
+    color:var(--zb-text-on-dark-bg); font-size:var(--zb-font-size-sm); font-weight:400;
+    margin-right:16px; flex:none;
+  }
+
+  .zb-bar .iconbtn{
+    width:36px; height:36px; margin-right:8px; flex:none; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--zb-text-on-dark-bg); background:none; border:0; cursor:pointer;
+  }
+  .zb-bar .iconbtn .material-icons{ font-size:24px; }
+  .zb-bar .iconbtn .badge{
+    position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%;
+    background:var(--zb-warn);
+  }
+
+  .zb-bar .user{ display:flex; align-items:center; height:100%; margin-left:8px; padding-right:8px; flex:none; }
+  .zb-bar .user .who{ width:108px; }
+  .zb-bar .user .who b{ display:block; font-size:15px; font-weight:600; line-height:15px; }
+  .zb-bar .user .who span{ display:block; font-size:var(--zb-font-size-xs); font-weight:400; line-height:12px; }
+  .zb-bar .user .avatar{ width:32px; height:32px; margin-left:8px; border-radius:50%; display:block; }
+
+  /* ==========================================================================
+     APP SHELL — left rail. EXPANDS ON HOVER after a delay, exactly like the app.
+     Measured: collapsed w64 from y=68, expanded w238 · width transition 0.1s,
+     opens ~400ms after the pointer arrives (the app toggles an `expanded` class
+     on a timer; a hover transition-delay reproduces it with no JS) · rows 48px,
+     icon 24x24 at x=20, label at x=60 fs12 white · active row full-bleed
+     --zb-primary, radius 0 · hover row rgba(--zb-primary-rgb,.2) ·
+     group heading is a 16px flex row, gap 8px, with a 1px rgba(255,255,255,.5)
+     rule filling whatever the label leaves · expanded box-shadow #555 0 0 10px 1px.
+
+     ⚠️ THE RAIL HAS ITS OWN BACKGROUND — it must NOT match the content area.
+     Measured off the running app; there is no token for it.
+     ========================================================================== */
+  .zb-rail{
+    position:absolute; left:0; top:var(--content-top); bottom:0; z-index:9;
+    width:var(--rail-w); padding:8px 0;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    background:radial-gradient(circle at 200% 50%, #232323 25%, #323232 50%, #232323 75%) left center / 323px auto fixed;
+    transition:width .1s;                    /* MEASURED: 0.1s */
+  }
+  .zb-rail:hover{
+    width:238px;                             /* MEASURED: expanded width */
+    box-shadow:0 0 10px 1px #555;            /* MEASURED */
+    transition-delay:.4s;                    /* MEASURED: ~405ms from pointer-in to expanded */
+  }
+
+  .zb-rail a{
+    height:48px; flex:none; display:flex; align-items:center; gap:16px; padding-left:20px;
+    color:var(--zb-text-on-dark-bg); text-decoration:none; white-space:nowrap;
+  }
+  .zb-rail a:hover{ background:rgba(var(--zb-primary-rgb),.2); }
+  .zb-rail a.active,
+  .zb-rail a.active:hover{ background:var(--zb-primary); }
+  .zb-rail a img{ width:24px; height:24px; flex:none; display:block; }
+  .zb-rail a .material-icons{ font-size:24px; flex:none; }
+
+  /* Labels are always in the DOM and clipped by the rail's overflow; max-width
+     (not display) is what animates, so the reveal can carry the same delay. */
+  .zb-rail .label{
+    font-size:var(--zb-font-size-xs); color:var(--zb-text-on-dark-bg);
+    max-width:0; overflow:hidden; text-overflow:ellipsis;
+    transition:max-width .1s;
+  }
+  .zb-rail:hover .label{ max-width:175px; transition-delay:.4s; }  /* MEASURED: max-width 175px */
+
+  .zb-rail .rule{
+    height:16px; margin:12px 0; flex:none;
+    display:flex; align-items:center; gap:8px; padding:0 16px;
+  }
+  .zb-rail .rule span{
+    font-size:var(--zb-font-size-md); color:var(--zb-text-on-dark-bg);
+    max-width:0; overflow:hidden; white-space:nowrap;
+    transition:max-width .1s;
+  }
+  .zb-rail:hover .rule span{ max-width:175px; transition-delay:.4s; }
+  .zb-rail .rule::after{
+    content:""; flex-grow:1;
+    border-bottom:1px solid rgba(255,255,255,.5); /* MEASURED off the running app. No token. */
+  }
+
+  .zb-rail .grow{ flex:1; }
+
+  /* Bottom logo: mark collapsed, wordmark revealed on expand. */
+  .zb-rail .bottom-logo{ padding-left:10px; gap:0; }
+  .zb-rail .bottom-logo img:first-of-type{ margin-left:4px; }
+  .zb-rail .bottom-logo img:last-of-type{
+    width:148px; height:auto; margin-left:4px;    /* MEASURED */
+    max-width:0; transition:max-width .1s;
+  }
+  .zb-rail:hover .bottom-logo img:last-of-type{ max-width:148px; transition-delay:.4s; }
+
+  /* ==========================================================================
+     PAGE CHROME — resource header, mock banner, tabs. Matches
+     zb-resource-container-page as built in projects-app. Delete what the screen
+     does not use; do not restyle what it keeps.
+     ========================================================================== */
+  .content{ position:relative; margin:var(--content-top) 0 0 var(--rail-w); }
+
+  .phead{ padding:var(--zb-spacing-md) var(--zb-spacing-md) 0; }
+  .titlerow{
+    display:flex; align-items:flex-start; gap:14px;
+    background:var(--panel); padding:12px var(--zb-spacing-md);
+    box-shadow:var(--zb-box-shadow);
+  }
+  .ricon{ width:64px; height:64px; flex:none; display:flex; align-items:center; justify-content:center; margin-top:4px; }
+  .ricon img{ width:52px; height:52px; display:block; }
+  .rmain{ display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+
+  .rcrumb{ display:flex; align-items:center; gap:var(--zb-spacing-sm); }
+  .rcrumb .cchip{
+    text-decoration:none; background:var(--panel-2); color:var(--link);
+    border-radius:var(--zb-radius-sm); height:22px; line-height:22px; padding:0 9px;
+    font-size:13px; font-weight:500; cursor:pointer;
+  }
+  .rcrumb .sep{ color:var(--dim); font-size:var(--zb-font-size-sm); }
+
+  .rtitle-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .titlerow h1{ font-size:var(--zb-font-size-xl); font-weight:500; line-height:1.2; }
+  .rsub{ font-size:13px; color:var(--dim); line-height:1.35; }
+
+  .ptype{
+    display:inline-flex; align-items:center; height:18px; padding:0 var(--zb-spacing-sm);
+    border-radius:3px; font-size:10px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; color:#1a1a1a;
+  }
+  .chip{
+    display:inline-flex; align-items:center; font-size:var(--zb-font-size-xs); font-weight:500;
+    padding:2px 10px; border-radius:var(--zb-radius-sm);
+  }
+  .chip.active{ background:var(--ok); color:var(--zb-color-white); font-weight:600; }
+
+  /* MOCK-DATA BANNER — keep it. Every screen must say on its face that the data is fabricated. */
+  .mockbanner{
+    display:flex; align-items:center; gap:12px;
+    margin:12px var(--zb-spacing-md) 0; padding:var(--zb-spacing-sm) var(--zb-spacing-md);
+    background:rgba(var(--zb-primary-rgb),.1);
+    border-bottom:2px solid var(--zb-primary);
+    font-size:var(--zb-font-size-sm); color:var(--zb-text);
+  }
+  .mockbanner .i{
+    width:22px; height:22px; border-radius:50%;
+    background:var(--zb-primary); color:var(--zb-primary-contrast-text-color);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:var(--zb-font-size-sm); flex:none;
+  }
+
+  .ptabs{ display:flex; align-items:stretch; margin-top:12px; border-bottom:1px solid var(--line); }
+  .ptabs a{
+    display:inline-flex; align-items:center; height:48px; padding:0 24px;
+    color:var(--dim); text-decoration:none; font-size:var(--zb-font-size-sm); font-weight:500;
+    letter-spacing:.006em; position:relative;
+  }
+  .ptabs a.active{ color:var(--zb-text); }
+  .ptabs a.active::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--zb-primary); }
+
+  /* ==========================================================================
+     SLOT 3 — screen styles. Everything specific to THIS mock goes below.
+     Use var(--zb-*) or the aliases above. No new hex.
+     ========================================================================== */
+  .body{ padding:var(--zb-spacing-md); }
+  .card{ background:var(--panel); box-shadow:var(--zb-box-shadow); padding:var(--zb-spacing-md); }
+</style>
+</head>
+
+<body class="dark-theme">
+
+<!-- ============ SHELL: top bar. Edit app name / icon / tabs / user. ============ -->
+<header class="zb-bar">
+  <img class="app-icon" src="https://cdn.zerobias.com/static/images/nav/color/app_projects.svg" alt="">
+  <span class="app-name">Projects</span>
+  <nav class="tabs">
+    <a class="active" href="#">Portfolio</a>
+    <a href="#">Engagements</a>
+    <a href="#">Dashboard</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="status-chip">ALPHA</span>
+  <button class="iconbtn"><span class="material-icons">assignment</span></button>
+  <button class="iconbtn"><span class="material-icons">notifications</span><span class="badge"></span></button>
+  <div class="user">
+    <div class="who"><b>Alex Rivera</b><span>Acme Operations</span></div>
+    <img class="avatar" src="https://cdn.zerobias.com/static/images/resourceType/party.svg" alt="">
+  </div>
+</header>
+
+<!-- ============ SHELL: left rail. Hover it to expand. `active` marks the current app.
+     Icons: https://cdn.zerobias.com/static/images/nav/white/app_<name>.svg
+     Known: app_data_collection, app_governance, app_projects, app_solution_portal,
+            app_tasks, app_learning_center
+     Every row needs its .label — it is what shows when the rail expands.        -->
+<nav class="zb-rail">
+  <a href="#"><span class="material-icons">home</span><span class="label">Home</span></a>
+
+  <div class="rule"><span>Boundaries</span></div>
+  <a href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_data_collection.svg" alt=""><span class="label">Platform DEV</span></a>
+
+  <div class="rule"><span>My Apps</span></div>
+  <a href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_governance.svg" alt=""><span class="label">Governance</span></a>
+  <a class="active" href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_projects.svg" alt=""><span class="label">Projects</span></a>
+  <a href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_solution_portal.svg" alt=""><span class="label">Catalog</span></a>
+  <a href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_tasks.svg" alt=""><span class="label">Tasks</span></a>
+  <a href="#"><img src="https://cdn.zerobias.com/static/images/nav/white/app_learning_center.svg" alt=""><span class="label">Learning Center</span></a>
+
+  <span class="grow"></span>
+  <a class="bottom-logo" href="#">
+    <img src="https://cdn.zerobias.com/static/images/zerobias/zerobias_icon_white.svg" alt="">
+    <img src="https://cdn.zerobias.com/static/images/zerobias/zerobias_white.svg" alt="ZeroBias">
+  </a>
+</nav>
+
+<div class="content">
+
+  <!-- ============ SLOT 2 — the screen ============ -->
+  <div class="phead">
+    <div class="titlerow">
+      <div class="ricon">
+        <img src="https://cdn.zerobias.com/static/images/resourceType/project.svg" alt="">
+      </div>
+      <div class="rmain">
+        <div class="rcrumb">
+          <a class="cchip" href="#">Parent</a>
+          <span class="sep">/</span>
+          <a class="cchip" href="#">Child</a>
+        </div>
+        <div class="rtitle-row">
+          <h1>Screen title</h1>
+          <span class="ptype" style="background:#90CAF9;">TYPE</span>
+          <span class="chip active">Active</span>
+        </div>
+        <div class="rsub">One line of supporting detail — owner, dates, counts.</div>
+      </div>
+    </div>
+
+    <div class="mockbanner">
+      <span class="i">i</span>
+      <span>Mock data. Identifiers are synthetic and resolve against no live API; people and companies are fictional.</span>
+    </div>
+
+    <nav class="ptabs">
+      <a class="active" href="#">Overview</a>
+      <a href="#">Second tab</a>
+    </nav>
+  </div>
+
+  <div class="body">
+    <div class="card">Screen content goes here.</div>
+  </div>
+
+</div>
+
+<script>
+  /* Vanilla JS only — no libraries, no imports, no fetch. Inline any data this screen needs. */
+</script>
+</body>
+</html>
